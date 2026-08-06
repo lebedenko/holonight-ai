@@ -1,0 +1,5 @@
+ALTER TABLE usage ADD COLUMN input_cost_usd REAL DEFAULT NULL;
+ALTER TABLE usage ADD COLUMN output_cost_usd REAL DEFAULT NULL;
+ALTER TABLE usage ADD COLUMN reasoning_cost_usd REAL DEFAULT NULL;
+ALTER TABLE usage ADD COLUMN cache_creation_cost_usd REAL DEFAULT NULL;
+ALTER TABLE usage ADD COLUMN cache_read_cost_usd REAL DEFAULT NULL;

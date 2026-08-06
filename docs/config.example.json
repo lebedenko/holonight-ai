@@ -1,0 +1,50 @@
+{
+    "provider_instances": {
+        "schema_version": 1,
+        "instances": [
+            {
+                "id": "8d32af34-1b93-4a56-a0d7-0c86c6244b17",
+                "type": "ollama",
+                "name": "Local Ollama",
+                "enabled": true,
+                "settings": {
+                    "base_url": "http://localhost:11434",
+                    "default_model": "llama3.2",
+                    "temperature": 0.7,
+                    "context_window": 4096
+                }
+            },
+            {
+                "id": "26828350-a98f-4a1c-a3f9-65098029b824",
+                "type": "openai",
+                "name": "OpenAI Work",
+                "enabled": false,
+                "settings": {
+                    "base_url": "https://api.openai.com/v1",
+                    "default_model": "gpt-4.1-mini",
+                    "temperature": 1
+                }
+            }
+        ],
+        "tombstones": [
+            {
+                "id": "fba18777-4e9c-48c5-a97b-a51c7083740e",
+                "type": "anthropic",
+                "name": "Previous Claude"
+            }
+        ]
+    },
+    "providers": {
+        "8d32af34-1b93-4a56-a0d7-0c86c6244b17": {
+            "cached_models": [
+                "llama3.2"
+            ]
+        }
+    },
+    "utility": {
+        "default_utility_model": {
+            "provider_id": "8d32af34-1b93-4a56-a0d7-0c86c6244b17",
+            "model_name": "llama3.2"
+        }
+    }
+}

@@ -1,0 +1,423 @@
+#include <QAbstractListModel>
+#include <QColor>
+#include <QCoreApplication>
+#include <QDir>
+#include <QQmlComponent>
+#include <QQmlEngine>
+#include <QQuickItem>
+#include <QTest>
+#include <QtQml>
+
+#include <gtest/gtest.h>
+#include <holonight_rendering/code_highlighter.h>
+#include <holonight_rendering/content_block.h>
+#include <memory>
+
+namespace {
+
+struct ProviderRow {
+  QString instance_id;
+  QString provider_type;
+  QString display_name;
+  bool enabled = true;
+};
+
+class FakeProviderModel final : public QAbstractListModel {
+  Q_OBJECT
+
+ public:
+  enum Role { InstanceIdRole = Qt::UserRole + 1, ProviderTypeRole, DisplayNameRole, EnabledRole };
+
+  [[nodiscard]] int rowCount(const QModelIndex& parent = {}) const override {
+    return parent.isValid() ? 0 : static_cast<int>(rows_.size());
+  }
+
+  [[nodiscard]] QVariant data(const QModelIndex& index, int role) const override {
+    if (!index.isValid() || index.row() < 0 || index.row() >= rowCount()) {
+      return {};
+    }
+    const auto& row = rows_[static_cast<std::size_t>(index.row())];
+    switch (role) {
+      case InstanceIdRole:
+        return row.instance_id;
+      case ProviderTypeRole:
+        return row.provider_type;
+      case DisplayNameRole:
+        return row.display_name;
+      case EnabledRole:
+        return row.enabled;
+      default:
+        return {};
+    }
+  }
+
+  [[nodiscard]] QHash<int, QByteArray> roleNames() const override {
+    return {{InstanceIdRole, "instanceId"},
+            {ProviderTypeRole, "providerType"},
+            {DisplayNameRole, "displayName"},
+            {EnabledRole, "enabled"}};
+  }
+
+  void prepend(ProviderRow row) {
+    beginInsertRows({}, 0, 0);
+    rows_.insert(rows_.begin(), std::move(row));
+    endInsertRows();
+  }
+
+  [[nodiscard]] const ProviderRow& row(int index) const { return rows_.at(static_cast<std::size_t>(index)); }
+
+ private:
+  std::vector<ProviderRow> rows_;
+};
+
+class FakeProviderController final : public QObject {
+  Q_OBJECT
+  Q_PROPERTY(QAbstractItemModel* instances READ instances CONSTANT)
+  Q_PROPERTY(QString selectedInstanceId READ selectedInstanceId NOTIFY selectionChanged)
+  Q_PROPERTY(QString selectedProviderType READ selectedProviderType NOTIFY selectionChanged)
+  Q_PROPERTY(QString displayName READ displayName WRITE setDisplayName NOTIFY draftChanged)
+  Q_PROPERTY(bool enabled READ enabled WRITE setEnabled NOTIFY draftChanged)
+  Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY draftChanged)
+  Q_PROPERTY(bool canSave READ canSave WRITE setCanSave NOTIFY draftChanged)
+  Q_PROPERTY(bool canDelete READ canDelete WRITE setCanDelete NOTIFY draftChanged)
+  Q_PROPERTY(QString nameValidationError READ nameValidationError WRITE setNameValidationError NOTIFY draftChanged)
+  Q_PROPERTY(QString deletionExplanation READ deletionExplanation WRITE setDeletionExplanation NOTIFY draftChanged)
+  Q_PROPERTY(bool navigationPromptVisible READ navigationPromptVisible WRITE setNavigationPromptVisible NOTIFY
+                 navigationPromptVisibleChanged)
+
+ public:
+  [[nodiscard]] QAbstractItemModel* instances() { return &model; }
+  [[nodiscard]] QString selectedInstanceId() const { return selected_instance_id_; }
+  [[nodiscard]] QString selectedProviderType() const { return selected_provider_type_; }
+  [[nodiscard]] QString displayName() const { return display_name_; }
+  [[nodiscard]] bool enabled() const { return enabled_; }
+  [[nodiscard]] bool dirty() const { return dirty_; }
+  [[nodiscard]] bool canSave() const { return can_save_; }
+  [[nodiscard]] bool canDelete() const { return can_delete_; }
+  [[nodiscard]] QString nameValidationError() const { return name_validation_error_; }
+  [[nodiscard]] QString deletionExplanation() const { return deletion_explanation_; }
+  [[nodiscard]] bool navigationPromptVisible() const { return navigation_prompt_visible_; }
+
+  void setDisplayName(QString value) {
+    display_name_ = std::move(value);
+    Q_EMIT draftChanged();
+  }
+  void setEnabled(bool value) {
+    enabled_ = value;
+    Q_EMIT draftChanged();
+  }
+  void setDirty(bool value) {
+    dirty_ = value;
+    Q_EMIT draftChanged();
+  }
+  void setCanSave(bool value) {
+    can_save_ = value;
+    Q_EMIT draftChanged();
+  }
+  void setCanDelete(bool value) {
+    can_delete_ = value;
+    Q_EMIT draftChanged();
+  }
+  void setNameValidationError(QString value) {
+    name_validation_error_ = std::move(value);
+    Q_EMIT draftChanged();
+  }
+  void setDeletionExplanation(QString value) {
+    deletion_explanation_ = std::move(value);
+    Q_EMIT draftChanged();
+  }
+  void setNavigationPromptVisible(bool value) {
+    navigation_prompt_visible_ = value;
+    Q_EMIT navigationPromptVisibleChanged();
+  }
+
+  Q_INVOKABLE bool addProvider(const QString& provider_type) {
+    const QString instance_id = QStringLiteral("new-%1").arg(provider_type);
+    model.prepend({.instance_id = instance_id,
+                   .provider_type = provider_type,
+                   .display_name = QStringLiteral("New provider"),
+                   .enabled = true});
+    selected_instance_id_ = instance_id;
+    selected_provider_type_ = provider_type;
+    Q_EMIT selectionChanged();
+    return true;
+  }
+  Q_INVOKABLE void requestSelection(const QString& instance_id) {
+    selected_instance_id_ = instance_id;
+    Q_EMIT selectionChanged();
+  }
+  Q_INVOKABLE void requestClose() { ++request_close_count; }
+  Q_INVOKABLE void cancelNavigation() { ++cancel_count; }
+  Q_INVOKABLE void discardAndContinue() { ++discard_count; }
+  Q_INVOKABLE void saveAndContinue() { ++save_count; }
+  Q_INVOKABLE bool deleteSelected(bool confirmed) {
+    if (confirmed) {
+      ++delete_count;
+    }
+    return confirmed;
+  }
+
+  FakeProviderModel model;
+  int request_close_count = 0;
+  int cancel_count = 0;
+  int discard_count = 0;
+  int save_count = 0;
+  int delete_count = 0;
+
+ Q_SIGNALS:
+  void selectionChanged();
+  void draftChanged();
+  void navigationPromptVisibleChanged();
+  void closeApproved();
+
+ private:
+  QString selected_instance_id_;
+  QString selected_provider_type_;
+  QString display_name_ = QStringLiteral("Provider");
+  QString name_validation_error_;
+  QString deletion_explanation_;
+  bool enabled_ = true;
+  bool dirty_ = false;
+  bool can_save_ = true;
+  bool can_delete_ = true;
+  bool navigation_prompt_visible_ = false;
+};
+
+QString workspaceFile(const QString& file_name) {
+  return QDir{QStringLiteral(PROJECT_SOURCE_DIR)}.filePath(QStringLiteral("qml/workspace/") + file_name);
+}
+
+std::unique_ptr<QObject> createComponent(QQmlEngine& engine, const QString& file_name,
+                                         const QVariantMap& initial_properties = {}) {
+  QQmlComponent component{&engine, QUrl::fromLocalFile(workspaceFile(file_name))};
+  EXPECT_TRUE(component.isReady()) << qPrintable(component.errorString());
+  if (!component.isReady()) {
+    return {};
+  }
+  std::unique_ptr<QObject> object{component.createWithInitialProperties(initial_properties)};
+  EXPECT_NE(object, nullptr) << qPrintable(component.errorString());
+  return object;
+}
+
+void activate(QObject* object, const char* signal_name) {
+  ASSERT_NE(object, nullptr);
+  ASSERT_TRUE(QMetaObject::invokeMethod(object, signal_name, Qt::DirectConnection));
+  QCoreApplication::processEvents();
+}
+
+class ProviderManagementQml : public testing::Test {
+ protected:
+  static void SetUpTestSuite() {
+    qmlRegisterTypesAndRevisions<holonight_rendering::CodeHighlighter>("HolonightChat", 1);
+    qmlRegisterTypesAndRevisions<holonight_rendering::ContentBlock>("HolonightChat", 1);
+    qmlRegisterTypesAndRevisions<holonight_rendering::ContentBlockTypeNs>("HolonightChat", 1);
+    qmlRegisterType(QUrl::fromLocalFile(workspaceFile(QStringLiteral("../shared/ProviderIcon.qml"))), "HolonightChat",
+                    1, 0, "ProviderIcon");
+  }
+
+  void SetUp() override {
+    engine.addImportPath(QStringLiteral(HOLONIGHT_QML_IMPORT_PATH));
+    engine.addImportPath(QDir{QStringLiteral(PROJECT_SOURCE_DIR)}.filePath(QStringLiteral("qml")));
+  }
+
+  QQmlEngine engine;
+};
+
+TEST_F(ProviderManagementQml, EmptyAndPopulatedListsDoNotAutomaticallySelectAProvider) {
+  FakeProviderController controller;
+  controller.model.prepend({.instance_id = QStringLiteral("existing"),
+                            .provider_type = QStringLiteral("ollama"),
+                            .display_name = QStringLiteral("Local"),
+                            .enabled = true});
+
+  auto panel = createComponent(engine, QStringLiteral("ProviderListPanel.qml"),
+                               {{QStringLiteral("providerController"), QVariant::fromValue(&controller)}});
+  ASSERT_NE(panel, nullptr);
+  auto* list = panel->findChild<QObject*>(QStringLiteral("providerInstanceList"));
+  ASSERT_NE(list, nullptr);
+  QTRY_COMPARE(list->property("count").toInt(), 1);
+  EXPECT_EQ(list->property("currentIndex").toInt(), -1);
+  EXPECT_TRUE(controller.selectedInstanceId().isEmpty());
+
+  auto page = createComponent(engine, QStringLiteral("ProvidersPage.qml"));
+  ASSERT_NE(page, nullptr);
+  auto* empty_state = page->findChild<QObject*>(QStringLiteral("noProviderSelectedState"));
+  auto* empty_state_text = page->findChild<QObject*>(QStringLiteral("noProviderSelectedText"));
+  QTRY_VERIFY(empty_state != nullptr);
+  ASSERT_NE(empty_state_text, nullptr);
+  EXPECT_TRUE(empty_state->property("surfaceRole").isValid());
+  EXPECT_NE(empty_state_text->property("color").value<QColor>(), QColor{Qt::black});
+}
+
+TEST_F(ProviderManagementQml, AddMenuListsEveryProviderAndPrependsAndSelectsTheDraft) {
+  FakeProviderController controller;
+  controller.model.prepend({.instance_id = QStringLiteral("existing"),
+                            .provider_type = QStringLiteral("ollama"),
+                            .display_name = QStringLiteral("Local"),
+                            .enabled = true});
+  auto panel = createComponent(engine, QStringLiteral("ProviderListPanel.qml"),
+                               {{QStringLiteral("providerController"), QVariant::fromValue(&controller)}});
+  ASSERT_NE(panel, nullptr);
+
+  const std::array actions = {
+      std::pair{QStringLiteral("addOllamaProviderAction"), QStringLiteral("Ollama")},
+      std::pair{QStringLiteral("addOpenAIProviderAction"), QStringLiteral("OpenAI")},
+      std::pair{QStringLiteral("addAnthropicProviderAction"), QStringLiteral("Anthropic")},
+      std::pair{QStringLiteral("addGoogleProviderAction"), QStringLiteral("Google")},
+  };
+  for (const auto& [object_name, label] : actions) {
+    auto* action = panel->findChild<QObject*>(object_name);
+    ASSERT_NE(action, nullptr) << qPrintable(object_name);
+    EXPECT_EQ(action->property("text").toString(), label);
+  }
+
+  activate(panel->findChild<QObject*>(QStringLiteral("addGoogleProviderAction")), "triggered");
+  ASSERT_EQ(controller.model.rowCount(), 2);
+  EXPECT_EQ(controller.model.row(0).provider_type, QStringLiteral("google"));
+  EXPECT_EQ(controller.selectedInstanceId(), QStringLiteral("new-google"));
+  EXPECT_EQ(controller.selectedProviderType(), QStringLiteral("google"));
+}
+
+TEST_F(ProviderManagementQml, ValidationAndDeletionStateArePresentedInline) {
+  FakeProviderController controller;
+  controller.setNameValidationError(QStringLiteral("Name already exists"));
+  controller.setCanDelete(false);
+  controller.setDeletionExplanation(QStringLiteral("Deletion is blocked while a response is streaming."));
+  auto scaffold = createComponent(engine, QStringLiteral("ProviderSettingsScaffold.qml"),
+                                  {{QStringLiteral("providerController"), QVariant::fromValue(&controller)},
+                                   {QStringLiteral("providerType"), QStringLiteral("ollama")},
+                                   {QStringLiteral("title"), QStringLiteral("Ollama")}});
+  ASSERT_NE(scaffold, nullptr);
+
+  auto* name_field = scaffold->findChild<QObject*>(QStringLiteral("providerNameField"));
+  auto* delete_button = scaffold->findChild<QObject*>(QStringLiteral("deleteProviderButton"));
+  ASSERT_NE(name_field, nullptr);
+  ASSERT_NE(delete_button, nullptr);
+  EXPECT_TRUE(name_field->property("hasError").toBool());
+  EXPECT_EQ(name_field->property("errorText").toString(), QStringLiteral("Name already exists"));
+  EXPECT_FALSE(delete_button->property("enabled").toBool());
+  auto* explanation = scaffold->findChild<QObject*>(QStringLiteral("deletionExplanationText"));
+  ASSERT_NE(explanation, nullptr);
+  EXPECT_TRUE(explanation->property("visible").toBool());
+  EXPECT_EQ(explanation->property("text").toString(),
+            QStringLiteral("Deletion is blocked while a response is streaming."));
+
+  controller.setCanDelete(true);
+  QTRY_VERIFY(delete_button->property("enabled").toBool());
+  auto* dialog = scaffold->findChild<QObject*>(QStringLiteral("deleteProviderDialog"));
+  ASSERT_NE(dialog, nullptr);
+  EXPECT_EQ(dialog->property("standardButtons").toInt(), 0);
+  auto* confirm_button = scaffold->findChild<QObject*>(QStringLiteral("confirmDeleteProviderButton"));
+  auto* cancel_button = scaffold->findChild<QObject*>(QStringLiteral("cancelDeleteProviderButton"));
+  ASSERT_NE(confirm_button, nullptr);
+  ASSERT_NE(cancel_button, nullptr);
+  activate(confirm_button, "clicked");
+  EXPECT_EQ(controller.delete_count, 1);
+}
+
+TEST_F(ProviderManagementQml, DisabledProviderUsesNeutralDisabledStatus) {
+  auto delegate = createComponent(engine, QStringLiteral("ProviderListDelegate.qml"),
+                                  {{QStringLiteral("providerName"), QStringLiteral("Offline provider")},
+                                   {QStringLiteral("providerId"), QStringLiteral("offline")},
+                                   {QStringLiteral("providerType"), QStringLiteral("unsupported")},
+                                   {QStringLiteral("providerEnabled"), false}});
+  ASSERT_NE(delegate, nullptr);
+  EXPECT_EQ(delegate->property("subtitle").toString(), QStringLiteral("Disabled"));
+  EXPECT_EQ(delegate->property("status").toInt(), 0);
+}
+
+TEST_F(ProviderManagementQml, DirtyPromptOffersSaveDiscardAndCancelActions) {
+  FakeProviderController controller;
+  controller.setDirty(true);
+  controller.setNavigationPromptVisible(true);
+  auto window = createComponent(engine, QStringLiteral("SettingsWindow.qml"),
+                                {{QStringLiteral("providerController"), QVariant::fromValue(&controller)}});
+  ASSERT_NE(window, nullptr);
+
+  auto* dialog = window->findChild<QObject*>(QStringLiteral("dirtyNavigationDialog"));
+  ASSERT_NE(dialog, nullptr);
+  QTRY_VERIFY(dialog->property("visible").toBool());
+  activate(window->findChild<QObject*>(QStringLiteral("cancelDirtyNavigationButton")), "clicked");
+  activate(window->findChild<QObject*>(QStringLiteral("discardDirtyNavigationButton")), "clicked");
+  activate(window->findChild<QObject*>(QStringLiteral("saveDirtyNavigationButton")), "clicked");
+  EXPECT_EQ(controller.cancel_count, 1);
+  EXPECT_EQ(controller.discard_count, 1);
+  EXPECT_EQ(controller.save_count, 1);
+  controller.setNavigationPromptVisible(false);
+}
+
+TEST_F(ProviderManagementQml, DirtyPromptDisablesSaveForInvalidDraft) {
+  FakeProviderController controller;
+  controller.setDirty(true);
+  controller.setCanSave(false);
+  controller.setNavigationPromptVisible(true);
+  auto window = createComponent(engine, QStringLiteral("SettingsWindow.qml"),
+                                {{QStringLiteral("providerController"), QVariant::fromValue(&controller)}});
+  ASSERT_NE(window, nullptr);
+
+  auto* save_button = window->findChild<QObject*>(QStringLiteral("saveDirtyNavigationButton"));
+  auto* discard_button = window->findChild<QObject*>(QStringLiteral("discardDirtyNavigationButton"));
+  ASSERT_NE(save_button, nullptr);
+  ASSERT_NE(discard_button, nullptr);
+  EXPECT_FALSE(save_button->property("enabled").toBool());
+  EXPECT_TRUE(discard_button->property("enabled").toBool());
+}
+
+TEST_F(ProviderManagementQml, HistoricalAttributionShowsResolvedNameModelAndProviderType) {
+  auto bubble = createComponent(engine, QStringLiteral("../shared/MessageBubble.qml"),
+                                {{QStringLiteral("messageRole"), QStringLiteral("assistant")},
+                                 {QStringLiteral("messageText"), QStringLiteral("Historical response")},
+                                 {QStringLiteral("messageStatus"), QStringLiteral("complete")},
+                                 {QStringLiteral("modelName"), QStringLiteral("gpt-5")},
+                                 {QStringLiteral("providerId"), QStringLiteral("deleted-instance")},
+                                 {QStringLiteral("providerType"), QStringLiteral("openai")},
+                                 {QStringLiteral("providerName"), QStringLiteral("Former work account")},
+                                 {QStringLiteral("createdAt"), QDateTime::currentDateTime()},
+                                 {QStringLiteral("contentBlocks"), QVariantList{}},
+                                 {QStringLiteral("inputTokenCount"), QVariant()},
+                                 {QStringLiteral("outputTokenCount"), QVariant()},
+                                 {QStringLiteral("reasoningTokenCount"), QVariant()},
+                                 {QStringLiteral("cacheCreationTokenCount"), QVariant()},
+                                 {QStringLiteral("cacheReadTokenCount"), QVariant()},
+                                 {QStringLiteral("totalTokenCount"), QVariant()},
+                                 {QStringLiteral("durationMs"), QVariant()}});
+  ASSERT_NE(bubble, nullptr);
+
+  auto* attribution = bubble->findChild<QObject*>(QStringLiteral("providerAttribution"));
+  auto* icon = bubble->findChild<QObject*>(QStringLiteral("providerIcon"));
+  ASSERT_NE(attribution, nullptr);
+  ASSERT_NE(icon, nullptr);
+  EXPECT_EQ(attribution->property("text").toString(), QStringLiteral("Former work account · gpt-5"));
+  EXPECT_EQ(icon->property("providerType").toString(), QStringLiteral("openai"));
+
+  bubble->setProperty("providerName", QStringLiteral("Renamed work account"));
+  QTRY_COMPARE(attribution->property("text").toString(), QStringLiteral("Renamed work account · gpt-5"));
+}
+
+TEST_F(ProviderManagementQml, EmptyCancelledAssistantPlaceholderIsNotRendered) {
+  auto bubble = createComponent(engine, QStringLiteral("../shared/MessageBubble.qml"),
+                                {{QStringLiteral("messageRole"), QStringLiteral("assistant")},
+                                 {QStringLiteral("messageText"), QStringLiteral("   \n")},
+                                 {QStringLiteral("messageStatus"), QStringLiteral("cancelled")},
+                                 {QStringLiteral("modelName"), QStringLiteral("claude-haiku")},
+                                 {QStringLiteral("providerId"), QStringLiteral("anthropic")},
+                                 {QStringLiteral("providerType"), QStringLiteral("anthropic")},
+                                 {QStringLiteral("providerName"), QStringLiteral("Anthropic")},
+                                 {QStringLiteral("createdAt"), QDateTime::currentDateTime()},
+                                 {QStringLiteral("contentBlocks"), QVariantList{}},
+                                 {QStringLiteral("inputTokenCount"), QVariant()},
+                                 {QStringLiteral("outputTokenCount"), QVariant()},
+                                 {QStringLiteral("reasoningTokenCount"), QVariant()},
+                                 {QStringLiteral("cacheCreationTokenCount"), QVariant()},
+                                 {QStringLiteral("cacheReadTokenCount"), QVariant()},
+                                 {QStringLiteral("totalTokenCount"), QVariant()},
+                                 {QStringLiteral("durationMs"), QVariant()}});
+  ASSERT_NE(bubble, nullptr);
+
+  EXPECT_FALSE(bubble->property("visible").toBool());
+  EXPECT_EQ(bubble->property("implicitHeight").toReal(), 0.0);
+}
+
+}  // namespace
+
+#include "test_provider_management.moc"

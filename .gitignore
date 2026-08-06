@@ -1,0 +1,73 @@
+# OS
+.DS_Store
+Desktop.ini
+Thumbs.db
+
+# Editor
+*~
+*.swo
+*.swp
+.idea/
+.vscode/
+
+# Environment
+*.key
+*.pem
+.env
+.env.*
+.mcp.json
+secrets.json
+
+# C++
+*.a
+*.dll
+*.dylib
+*.exe
+*.o
+*.obj
+*.out
+*.so
+
+# Qt
+*.jsc
+*.moc
+*.qmlc
+.qmake.stash
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+
+# Build
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+_deps/
+build-*/
+build/
+cmake-build-*/
+cmake_install.cmake
+compile_commands.json
+install_manifest.txt
+
+# Test & Coverage
+*.gcda
+*.gcno
+coverage.*
+coverage/
+Testing/
+
+# Logs
+*.log
+
+# Temp
+*.bak
+*.tmp
+.cache/
+.serena/
+.task/
+.claude.local.md
+.codex/
+.claude/
+AGENTS.md
+CLAUDE.md

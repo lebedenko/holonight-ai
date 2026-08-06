@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="tile" x1="38" y1="28" x2="222" y2="230" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#17243B"/>
+      <stop offset="1" stop-color="#090E1B"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="40" y1="34" x2="218" y2="220" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5DEBFF"/>
+      <stop offset=".52" stop-color="#57A8FF"/>
+      <stop offset="1" stop-color="#B56CFF"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#tile)" stroke="url(#accent)" stroke-width="8" stroke-linejoin="round"
+        d="M54 20h132l50 50v132l-34 34H70l-50-50V54z"/>
+  <path fill="#253653" opacity=".72" d="M54 35h126l41 41v8L174 47H47v127l-12 12V60z"/>
+  <g fill="none" stroke="#65E7FF" stroke-width="10" stroke-linecap="round">
+    <path d="M128 76 82 105v54l46 27 46-27v-54z"/>
+    <path d="m82 105 46 27 46-27M128 132v54"/>
+  </g>
+  <path fill="#DDF8FF" d="m128 72 11 35 35 11-35 11-11 35-11-35-35-11 35-11z"/>
+  <circle cx="128" cy="118" r="10" fill="#B56CFF"/>
+  <path fill="#B56CFF" d="m185 65 4 13 13 4-13 4-4 13-4-13-13-4 13-4z"/>
+</svg>

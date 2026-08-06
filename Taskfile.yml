@@ -1,0 +1,185 @@
+version: "3"
+
+vars:
+  BUILD_DIR: build
+  RELEASE_BUILD_DIR: build-release
+  HOLONIGHT_QT_PREFIX: /tmp/holonight-qt-prefix
+  HOLONIGHT_QT_DIR: /tmp/holonight-qt-prefix/lib/cmake/HolonightQt
+  SCALE_FACTOR: '{{default "1.0" .SCALE_FACTOR}}'
+  NPROC:
+    sh: nproc
+
+tasks:
+  configure:
+    desc: Configure CMake (debug, no tests)
+    deps: [build:qt-dependency]
+    cmds:
+      - cmake -B {{.BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DENABLE_COVERAGE=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_PREFIX_PATH={{.HOLONIGHT_QT_PREFIX}} -DHolonightQt_DIR={{.HOLONIGHT_QT_DIR}} -S .
+      - ln -sf {{.BUILD_DIR}}/compile_commands.json .
+
+  configure:release:
+    desc: Configure (Release)
+    deps: [build:qt-dependency]
+    cmds:
+      - |
+        if [ -f "{{.RELEASE_BUILD_DIR}}/CMakeCache.txt" ] && ! grep -Fxq "CMAKE_HOME_DIRECTORY:INTERNAL={{.TASKFILE_DIR}}" "{{.RELEASE_BUILD_DIR}}/CMakeCache.txt"; then
+          cmake -E echo "Removing stale {{.RELEASE_BUILD_DIR}} CMake cache from another source directory"
+          cmake -E rm -rf "{{.RELEASE_BUILD_DIR}}"
+        fi
+      - cmake -S . -B {{.RELEASE_BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DCMAKE_PREFIX_PATH={{.HOLONIGHT_QT_PREFIX}} -DHolonightQt_DIR={{.HOLONIGHT_QT_DIR}}
+
+  configure-tests:
+    desc: Configure CMake with tests enabled
+    deps: [build:qt-dependency]
+    cmds:
+      - cmake -B {{.BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DENABLE_COVERAGE=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_PREFIX_PATH={{.HOLONIGHT_QT_PREFIX}} -DHolonightQt_DIR={{.HOLONIGHT_QT_DIR}} -S .
+      - ln -sf {{.BUILD_DIR}}/compile_commands.json .
+
+  configure-coverage:
+    desc: Configure CMake with tests and coverage enabled
+    deps: [build:qt-dependency]
+    cmds:
+      - cmake -B {{.BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_PREFIX_PATH={{.HOLONIGHT_QT_PREFIX}} -DHolonightQt_DIR={{.HOLONIGHT_QT_DIR}} -S .
+      - ln -sf {{.BUILD_DIR}}/compile_commands.json .
+
+  build:qt-dependency:
+    desc: Build and install holonight-qt debug dependency to /tmp/holonight-qt-prefix
+    cmds:
+      - |
+        if [ -d "../holonight-qt" ]; then
+          cmake --build ../holonight-qt/build -j{{.NPROC}}
+          cmake --install ../holonight-qt/build --prefix {{.HOLONIGHT_QT_PREFIX}}
+        else
+          echo "Warning: holonight-qt not found at ../holonight-qt"
+        fi
+
+  build:
+    desc: Build the project
+    deps: [configure]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} -j{{.NPROC}}
+
+  build:release:
+    desc: Build (Release)
+    deps: [configure:release]
+    cmds:
+      - cmake --build {{.RELEASE_BUILD_DIR}} -j{{.NPROC}}
+
+  run:
+    desc: Build and run holonight-chat (SCALE_FACTOR defaults to 1.0)
+    deps: [build]
+    cmds:
+      - QT_SCALE_FACTOR={{.SCALE_FACTOR}} QML_IMPORT_PATH={{.HOLONIGHT_QT_PREFIX}}/lib/qt6/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH} ./{{.BUILD_DIR}}/holonight-chat
+
+  install:local:
+    desc: Build and install to ~/.local
+    deps: [build]
+    cmds:
+      - cmake -B {{.BUILD_DIR}} -DCMAKE_INSTALL_PREFIX="$HOME/.local"
+      - cmake --build {{.BUILD_DIR}} -j{{.NPROC}}
+      - cmake --install {{.BUILD_DIR}}
+
+  install:system:
+    desc: Install to /usr (requires sudo)
+    deps: [build:release]
+    cmds:
+      - cmake -B {{.RELEASE_BUILD_DIR}} -DCMAKE_INSTALL_PREFIX=/usr
+      - cmake --build {{.RELEASE_BUILD_DIR}} -j{{.NPROC}}
+      - sudo cmake --install {{.RELEASE_BUILD_DIR}}
+
+  test:
+    desc: Build with tests and run ctest
+    deps: [configure-tests]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} -j{{.NPROC}}
+      - ctest --test-dir {{.BUILD_DIR}} --output-on-failure
+
+  coverage:
+    desc: Build with coverage and open HTML report
+    deps: [configure-coverage]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} --target coverage
+    generates:
+      - "{{.BUILD_DIR}}/coverage/index.html"
+
+  format:
+    desc: Auto-format source files with clang-format
+    deps: [configure]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} --target format
+
+  format-check:
+    desc: Check formatting without writing changes
+    deps: [configure]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} --target format-check
+
+  tidy:
+    desc: Run clang-tidy
+    deps: [configure-tests]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} --target tidy
+
+  tidy-src:
+    desc: Run clang-tidy on production sources
+    deps: [configure-tests]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} --target tidy-src
+
+  tidy-tests:
+    desc: Run clang-tidy on tests
+    deps: [configure-tests]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} --target tidy-tests
+
+  tidy-container:
+    desc: Run static checks inside the CI container (Docker/Podman) for predictable results
+    cmds:
+      - task: build:qt-dependency
+      - |
+        if command -v docker >/dev/null 2>&1; then
+          CONTAINER_RUNNER="docker"
+        elif command -v podman >/dev/null 2>&1; then
+          CONTAINER_RUNNER="podman"
+        else
+          echo "ERROR: Neither docker nor podman is available." >&2
+          exit 1
+        fi
+        $CONTAINER_RUNNER run --rm -v "$(pwd):/workspace" -v "/tmp/holonight-qt-prefix:/tmp/holonight-qt-prefix" -w /workspace ghcr.io/lebedenko/holonight-ai-ci:latest bash -c "
+          rm -rf build-ci-check &&
+          cmake -B build-ci-check -G Ninja -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=ON -DCMAKE_PREFIX_PATH=/tmp/holonight-qt-prefix &&
+          cmake --build build-ci-check --target format-check &&
+          cmake --build build-ci-check --target tidy
+        "
+
+  build-ci-image:
+    desc: Build the CI container image locally
+    cmds:
+      - |
+        if command -v docker >/dev/null 2>&1; then
+          CONTAINER_RUNNER="docker"
+        elif command -v podman >/dev/null 2>&1; then
+          CONTAINER_RUNNER="podman"
+        else
+          echo "ERROR: Neither docker nor podman is available." >&2
+          exit 1
+        fi
+        $CONTAINER_RUNNER build -t ghcr.io/lebedenko/holonight-ai-ci:latest -f Dockerfile.ci .
+
+  qml-lint:
+    desc: Run qmllint on all QML files
+    deps: [configure]
+    cmds:
+      - cmake --build {{.BUILD_DIR}} --target qml-lint
+
+  qmltypes-check:
+    desc: Verify generated HolonightChat QML type metadata
+    deps: [build]
+    cmds:
+      - scripts/check-qmltypes.sh {{.BUILD_DIR}}
+
+  clean:
+    desc: Remove the build directory
+    cmds:
+      - rm -rf {{.BUILD_DIR}}
+    prompt: Remove {{.BUILD_DIR}}/ entirely?
