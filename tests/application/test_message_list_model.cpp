@@ -70,15 +70,16 @@ TEST(MessageListModel, ResetReversesChronologicalInput) {
 TEST(MessageListModel, StreamingUpdateChangesOnlyNewestTextAndStatusRoles) {
   MessageListModel model;
   const MessageId messageId = MessageId::generate();
+  const QDateTime createdAt(QDate(2026, 8, 12), QTime(12, 0), QTimeZone::UTC);
   model.insertNewestMessage(
       Message(MessageId::generate(), MessageRole::User, QStringLiteral("older"), MessageStatus::Complete));
   model.insertNewestMessage(
-      Message(messageId, MessageRole::Assistant, QString(), MessageStatus::Pending, {},
+      Message(messageId, MessageRole::Assistant, QString(), MessageStatus::Pending, createdAt,
               ModelId{.provider_id = QStringLiteral("openai"), .model_name = QStringLiteral("gpt")}));
   QSignalSpy changedSpy(&model, &QAbstractItemModel::dataChanged);
 
   model.updateNewestMessage(
-      Message(messageId, MessageRole::Assistant, QStringLiteral("partial"), MessageStatus::Streaming, {},
+      Message(messageId, MessageRole::Assistant, QStringLiteral("partial"), MessageStatus::Streaming, createdAt,
               ModelId{.provider_id = QStringLiteral("openai"), .model_name = QStringLiteral("gpt")}));
 
   ASSERT_EQ(changedSpy.count(), 1);

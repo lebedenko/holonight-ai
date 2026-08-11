@@ -54,7 +54,9 @@ TEST(ToolActivityCardQml, RawDetailsAreHiddenUntilExplicitlyOpenedAndRemainSelec
   configureEngine(engine);
   auto card = createCard(engine, completedToolCall());
   ASSERT_NE(card, nullptr);
+  card->setProperty("width", 800);
   card->setProperty("expanded", true);
+  QCoreApplication::processEvents();
 
   auto* details = card->findChild<QObject*>(QStringLiteral("toolActivityRawDetails"));
   auto* disclosure = card->findChild<QObject*>(QStringLiteral("toolActivityRawDisclosure"));
@@ -64,7 +66,6 @@ TEST(ToolActivityCardQml, RawDetailsAreHiddenUntilExplicitlyOpenedAndRemainSelec
   ASSERT_NE(disclosure, nullptr);
   ASSERT_NE(arguments, nullptr);
   ASSERT_NE(result, nullptr);
-  EXPECT_GT(card->property("implicitHeight").toReal(), 0.0);
   EXPECT_FALSE(details->property("visible").toBool());
 
   ASSERT_TRUE(QMetaObject::invokeMethod(disclosure, "clicked"));

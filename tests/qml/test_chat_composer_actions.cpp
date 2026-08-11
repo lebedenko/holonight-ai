@@ -63,9 +63,9 @@ TEST_F(ChatComposerActionsQml, PreservesDesktopAndCompactPresentation) {
   EXPECT_FALSE(attachment->property("enabled").toBool());
   EXPECT_FALSE(context->property("enabled").toBool());
   EXPECT_FALSE(tools->property("enabled").toBool());
-  EXPECT_TRUE(QQmlProperty{attachment, QStringLiteral("foregroundColor")}.isValid());
-  EXPECT_TRUE(QQmlProperty{context, QStringLiteral("foregroundColor")}.isValid());
-  EXPECT_TRUE(QQmlProperty{tools, QStringLiteral("foregroundColor")}.isValid());
+  EXPECT_TRUE((QQmlProperty{attachment, QStringLiteral("icon.color")}.isValid()));
+  EXPECT_TRUE((QQmlProperty{context, QStringLiteral("icon.color")}.isValid()));
+  EXPECT_TRUE((QQmlProperty{tools, QStringLiteral("icon.color")}.isValid()));
   EXPECT_EQ(attachment->implicitHeight(), context->implicitHeight());
   EXPECT_EQ(attachment->implicitHeight(), tools->implicitHeight());
   EXPECT_EQ(attachment->implicitWidth(), attachment->implicitHeight());
@@ -124,7 +124,7 @@ TEST_F(ChatComposerActionsQml, AppliesSubmitPolicyAndForwardsRequest) {
   ASSERT_NE(actions, nullptr);
   auto* send = actions->findChild<QObject*>(QStringLiteral("sendButton"));
   ASSERT_NE(send, nullptr);
-  EXPECT_TRUE(QQmlProperty{send, QStringLiteral("foregroundColor")}.isValid());
+  EXPECT_TRUE((QQmlProperty{send, QStringLiteral("icon.color")}.isValid()));
   EXPECT_TRUE(send->property("enabled").toBool());
   EXPECT_EQ(iconSource(send), QUrl{QStringLiteral("qrc:/qt/qml/Holonight/Controls/assets/send.svg")});
 

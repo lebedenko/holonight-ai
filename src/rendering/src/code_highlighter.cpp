@@ -4,7 +4,7 @@
 
 #include <KSyntaxHighlighting/Definition>
 #include <KSyntaxHighlighting/Theme>
-#include <holonight/config.h>
+#include <holonight/appearance_reader.h>
 #include <holonight/theme_catalog.h>
 
 namespace holonight_rendering {
@@ -57,7 +57,7 @@ void CodeHighlighter::refreshTheme() {
 }
 
 void CodeHighlighter::applyThemeForActiveScheme() {
-  const Holonight::ThemeSchemeKind scheme = Holonight::ThemeConfig::load().resolvedThemeScheme();
+  const Holonight::ThemeSchemeKind scheme = Holonight::AppearanceReader().appearance().theme_scheme;
   const QString schemeId = Holonight::schemeIdForKind(scheme);
 
   const KSyntaxHighlighting::Theme theme = repository_.theme(schemeId);
