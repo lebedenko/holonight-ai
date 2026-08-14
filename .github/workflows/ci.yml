@@ -107,5 +107,8 @@ jobs:
       - name: Format check
         run: cmake --build build --target format-check
 
+      - name: Generate build artifacts for static analysis
+        run: cmake --build build --parallel
+
       - name: Clang tidy
         run: cmake --build build --target tidy

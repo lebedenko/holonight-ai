@@ -226,7 +226,7 @@ TEST(BottomAnchoredListView, ExposesVerticalScrollPositionForLongTranscripts) {
   window.show();
   ASSERT_TRUE(QTest::qWaitForWindowExposed(&window));
 
-  QObject* scroll_bar = view->findChild<QObject*>(QStringLiteral("transcriptScrollBar"));
+  auto* scroll_bar = view->findChild<QObject*>(QStringLiteral("transcriptScrollBar"));
   ASSERT_NE(scroll_bar, nullptr);
   QTRY_VERIFY(scroll_bar->property("visible").toBool());
   EXPECT_LT(scroll_bar->property("size").toReal(), 1.0);
@@ -282,7 +282,7 @@ TEST(BottomAnchoredListView, RestoredTallResponseKeepsScrollbarGeometryStable) {
   QTRY_VERIFY_WITH_TIMEOUT(delegateForRow(view, 0) != nullptr, 250);
   QTRY_VERIFY_WITH_TIMEOUT(delegateForRow(view, 1) != nullptr, 250);
   QTRY_VERIFY_WITH_TIMEOUT(delegateForRow(view, 10) != nullptr, 250);
-  QObject* scroll_bar = view->findChild<QObject*>(QStringLiteral("transcriptScrollBar"));
+  auto* scroll_bar = view->findChild<QObject*>(QStringLiteral("transcriptScrollBar"));
   ASSERT_NE(scroll_bar, nullptr);
   const qreal initial_size = scroll_bar->property("size").toReal();
 
@@ -329,7 +329,7 @@ TEST(BottomAnchoredListView, AcceleratesHighResolutionDiscreteWheelEvents) {
   window.show();
   QCoreApplication::processEvents();
 
-  QObject* scroll_bar = view->findChild<QObject*>(QStringLiteral("transcriptScrollBar"));
+  auto* scroll_bar = view->findChild<QObject*>(QStringLiteral("transcriptScrollBar"));
   ASSERT_NE(scroll_bar, nullptr);
   const qreal initial_position = scroll_bar->property("position").toReal();
 

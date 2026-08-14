@@ -38,7 +38,7 @@ Content before the extracted fence.)");
   EXPECT_EQ(object->property("markdown").toString(), source);
   EXPECT_TRUE(object->property("renderedMarkdown").toString().contains(QStringLiteral("&lt;details&gt;")));
 
-  QObject* body = object->findChild<QObject*>(QStringLiteral("markdownBlockBody"));
+  auto* body = object->findChild<QObject*>(QStringLiteral("markdownBlockBody"));
   ASSERT_NE(body, nullptr);
   EXPECT_TRUE(body->property("text").toString().contains(QStringLiteral("Configuration details")));
   EXPECT_TRUE(body->property("text").toString().contains(QStringLiteral("Content before the extracted fence.")));
@@ -68,7 +68,7 @@ TEST(MarkdownBlock, ClosingDisclosureTagDoesNotHideFollowingMarkdown) {
   ASSERT_NE(object, nullptr) << qPrintable(component.errorString());
   EXPECT_EQ(object->property("markdown").toString(), source);
 
-  QObject* body = object->findChild<QObject*>(QStringLiteral("markdownBlockBody"));
+  auto* body = object->findChild<QObject*>(QStringLiteral("markdownBlockBody"));
   ASSERT_NE(body, nullptr);
   EXPECT_TRUE(body->property("text").toString().contains(QStringLiteral("Footer")));
   EXPECT_TRUE(body->property("text").toString().contains(QStringLiteral("Testing complete!")));

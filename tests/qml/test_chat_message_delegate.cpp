@@ -61,7 +61,7 @@ class ChatMessageDelegateQml : public testing::Test {
          {QStringLiteral("providerId"), QStringLiteral("provider-id")},
          {QStringLiteral("providerType"), QStringLiteral("openai")},
          {QStringLiteral("providerName"), QStringLiteral("Provider A")},
-         {QStringLiteral("contentBlocks"), QVariant::fromValue(&contentModel)},
+         {QStringLiteral("contentBlocks"), QVariant::fromValue(&content_model)},
          {QStringLiteral("inputTokenCount"), 11},
          {QStringLiteral("outputTokenCount"), 22},
          {QStringLiteral("reasoningTokenCount"), 3},
@@ -75,7 +75,7 @@ class ChatMessageDelegateQml : public testing::Test {
   }
 
   QQmlEngine engine;
-  holonight_application::MessageContentModel contentModel;
+  holonight_application::MessageContentModel content_model;
 };
 
 TEST_F(ChatMessageDelegateQml, RoutesUserAssistantFallbackAndToolRowsWithExistingPrecedence) {
@@ -120,7 +120,7 @@ TEST_F(ChatMessageDelegateQml, PreservesBindingsLayoutAndLoadedCardIdentity) {
   EXPECT_EQ(bubble->property("providerId").toString(), QStringLiteral("provider-id"));
   EXPECT_EQ(bubble->property("providerType").toString(), QStringLiteral("openai"));
   EXPECT_EQ(bubble->property("providerName").toString(), QStringLiteral("Provider A"));
-  EXPECT_EQ(bubble->property("contentBlocks").value<QObject*>(), &contentModel);
+  EXPECT_EQ(bubble->property("contentBlocks").value<QObject*>(), &content_model);
   EXPECT_EQ(bubble->property("inputTokenCount").toInt(), 11);
   EXPECT_EQ(bubble->property("outputTokenCount").toInt(), 22);
   EXPECT_EQ(bubble->property("reasoningTokenCount").toInt(), 3);
