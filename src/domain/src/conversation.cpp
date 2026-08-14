@@ -42,9 +42,8 @@ bool Conversation::replaceLastMessage(Message replacement) {
 }
 
 bool Conversation::replaceMessage(Message replacement) {
-  const auto iterator = std::ranges::find_if(messages_, [&replacement](const Message& message) {
-    return message.id() == replacement.id();
-  });
+  const auto iterator = std::ranges::find_if(
+      messages_, [&replacement](const Message& message) { return message.id() == replacement.id(); });
   if (iterator == messages_.end()) {
     return false;
   }
