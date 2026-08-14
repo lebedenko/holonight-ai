@@ -5,6 +5,13 @@ vars:
   RELEASE_BUILD_DIR: build-release
   HOLONIGHT_QT_PREFIX: /tmp/holonight-qt-prefix
   HOLONIGHT_QT_DIR: /tmp/holonight-qt-prefix/lib/cmake/HolonightQt
+  HOLONIGHT_QT_BUILD_DIR: ../holonight-qt/build-ai-provider
+  HOLONIGHT_QT_SOURCE: '{{default "../holonight-qt" .HOLONIGHT_QT_SOURCE}}'
+  HOLONIGHT_QT_REVISION: a45f7552054abbc6cbd66609e802b43b9b8ee894
+  HOLONIGHT_CONFIG_PREFIX: /tmp/holonight-config-prefix
+  HOLONIGHT_CONFIG_BUILD_DIR: ../holonight-config/build-ai-provider
+  HOLONIGHT_CONFIG_SOURCE: '{{default "../holonight-config" .HOLONIGHT_CONFIG_SOURCE}}'
+  HOLONIGHT_CONFIG_REVISION: 5cd36ec9986801c4b831527a38e7b7414b9a1312
   SCALE_FACTOR: '{{default "1.0" .SCALE_FACTOR}}'
   NPROC:
     sh: nproc
@@ -44,13 +51,35 @@ tasks:
 
   build:qt-dependency:
     desc: Build and install holonight-qt debug dependency to /tmp/holonight-qt-prefix
+    deps: [build:config-dependency]
     cmds:
       - |
-        if [ -d "../holonight-qt" ]; then
-          cmake --build ../holonight-qt/build -j{{.NPROC}}
-          cmake --install ../holonight-qt/build --prefix {{.HOLONIGHT_QT_PREFIX}}
+        if [ -d "{{.HOLONIGHT_QT_SOURCE}}" ]; then
+          test "$(git -C {{.HOLONIGHT_QT_SOURCE}} rev-parse HEAD)" = "{{.HOLONIGHT_QT_REVISION}}" || {
+            echo "ERROR: holonight-qt must be checked out at {{.HOLONIGHT_QT_REVISION}}" >&2
+            exit 1
+          }
+          cmake -S {{.HOLONIGHT_QT_SOURCE}} -B {{.HOLONIGHT_QT_BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DCMAKE_PREFIX_PATH={{.HOLONIGHT_CONFIG_PREFIX}}
+          cmake --build {{.HOLONIGHT_QT_BUILD_DIR}} -j{{.NPROC}}
+          cmake --install {{.HOLONIGHT_QT_BUILD_DIR}} --prefix {{.HOLONIGHT_QT_PREFIX}}
         else
           echo "Warning: holonight-qt not found at ../holonight-qt"
+        fi
+
+  build:config-dependency:
+    desc: Build and install the pinned appearance config dependency
+    cmds:
+      - |
+        if [ -d "{{.HOLONIGHT_CONFIG_SOURCE}}" ]; then
+          test "$(git -C {{.HOLONIGHT_CONFIG_SOURCE}} rev-parse HEAD)" = "{{.HOLONIGHT_CONFIG_REVISION}}" || {
+            echo "ERROR: holonight-config must be checked out at {{.HOLONIGHT_CONFIG_REVISION}}" >&2
+            exit 1
+          }
+          cmake -S {{.HOLONIGHT_CONFIG_SOURCE}} -B {{.HOLONIGHT_CONFIG_BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF
+          cmake --build {{.HOLONIGHT_CONFIG_BUILD_DIR}} -j{{.NPROC}}
+          cmake --install {{.HOLONIGHT_CONFIG_BUILD_DIR}} --prefix {{.HOLONIGHT_CONFIG_PREFIX}}
+        else
+          echo "Warning: holonight-config not found at ../holonight-config"
         fi
 
   build:

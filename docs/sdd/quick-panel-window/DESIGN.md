@@ -1,5 +1,9 @@
 # Quick Panel Design
 
+> Lifecycle ownership in this design is superseded by
+> [`../shared-wayland-surface-host-adoption/DESIGN.md`](../shared-wayland-surface-host-adoption/DESIGN.md).
+> The D-Bus, presentation, geometry, and application sequencing decisions remain authoritative.
+
 ## Ownership
 
 `holonight-chat` owns all chat state and rendering. `holonight-shell` remains an optional control

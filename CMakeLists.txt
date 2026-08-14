@@ -9,11 +9,7 @@ set(CMAKE_AUTORCC ON)
 include(GNUInstallDirs)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Quick Qml Network Concurrent Sql DBus)
-find_package(Qt6 COMPONENTS GuiPrivate QUIET)
-find_package(Qt6WaylandScannerTools REQUIRED)
-include("${Qt6WaylandScannerTools_DIR}/Qt6WaylandClientMacros.cmake")
-find_package(WaylandScanner REQUIRED)
-find_package(HolonightQt REQUIRED)
+find_package(HolonightQt REQUIRED COMPONENTS Controls Wayland)
 find_path(HOLONIGHT_QML_IMPORT_PATH
   NAMES Holonight/qmldir
   HINTS "${HolonightQt_DIR}/../../.."
@@ -23,20 +19,6 @@ find_path(HOLONIGHT_QML_IMPORT_PATH
 )
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBSECRET REQUIRED libsecret-1)
-pkg_check_modules(WAYLAND_CLIENT REQUIRED wayland-client)
-pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
-pkg_get_variable(WAYLAND_PROTOCOLS_PKGDATADIR wayland-protocols pkgdatadir)
-set(XDG_SHELL_PROTOCOL "${WAYLAND_PROTOCOLS_PKGDATADIR}/stable/xdg-shell/xdg-shell.xml")
-if(NOT EXISTS "${XDG_SHELL_PROTOCOL}")
-  message(FATAL_ERROR "xdg-shell protocol XML not found: ${XDG_SHELL_PROTOCOL}")
-endif()
-
-add_library(holonight_qt_gui_private INTERFACE)
-if(TARGET Qt6::GuiPrivate)
-  target_link_libraries(holonight_qt_gui_private INTERFACE Qt6::GuiPrivate)
-else()
-  message(FATAL_ERROR "Qt Gui private headers are required for Wayland layer-surface integration")
-endif()
 
 # Generate qmldir redirectors for QML files in module subdirectories.
 qt_policy(SET QTP0004 NEW)
@@ -234,8 +216,6 @@ if(CLANG_TIDY)
   add_holonight_tidy_target(tidy-src ALL_CXX_SRC_IMPL_FILES)
   add_holonight_tidy_target(tidy-tests ALL_CXX_TEST_IMPL_FILES)
   add_holonight_tidy_target(tidy ALL_CXX_IMPL_FILES)
-  add_dependencies(tidy-src holonight_platform_protocol_headers)
-  add_dependencies(tidy holonight_platform_protocol_headers)
 
   if(NOT RUN_CLANG_TIDY)
     message(STATUS "run-clang-tidy was not found; tidy targets will use clang-tidy sequentially")

@@ -18,18 +18,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout holonight-config dependency
+        uses: actions/checkout@v4
+        with:
+          repository: lebedenko/holonight-config
+          ref: 5cd36ec9986801c4b831527a38e7b7414b9a1312
+          path: holonight-config-dep
+
       - name: Checkout holonight-qt dependency
         uses: actions/checkout@v4
         with:
           repository: lebedenko/holonight-qt
+          ref: a45f7552054abbc6cbd66609e802b43b9b8ee894
           path: holonight-qt-dep
 
-      - name: Build and install holonight-qt dependency
+      - name: Build and install pinned dependencies
         run: |
-          cmake -S holonight-qt-dep -B holonight-qt-dep/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake -S holonight-config-dep -B holonight-config-dep/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+          cmake --build holonight-config-dep/build --parallel
+          cmake --install holonight-config-dep/build --prefix /usr
+          cmake -S holonight-qt-dep -B holonight-qt-dep/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr
           cmake --build holonight-qt-dep/build --parallel
           cmake --install holonight-qt-dep/build --prefix /usr
-          rm -rf holonight-qt-dep
 
       - name: Configure
         run: >
@@ -58,18 +68,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout holonight-config dependency
+        uses: actions/checkout@v4
+        with:
+          repository: lebedenko/holonight-config
+          ref: 5cd36ec9986801c4b831527a38e7b7414b9a1312
+          path: holonight-config-dep
+
       - name: Checkout holonight-qt dependency
         uses: actions/checkout@v4
         with:
           repository: lebedenko/holonight-qt
+          ref: a45f7552054abbc6cbd66609e802b43b9b8ee894
           path: holonight-qt-dep
 
-      - name: Build and install holonight-qt dependency
+      - name: Build and install pinned dependencies
         run: |
-          cmake -S holonight-qt-dep -B holonight-qt-dep/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake -S holonight-config-dep -B holonight-config-dep/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+          cmake --build holonight-config-dep/build --parallel
+          cmake --install holonight-config-dep/build --prefix /usr
+          cmake -S holonight-qt-dep -B holonight-qt-dep/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr
           cmake --build holonight-qt-dep/build --parallel
           cmake --install holonight-qt-dep/build --prefix /usr
-          rm -rf holonight-qt-dep
 
       - name: Configure
         run: >
