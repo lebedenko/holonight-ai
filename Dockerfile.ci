@@ -13,6 +13,7 @@ RUN pacman -Syu --noconfirm && \
         qt6-svg \
         md4c \
         syntax-highlighting \
+        tomlplusplus \
         wayland-protocols \
         gtest \
         libsecret \

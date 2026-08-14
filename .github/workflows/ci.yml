@@ -18,6 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install config-provider build dependency
+        run: pacman -S --noconfirm tomlplusplus
+
       - name: Checkout holonight-config dependency
         uses: actions/checkout@v4
         with:
@@ -67,6 +70,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install config-provider build dependency
+        run: pacman -S --noconfirm tomlplusplus
 
       - name: Checkout holonight-config dependency
         uses: actions/checkout@v4

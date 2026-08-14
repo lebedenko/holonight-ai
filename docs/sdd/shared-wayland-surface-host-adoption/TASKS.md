@@ -27,4 +27,6 @@ Status: Accepted
 - Source and regenerated Ninja/compilation configuration contain no AI-owned protocol XML,
   `zwlr_layer_*` calls, raw Wayland handles, Qt Wayland private headers, or AI protocol scanner.
 
-Handoff commit: this document's containing commit. Publication and CI results are pending.
+Initial handoff commit: `3e75aa6a35e4a7756dc85fe6c4dc3293bc434f65`, published to canonical
+`origin/main`. CI run `31794389862` exposed a missing `tomlplusplus` package in the AI CI image;
+the follow-up environment repair is part of this handoff. Final CI results are pending.
