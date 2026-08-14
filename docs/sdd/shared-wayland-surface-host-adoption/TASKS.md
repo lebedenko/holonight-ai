@@ -29,4 +29,5 @@ Status: Accepted
 
 Initial handoff commit: `3e75aa6a35e4a7756dc85fe6c4dc3293bc434f65`, published to canonical
 `origin/main`. CI run `31794389862` exposed a missing `tomlplusplus` package in the AI CI image;
-the follow-up environment repair is part of this handoff. Final CI results are pending.
+run `31794521163` then exposed missing `ripgrep` and a root-only permission-test assumption. The
+follow-up environment repairs are part of this handoff. Final CI results are pending.

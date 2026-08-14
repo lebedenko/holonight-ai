@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <unistd.h>
 
 namespace holonight_application {
 namespace {
@@ -142,6 +143,9 @@ TEST_F(ListFilesToolTest, FilePathReturnsNotADirectoryError) {
 }
 
 TEST_F(ListFilesToolTest, UnreadableDirectoryReturnsPermissionDeniedError) {
+  if (geteuid() == 0) {
+    GTEST_SKIP() << "root bypasses directory permission bits";
+  }
   const QJsonObject result = tool().execute(QJsonObject{{QStringLiteral("path"), QStringLiteral("unreadable")}});
   ASSERT_TRUE(result.contains(QStringLiteral("error")));
   EXPECT_EQ(result.value(QStringLiteral("error")).toObject().value(QStringLiteral("code")).toString(),
