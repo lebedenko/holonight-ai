@@ -1,0 +1,8 @@
+name: Licensing
+on: [push, pull_request]
+jobs:
+  reuse:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: pipx run --spec reuse==6.2.0 reuse lint

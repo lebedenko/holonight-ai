@@ -14,7 +14,7 @@ Item {
         "ollama":    { source: "qrc:/HolonightChat/assets/providers/ollama.svg",    tinted: true },
         "openai":    { source: "qrc:/HolonightChat/assets/providers/openai.svg",    tinted: true },
         "anthropic": { source: "qrc:/HolonightChat/assets/providers/anthropic.svg", tinted: true },
-        "google":    { source: "qrc:/HolonightChat/assets/providers/google.svg",    tinted: false },
+        "google":    { source: "qrc:/HolonightChat/assets/providers/google.svg",    tinted: true },
     })
     readonly property var _entry: root._table[root.providerType]
     readonly property bool _known: root._entry !== undefined
