@@ -7,11 +7,11 @@ vars:
   HOLONIGHT_QT_DIR: /tmp/holonight-qt-prefix/lib/cmake/HolonightQt
   HOLONIGHT_QT_BUILD_DIR: ../holonight-qt/build-ai-provider
   HOLONIGHT_QT_SOURCE: '{{default "../holonight-qt" .HOLONIGHT_QT_SOURCE}}'
-  HOLONIGHT_QT_REVISION: a45f7552054abbc6cbd66609e802b43b9b8ee894
+  HOLONIGHT_QT_REVISION: 0b1bf7c3e27d1aafb19abe39cbf29f833f66289c
   HOLONIGHT_CONFIG_PREFIX: /tmp/holonight-config-prefix
   HOLONIGHT_CONFIG_BUILD_DIR: ../holonight-config/build-ai-provider
   HOLONIGHT_CONFIG_SOURCE: '{{default "../holonight-config" .HOLONIGHT_CONFIG_SOURCE}}'
-  HOLONIGHT_CONFIG_REVISION: 5cd36ec9986801c4b831527a38e7b7414b9a1312
+  HOLONIGHT_CONFIG_REVISION: fe69a59e6b73167fd5349223a4d265d75386c139
   SCALE_FACTOR: '{{default "1.0" .SCALE_FACTOR}}'
   NPROC:
     sh: nproc
@@ -63,6 +63,10 @@ tasks:
             echo "ERROR: holonight-qt must be checked out at {{.HOLONIGHT_QT_REVISION}}" >&2
             exit 1
           }
+          if [ -f "{{.HOLONIGHT_QT_BUILD_DIR}}/CMakeCache.txt" ] && ! grep -Fxq "CMAKE_HOME_DIRECTORY:INTERNAL=$(cd {{.HOLONIGHT_QT_SOURCE}} && pwd)" "{{.HOLONIGHT_QT_BUILD_DIR}}/CMakeCache.txt"; then
+            cmake -E echo "Removing stale {{.HOLONIGHT_QT_BUILD_DIR}} CMake cache from another source directory"
+            cmake -E rm -rf "{{.HOLONIGHT_QT_BUILD_DIR}}"
+          fi
           cmake -S {{.HOLONIGHT_QT_SOURCE}} -B {{.HOLONIGHT_QT_BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DCMAKE_PREFIX_PATH={{.HOLONIGHT_CONFIG_PREFIX}}
           cmake --build {{.HOLONIGHT_QT_BUILD_DIR}} -j{{.NPROC}}
           cmake --install {{.HOLONIGHT_QT_BUILD_DIR}} --prefix {{.HOLONIGHT_QT_PREFIX}}
@@ -79,6 +83,10 @@ tasks:
             echo "ERROR: holonight-config must be checked out at {{.HOLONIGHT_CONFIG_REVISION}}" >&2
             exit 1
           }
+          if [ -f "{{.HOLONIGHT_CONFIG_BUILD_DIR}}/CMakeCache.txt" ] && ! grep -Fxq "CMAKE_HOME_DIRECTORY:INTERNAL=$(cd {{.HOLONIGHT_CONFIG_SOURCE}} && pwd)" "{{.HOLONIGHT_CONFIG_BUILD_DIR}}/CMakeCache.txt"; then
+            cmake -E echo "Removing stale {{.HOLONIGHT_CONFIG_BUILD_DIR}} CMake cache from another source directory"
+            cmake -E rm -rf "{{.HOLONIGHT_CONFIG_BUILD_DIR}}"
+          fi
           cmake -S {{.HOLONIGHT_CONFIG_SOURCE}} -B {{.HOLONIGHT_CONFIG_BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF
           cmake --build {{.HOLONIGHT_CONFIG_BUILD_DIR}} -j{{.NPROC}}
           cmake --install {{.HOLONIGHT_CONFIG_BUILD_DIR}} --prefix {{.HOLONIGHT_CONFIG_PREFIX}}
