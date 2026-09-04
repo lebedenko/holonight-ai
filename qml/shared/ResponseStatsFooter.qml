@@ -24,7 +24,7 @@ RowLayout {
     // a usage row exists for this message -- the most reliable "usage present" check
     // available from the flattened QML roles (there is no single "usage" role/object).
     visible: root.isAssistant && root.messageStatus === "complete" && root.durationMs !== undefined
-    spacing: HoloniightPalette.controlPadding / 2
+    spacing: HnMetrics.internalSpacing(HnControlSize.Normal) / 2
 
     ResponseStatsPopup {
         id: responseStatsPopup

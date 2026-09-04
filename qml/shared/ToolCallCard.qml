@@ -34,8 +34,8 @@ Item {
         chamferedCornersOverride: HnCornerMask.TopRight
         fillColor: HoloniightPalette.surface
         borderColor: root.isError ? HoloniightPalette.borderUrgent : HoloniightPalette.borderSubtle
-        borderWidth: HoloniightPalette.borderWidth
-        height: content.implicitHeight + HoloniightPalette.controlPadding * 4
+        borderWidth: HnMetrics.borderWidth
+        height: content.implicitHeight + HnMetrics.horizontalPadding(HnControlSize.Normal) * 4
 
         ColumnLayout {
             id: content
@@ -43,15 +43,15 @@ Item {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.margins: HoloniightPalette.controlPadding * 2
-            spacing: HoloniightPalette.controlPadding
+            anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: HoloniightPalette.controlPadding / 2
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal) / 2
 
                 Rectangle {
-                    Layout.preferredWidth: HoloniightPalette.controlHeight * 0.6
+                    Layout.preferredWidth: HnMetrics.controlHeight(HnControlSize.Normal) * 0.6
                     Layout.preferredHeight: Layout.preferredWidth
                     radius: width / 2
                     color: root.isError ? HoloniightPalette.error : HoloniightPalette.accentCyan
@@ -92,7 +92,7 @@ Item {
                 wrapMode: TextEdit.Wrap
                 readOnly: true
                 selectByMouse: true
-                font.family: HolonightTheme.fixedFont
+                font.family: HolonightTheme.monospaceFont
                 color: HoloniightPalette.textPrimary
             }
         }

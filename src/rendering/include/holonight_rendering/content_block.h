@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QMetaType>
+#include <QObject>
 #include <QString>
 #include <QtQml/qqmlregistration.h>
 
@@ -9,18 +10,17 @@
 
 namespace holonight_rendering {
 
-// Namespace-style holder purely so the enum gets a QML-visible name (`ContentBlockType.Code`)
-// distinct from the `ContentBlock` value type itself. Deliberately capitalized despite Qt's
-// "value type names should begin with a lowercase letter" startup warning: QML's grammar requires
-// an uppercase-first identifier to resolve as a type/namespace for static member access
-// (`ContentBlockType.Code`); a lowercase name resolves as a property/id lookup instead and fails
-// silently, breaking every Loader that switches on this enum. Verified the hard way — renaming
-// this to lowercase to silence the warning made all assistant message content blocks render empty.
-class ContentBlockTypeNs {
-  Q_GADGET
+// Singleton holder gives the enum its QML-visible `ContentBlockType.Code` syntax without
+// registering an uppercase value type (which Qt rejects with a startup warning).
+class ContentBlockTypeNs : public QObject {
+  Q_OBJECT
+  QML_SINGLETON
   QML_NAMED_ELEMENT(ContentBlockType)
 
  public:
+  explicit ContentBlockTypeNs(QObject* parent = nullptr) : QObject{parent} {}
+  Q_DISABLE_COPY_MOVE(ContentBlockTypeNs)
+
   enum class Type : std::uint8_t { Markdown, Code };
   Q_ENUM(Type)
 };

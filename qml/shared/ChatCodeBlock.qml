@@ -42,14 +42,14 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: HoloniightPalette.controlPadding / 2
+        spacing: HnMetrics.internalSpacing(HnControlSize.Normal) / 2
 
         Text {
             objectName: "codeLanguageLabel"
             text: root.highlighter && root.highlighter.highlightingActive ? root.language : qsTr("plain text")
             textFormat: Text.PlainText
             color: HoloniightPalette.textSecondary
-            font.family: HolonightTheme.fixedFont
+            font.family: HolonightTheme.monospaceFont
         }
 
         Item {
@@ -103,7 +103,7 @@ ColumnLayout {
                 wrapMode: TextEdit.NoWrap
                 readOnly: true
                 selectByMouse: true
-                font.family: HolonightTheme.fixedFont
+                font.family: HolonightTheme.monospaceFont
                 color: HoloniightPalette.textPrimary
             }
         }

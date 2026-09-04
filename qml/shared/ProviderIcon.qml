@@ -29,7 +29,7 @@ Item {
         surfaceRole: HnSurfaceRole.Card
         fillColor: "transparent"
         borderColor: root.framed ? HoloniightPalette.borderSubtle : "transparent"
-        borderWidth: root.framed ? HoloniightPalette.borderWidth : 0
+        borderWidth: root.framed ? HnMetrics.borderWidth : 0
 
         HnIcon {
             anchors.centerIn: parent

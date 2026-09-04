@@ -14,7 +14,7 @@ HnApplicationWindow {
     minimumHeight: 640
     visible: false
     title: qsTr("HoloNight AI")
-    contentPadding: HoloniightPalette.controlPadding
+    contentPadding: HnMetrics.horizontalPadding(HnControlSize.Normal)
 
     Loader {
         id: settingsLoader
@@ -41,14 +41,14 @@ HnApplicationWindow {
 
     RowLayout {
         anchors.fill: parent
-        spacing: HoloniightPalette.controlPadding
+        spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
         ConversationListPanel {
             Layout.preferredWidth: 320
             Layout.fillHeight: true
             chamferedCornersOverride: HnCornerMask.TopRight | HnCornerMask.BottomRight
             borderColor: HoloniightPalette.borderPassive
-            borderWidth: HoloniightPalette.borderWidth
+            borderWidth: HnMetrics.borderWidth
             onSettingsToggleRequested: root.toggleSettings()
             onNewChatRequested: workspaceChatPanel.focusComposer()
         }
@@ -59,7 +59,7 @@ HnApplicationWindow {
             surfaceRole: HnSurfaceRole.Window
             fillColor: HoloniightPalette.surface
             borderColor: HoloniightPalette.borderPassive
-            borderWidth: HoloniightPalette.borderWidth
+            borderWidth: HnMetrics.borderWidth
 
             ColumnLayout {
                 anchors.fill: parent
@@ -76,7 +76,7 @@ HnApplicationWindow {
 
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    Layout.margins: HoloniightPalette.controlPadding * 2
+                    Layout.margins: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
                     showHeader: false
                 }
             }
@@ -87,7 +87,7 @@ HnApplicationWindow {
             Layout.fillHeight: true
             chamferedCornersOverride: HnCornerMask.TopLeft | HnCornerMask.BottomLeft
             borderColor: HoloniightPalette.borderPassive
-            borderWidth: HoloniightPalette.borderWidth
+            borderWidth: HnMetrics.borderWidth
         }
     }
 }

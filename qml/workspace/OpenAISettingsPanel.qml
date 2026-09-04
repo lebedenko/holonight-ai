@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls.Basic as QQC2
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
@@ -24,7 +24,7 @@ ProviderSettingsScaffold {
     }
     formContent: Component {
         ColumnLayout {
-            spacing: HoloniightPalette.controlPadding * 2
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
             ProviderFormActionRow {
                 Layout.fillWidth: true
                 fieldContent: Component {

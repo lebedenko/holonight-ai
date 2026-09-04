@@ -17,7 +17,7 @@ HnSurfaceFrame {
 
         HnHeaderBar {
             Layout.fillWidth: true
-            dividerInset: HoloniightPalette.controlPadding * 2
+            dividerInset: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
             content: HnPanelHeader {
                 title: qsTr("Workspace")
                 dividerVisible: false
@@ -27,12 +27,12 @@ HnSurfaceFrame {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.margins: HoloniightPalette.controlPadding * 2
-            spacing: HoloniightPalette.controlPadding * 2
+            Layout.margins: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: HoloniightPalette.controlPadding
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
                 Text {
                     Layout.fillWidth: true
@@ -54,7 +54,7 @@ HnSurfaceFrame {
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: HoloniightPalette.controlPadding
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
                 Text {
                     Layout.fillWidth: true
@@ -74,7 +74,7 @@ HnSurfaceFrame {
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: HoloniightPalette.controlPadding
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
                 Text {
                     Layout.fillWidth: true

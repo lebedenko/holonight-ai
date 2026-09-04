@@ -14,7 +14,7 @@ ColumnLayout {
         composer.focusEditor()
     }
 
-    spacing: compact ? HoloniightPalette.controlPadding / 2 : HoloniightPalette.controlPadding
+    spacing: compact ? HnMetrics.internalSpacing(HnControlSize.Normal) / 2 : HnMetrics.internalSpacing(HnControlSize.Normal)
 
     ChatHeader {
         Layout.fillWidth: true

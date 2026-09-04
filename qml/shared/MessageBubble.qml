@@ -35,7 +35,7 @@ Item {
     readonly property bool isEmptyTerminalTurn: isAssistant && messageText.trim().length === 0
                                                 && (messageStatus === "complete" || messageStatus === "cancelled")
     readonly property real iconSize: 64
-    readonly property real iconSpacing: HoloniightPalette.controlPadding / 4
+    readonly property real iconSpacing: HnMetrics.internalSpacing(HnControlSize.Normal) / 4
     visible: !isWaitingForFirstToken && !isEmptyTerminalTurn
     implicitHeight: (isWaitingForFirstToken || isEmptyTerminalTurn) ? 0
                      : Math.max(messageFrame.height, root.isAssistant ? root.iconSize : 0)
@@ -64,8 +64,8 @@ Item {
         chamferedCornersOverride: HnCornerMask.TopRight
         fillColor: HoloniightPalette.surface
         borderColor: HoloniightPalette.borderUrgent
-        borderWidth: root.isError ? HoloniightPalette.borderWidth : 0
-        height: content.implicitHeight + HoloniightPalette.controlPadding * 4
+        borderWidth: root.isError ? HnMetrics.borderWidth : 0
+        height: content.implicitHeight + HnMetrics.horizontalPadding(HnControlSize.Normal) * 4
 
         ColumnLayout {
             id: content
@@ -73,13 +73,13 @@ Item {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.margins: HoloniightPalette.controlPadding * 2
-            spacing: HoloniightPalette.controlPadding
+            anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
             RowLayout {
                 Layout.fillWidth: true
                 visible: root.isAssistant
-                spacing: HoloniightPalette.controlPadding / 2
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal) / 2
 
                 Text {
                     objectName: "providerAttribution"

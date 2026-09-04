@@ -228,6 +228,7 @@ endif()
 if(QMLLINT)
   add_custom_target(qml-lint
         COMMAND ${QMLLINT}
+            --max-warnings 0
             --unqualified disable
             --unused-imports disable
             -I "${CMAKE_CURRENT_SOURCE_DIR}/tests/qmllint"

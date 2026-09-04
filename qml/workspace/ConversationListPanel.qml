@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls.Basic as QQC2
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
@@ -61,8 +61,8 @@ HnSurfaceFrame {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.margins: HoloniightPalette.controlPadding * 2
-            spacing: HoloniightPalette.controlPadding * 2
+            Layout.margins: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
 
             Button {
                 Layout.fillWidth: true
@@ -183,14 +183,14 @@ HnSurfaceFrame {
 
             HnSeparator {
                 Layout.fillWidth: true
-                Layout.leftMargin: -HoloniightPalette.controlPadding * 2
-                Layout.rightMargin: -HoloniightPalette.controlPadding * 2
+                Layout.leftMargin: -HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
+                Layout.rightMargin: -HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
                 color: HoloniightPalette.borderPassive
             }
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: HoloniightPalette.controlPadding * 2
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
 
                 HnIconButton {
                     Layout.fillWidth: true

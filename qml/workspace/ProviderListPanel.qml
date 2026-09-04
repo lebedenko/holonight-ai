@@ -18,8 +18,8 @@ HnSurfaceFrame {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: HoloniightPalette.controlPadding * 2
-        spacing: HoloniightPalette.controlPadding * 2
+        anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
+        spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
 
         HnPanelHeader {
             Layout.fillWidth: true
@@ -67,7 +67,7 @@ HnSurfaceFrame {
             Layout.fillWidth: true
             Layout.fillHeight: true
             model: root.providerController.instances
-            spacing: HoloniightPalette.controlPadding
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
             clip: true
             currentIndex: -1
 

@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls.Basic as QQC2
 import QtQuick.Layouts
 import Holonight.Core
 import Holonight.Controls
@@ -165,8 +165,8 @@ HnNavigationDelegate {
         anchors.right: root.contentItem.right
         anchors.top: root.top
         anchors.bottom: root.bottom
-        anchors.topMargin: HoloniightPalette.controlPadding / 2
-        anchors.bottomMargin: HoloniightPalette.controlPadding / 2
+        anchors.topMargin: HnMetrics.horizontalPadding(HnControlSize.Normal) / 2
+        anchors.bottomMargin: HnMetrics.horizontalPadding(HnControlSize.Normal) / 2
         visible: root.editing
 
         onEditingFinished: {

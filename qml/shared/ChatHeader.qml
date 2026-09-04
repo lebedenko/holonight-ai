@@ -10,7 +10,7 @@ HnHeaderBar {
     id: root
 
     property bool compact: false
-    horizontalPadding: HoloniightPalette.controlPadding
+    horizontalPadding: HnMetrics.horizontalPadding(HnControlSize.Normal)
     readonly property string statusText: {
         switch (ChatViewModel.selectedProviderStatus) {
         case ChatViewModel.Checking: return qsTr("Checking…")
@@ -37,25 +37,22 @@ HnHeaderBar {
     signal providerSettingsRequested(string providerId)
     signal collapseRequested()
 
-    function syncProviderSelection(): void {
-        if (contentItem)
-            contentItem.providerControl.currentIndex = contentItem.providerControl.selectedIndex()
-    }
-
-    function syncModelSelection(): void {
-        if (contentItem)
-            contentItem.modelControl.currentIndex = contentItem.modelControl.model.indexOf(ChatViewModel.selectedModelName)
-    }
-
     content: RowLayout {
-        property alias providerControl: providerCombo
-        property alias modelControl: modelCombo
+        id: headerContent
 
-        spacing: HoloniightPalette.controlPadding
+        function syncProviderSelection(): void {
+            providerCombo.currentIndex = providerCombo.selectedIndex()
+        }
+
+        function syncModelSelection(): void {
+            modelCombo.currentIndex = modelCombo.model.indexOf(ChatViewModel.selectedModelName)
+        }
+
+        spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
         Rectangle {
             Layout.preferredWidth: 3
-            Layout.preferredHeight: HoloniightPalette.controlHeight * 0.7
+            Layout.preferredHeight: HnMetrics.controlHeight(HnControlSize.Normal) * 0.7
             color: HoloniightPalette.accentCyan
             radius: width / 2
         }
@@ -128,30 +125,30 @@ HnHeaderBar {
             Accessible.name: qsTr("Collapse to quick panel")
             onClicked: root.collapseRequested()
         }
-    }
 
-    Connections {
-        target: ChatViewModel
+        Connections {
+            target: ChatViewModel
 
-        function onAvailableProvidersChanged(): void {
-            root.syncProviderSelection()
+            function onAvailableProvidersChanged(): void {
+                headerContent.syncProviderSelection()
+            }
+
+            function onSelectedProviderIdChanged(): void {
+                headerContent.syncProviderSelection()
+            }
+
+            function onAvailableModelNamesChanged(): void {
+                headerContent.syncModelSelection()
+            }
+
+            function onSelectedModelNameChanged(): void {
+                headerContent.syncModelSelection()
+            }
         }
 
-        function onSelectedProviderIdChanged(): void {
-            root.syncProviderSelection()
+        Component.onCompleted: {
+            syncProviderSelection()
+            syncModelSelection()
         }
-
-        function onAvailableModelNamesChanged(): void {
-            root.syncModelSelection()
-        }
-
-        function onSelectedModelNameChanged(): void {
-            root.syncModelSelection()
-        }
-    }
-
-    Component.onCompleted: {
-        syncProviderSelection()
-        syncModelSelection()
     }
 }

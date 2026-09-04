@@ -28,7 +28,7 @@ Item {
         anchors.fill: parent
         visible: ChatViewModel.messagesReady
         clip: true
-        spacing: HoloniightPalette.controlPadding
+        spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
         model: ChatViewModel.messages
 
         delegate: ChatMessageDelegate {

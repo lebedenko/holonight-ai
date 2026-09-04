@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls.Basic as QQC2
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
@@ -17,7 +17,7 @@ HnSurfaceFrame {
     readonly property bool canSubmit: !ChatViewModel.isStreaming
                                       && ChatViewModel.canSend
                                       && inputBox.text.trim().length > 0
-    readonly property real composerPadding: HoloniightPalette.controlPadding
+    readonly property real composerPadding: HnMetrics.horizontalPadding(HnControlSize.Normal)
     readonly property real editorLineHeight: editorFontMetrics.lineSpacing
     readonly property real minimumEditorHeight: editorLineHeight * 3
     readonly property real maximumEditorHeight: editorLineHeight * 8
@@ -36,7 +36,7 @@ HnSurfaceFrame {
     chamferedCornersOverride: HnCornerMask.TopRight
     fillColor: HoloniightPalette.surface
     borderColor: inputBox.activeFocus ? HoloniightPalette.borderFocus : HoloniightPalette.borderPassive
-    borderWidth: inputBox.activeFocus ? HoloniightPalette.focusBorderWidth : HoloniightPalette.borderWidth
+    borderWidth: inputBox.activeFocus ? HnMetrics.focusBorderWidth : HnMetrics.borderWidth
 
     FontMetrics {
         id: editorFontMetrics
@@ -49,7 +49,7 @@ HnSurfaceFrame {
 
         anchors.fill: parent
         anchors.margins: root.composerPadding
-        spacing: root.compact ? HoloniightPalette.controlPadding / 2 : HoloniightPalette.controlPadding
+        spacing: root.compact ? HnMetrics.internalSpacing(HnControlSize.Normal) / 2 : HnMetrics.internalSpacing(HnControlSize.Normal)
 
         ScrollView {
             id: editorScrollView

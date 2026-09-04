@@ -1,5 +1,5 @@
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls.Basic as QQC2
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
@@ -12,19 +12,19 @@ ColumnLayout {
     visible: ChatViewModel.persistenceStatusMessage.length > 0
         || ChatViewModel.providerStatusMessage.length > 0
         || ChatViewModel.errorMessage.length > 0
-    spacing: HoloniightPalette.controlPadding
+    spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
     HnSurfaceFrame {
         Layout.fillWidth: true
         visible: ChatViewModel.persistenceStatusMessage.length > 0
-        implicitHeight: persistenceText.implicitHeight + HoloniightPalette.controlPadding * 2
+        implicitHeight: persistenceText.implicitHeight + HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
         surfaceRole: HnSurfaceRole.Hud
         fillColor: HoloniightPalette.surfaceElevated
 
         RowLayout {
             anchors.fill: parent
-            anchors.margins: HoloniightPalette.controlPadding
-            spacing: HoloniightPalette.controlPadding
+            anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal)
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
             Text {
                 id: persistenceText
@@ -46,7 +46,7 @@ ColumnLayout {
     HnSurfaceFrame {
         Layout.fillWidth: true
         visible: ChatViewModel.providerStatusMessage.length > 0
-        implicitHeight: providerStatusText.implicitHeight + HoloniightPalette.controlPadding * 2
+        implicitHeight: providerStatusText.implicitHeight + HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
         surfaceRole: HnSurfaceRole.Hud
         fillColor: HoloniightPalette.surfaceElevated
 
@@ -54,7 +54,7 @@ ColumnLayout {
             id: providerStatusText
 
             anchors.fill: parent
-            anchors.margins: HoloniightPalette.controlPadding
+            anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal)
             text: ChatViewModel.providerStatusMessage
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
@@ -65,7 +65,7 @@ ColumnLayout {
     HnSurfaceFrame {
         Layout.fillWidth: true
         visible: ChatViewModel.errorMessage.length > 0
-        implicitHeight: errorText.implicitHeight + HoloniightPalette.controlPadding * 2
+        implicitHeight: errorText.implicitHeight + HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
         surfaceRole: HnSurfaceRole.Control
         cornerStyleOverride: HnCornerStyle.Rounded
         fillColor: HoloniightPalette.error
@@ -75,7 +75,7 @@ ColumnLayout {
             id: errorText
 
             anchors.fill: parent
-            anchors.margins: HoloniightPalette.controlPadding
+            anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal)
             text: ChatViewModel.errorMessage
             textFormat: Text.PlainText
             wrapMode: Text.Wrap

@@ -1,5 +1,5 @@
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls.Basic as QQC2
 import QtQuick.Layouts
 import Holonight.Core
 import Holonight.Controls
@@ -17,7 +17,7 @@ RowLayout {
     signal submitRequested
 
     objectName: "composerActions"
-    spacing: compact ? HoloniightPalette.controlPadding / 2 : HoloniightPalette.controlPadding
+    spacing: compact ? HnMetrics.internalSpacing(HnControlSize.Normal) / 2 : HnMetrics.internalSpacing(HnControlSize.Normal)
 
     Button {
         objectName: "attachmentButton"

@@ -26,6 +26,12 @@ while IFS= read -r qml_file; do
     echo "${qml_file}: compatibility import has no style-owned component consumer" >&2
     failed=1
   fi
+
+  if rg -q '^import Holonight$' "${qml_file}" \
+      && rg -q '^import QtQuick\.Controls\.Basic$' "${qml_file}"; then
+    echo "${qml_file}: unaliased Basic controls shadow the Holonight style module" >&2
+    failed=1
+  fi
 done < <(find "${qml_dir}" -type f -name '*.qml' -print | sort)
 
 if rg -n '^import holonight\.(core|controls)' "${qml_dir}"; then

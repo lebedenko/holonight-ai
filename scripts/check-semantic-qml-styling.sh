@@ -48,7 +48,7 @@ for file in qml/shared/UserMessageCard.qml qml/shared/MessageBubble.qml; do
 done
 require_text qml/shared/UserMessageCard.qml "fillColor: HoloniightPalette.surfaceElevated"
 require_text qml/shared/MessageBubble.qml "fillColor: HoloniightPalette.surface"
-require_text qml/shared/MessageBubble.qml "borderWidth: root.isError ? HoloniightPalette.borderWidth : 0"
+require_text qml/shared/MessageBubble.qml "borderWidth: root.isError ? HnMetrics.borderWidth : 0"
 
 for file in qml/quickpanel/QuickPanelHeader.qml qml/workspace/UnsupportedProviderPanel.qml; do
   reject_text "$file" "font.pixelSize: 18"

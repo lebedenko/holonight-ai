@@ -16,7 +16,7 @@ HnApplicationWindow {
     minimumHeight: 720
     visible: false
     title: qsTr("Settings")
-    contentPadding: HoloniightPalette.controlPadding
+    contentPadding: HnMetrics.horizontalPadding(HnControlSize.Normal)
     property string requestedProviderId: ""
     property var providerController: ProviderManagementController
     property var utilityController: UtilitySettingsController
@@ -40,7 +40,7 @@ HnApplicationWindow {
 
     RowLayout {
         anchors.fill: parent
-        spacing: HoloniightPalette.controlPadding
+        spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
         SettingsSidebar {
             Layout.preferredWidth: 220
@@ -95,7 +95,7 @@ HnApplicationWindow {
         anchors.centerIn: parent
         modal: true
         visible: root.providerController.navigationPromptVisible
-        padding: HoloniightPalette.controlPadding * 2
+        padding: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
         standardButtons: Dialog.NoButton
 
         background: HnSurfaceFrame {
@@ -103,18 +103,18 @@ HnApplicationWindow {
         }
 
         contentItem: ColumnLayout {
-            spacing: HoloniightPalette.controlPadding * 2
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
 
             Text {
                 Layout.fillWidth: true
                 text: qsTr("Save provider changes?")
                 color: HoloniightPalette.textPrimary
-                font.pointSize: HolonightTheme.titleSize
+                font.pointSize: HolonightTheme.titleFontSize
                 font.bold: true
             }
 
             RowLayout {
-                spacing: HoloniightPalette.controlPadding
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
                 H.Button {
                     objectName: "cancelDirtyNavigationButton"

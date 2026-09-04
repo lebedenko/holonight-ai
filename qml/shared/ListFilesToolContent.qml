@@ -23,15 +23,15 @@ Item {
     readonly property bool hasError: root.errorMessage.length > 0 || root.toolCall.isError === true
     property bool showAllEntries: false
 
-    implicitWidth: Math.max(280, column.implicitWidth + HoloniightPalette.controlPadding * 2)
-    implicitHeight: column.implicitHeight + HoloniightPalette.controlPadding * 2
+    implicitWidth: Math.max(280, column.implicitWidth + HnMetrics.horizontalPadding(HnControlSize.Normal) * 2)
+    implicitHeight: column.implicitHeight + HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
 
     ColumnLayout {
         id: column
 
         anchors.fill: parent
-        anchors.margins: HoloniightPalette.controlPadding
-        spacing: HoloniightPalette.controlPadding
+        anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal)
+        spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
         Text {
             objectName: "listFilesPath"
@@ -58,7 +58,7 @@ Item {
             objectName: "listFilesErrorState"
             visible: root.hasError
             Layout.fillWidth: true
-            implicitHeight: errorText.implicitHeight + HoloniightPalette.controlPadding * 2
+            implicitHeight: errorText.implicitHeight + HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
             radius: height / 2
             color: HoloniightPalette.surfaceElevated
             border.color: HoloniightPalette.borderUrgent
@@ -67,7 +67,7 @@ Item {
                 id: errorText
 
                 anchors.fill: parent
-                anchors.margins: HoloniightPalette.controlPadding
+                anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal)
                 text: root.errorMessage.length > 0 ? root.errorMessage : qsTr("The directory could not be listed.")
                 textFormat: Text.PlainText
                 color: HoloniightPalette.error
@@ -105,7 +105,7 @@ Item {
 
                 RowLayout {
                     anchors.fill: parent
-                    spacing: HoloniightPalette.controlPadding
+                    spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
                     HnIcon {
                         objectName: "listFilesEntryIcon"

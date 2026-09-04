@@ -15,7 +15,7 @@ HnHeaderBar {
     readonly property alias dropdownOpen: dropdownPopup.visible
 
     content: RowLayout {
-        spacing: HoloniightPalette.controlPadding
+        spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
         HnAppTitle {
             Layout.fillWidth: true
@@ -27,7 +27,7 @@ HnHeaderBar {
         RowLayout {
             id: actionsRow
 
-            spacing: HoloniightPalette.controlPadding
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
             HnIconButton {
                 id: dropdownTrigger
@@ -73,7 +73,7 @@ HnHeaderBar {
         parent: root
         x: root.width - width - root.horizontalPadding
         y: root.height
-        width: Math.min(Math.max(220, HnControlMetrics.controlHeight(HnControlSize.Large) * 4),
+        width: Math.min(Math.max(220, HnMetrics.controlHeight(HnControlSize.Large) * 4),
                         root.width - root.horizontalPadding * 2)
         implicitHeight: dropdownContent.implicitHeight + 2
         padding: 1

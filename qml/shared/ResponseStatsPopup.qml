@@ -21,7 +21,7 @@ Popup {
     modal: false
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-    padding: HoloniightPalette.controlPadding
+    padding: HnMetrics.horizontalPadding(HnControlSize.Normal)
 
     // Reparent to the window's overlay layer (not ResponseStatsFooter's own parent inside an
     // opaque HnSurfaceFrame) so this popup's stacking order is independent of
@@ -66,7 +66,7 @@ Popup {
     contentItem: ColumnLayout {
         id: tokenColumn
 
-        spacing: HoloniightPalette.controlPadding / 4
+        spacing: HnMetrics.internalSpacing(HnControlSize.Normal) / 4
 
         Text {
             objectName: "tokenBreakdownHeading"

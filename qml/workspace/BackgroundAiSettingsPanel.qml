@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls.Basic as QQC2
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
@@ -21,11 +21,11 @@ ProviderSettingsScaffold {
 
     formContent: Component {
         ColumnLayout {
-            spacing: HoloniightPalette.controlPadding * 3
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 3
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: HoloniightPalette.controlPadding
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
                 Text {
                     text: qsTr("Default utility model")
@@ -53,7 +53,7 @@ ProviderSettingsScaffold {
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: HoloniightPalette.controlPadding
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
                 Text {
                     text: qsTr("Chat titles")

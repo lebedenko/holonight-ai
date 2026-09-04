@@ -1,5 +1,5 @@
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls.Basic as QQC2
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
@@ -10,18 +10,18 @@ HnSurfaceFrame {
     id: root
 
     visible: ChatViewModel.isStreaming
-    implicitHeight: visible ? content.implicitHeight + HoloniightPalette.controlPadding * 2 : 0
+    implicitHeight: visible ? content.implicitHeight + HnMetrics.horizontalPadding(HnControlSize.Normal) * 2 : 0
     surfaceRole: HnSurfaceRole.Control
     fillColor: HoloniightPalette.surface
     borderColor: HoloniightPalette.borderPassive
-    borderWidth: HoloniightPalette.borderWidth
+    borderWidth: HnMetrics.borderWidth
 
     RowLayout {
         id: content
 
         anchors.fill: parent
-        anchors.margins: HoloniightPalette.controlPadding
-        spacing: HoloniightPalette.controlPadding
+        anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal)
+        spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
         HnStatusIndicator {
             Layout.fillWidth: true

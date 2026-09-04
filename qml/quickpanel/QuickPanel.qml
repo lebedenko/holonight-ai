@@ -42,7 +42,7 @@ Item {
 
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.margins: HoloniightPalette.controlPadding * 2
+                Layout.margins: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
                 compact: true
                 showHeader: false
             }

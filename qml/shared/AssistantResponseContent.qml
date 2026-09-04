@@ -10,7 +10,7 @@ ColumnLayout {
     required property var contentModel
     required property string messageStatus
 
-    spacing: HoloniightPalette.controlPadding
+    spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
     function blockAt(index: int): var {
         return blockRepeater.itemAt(index)

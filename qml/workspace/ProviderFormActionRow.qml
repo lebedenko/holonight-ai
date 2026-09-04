@@ -11,7 +11,7 @@ RowLayout {
     property Component actionContent
     property real actionColumnWidth: 220
 
-    spacing: HoloniightPalette.controlPadding * 2
+    spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
 
     Loader {
         Layout.fillWidth: true

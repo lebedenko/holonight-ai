@@ -13,13 +13,13 @@ H.TextField {
     signal clearRequested
 
     echoMode: revealButton.checked ? TextInput.Normal : TextInput.Password
-    rightPadding: trailingActions.width + HoloniightPalette.controlPadding * 2
+    rightPadding: trailingActions.width + HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
 
     RowLayout {
         id: trailingActions
 
         anchors.right: parent.right
-        anchors.rightMargin: HoloniightPalette.controlPadding
+        anchors.rightMargin: HnMetrics.horizontalPadding(HnControlSize.Normal)
         anchors.verticalCenter: parent.verticalCenter
         spacing: 0
 

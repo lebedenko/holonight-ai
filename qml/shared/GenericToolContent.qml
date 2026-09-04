@@ -35,13 +35,13 @@ Item {
     }
 
     implicitWidth: Math.max(240, column.implicitWidth)
-    implicitHeight: column.implicitHeight + HoloniightPalette.controlPadding * 2
+    implicitHeight: column.implicitHeight + HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
 
     ColumnLayout {
         id: column
         anchors.fill: parent
-        anchors.margins: HoloniightPalette.controlPadding
-        spacing: HoloniightPalette.controlPadding
+        anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal)
+        spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
         Text {
             text: qsTr("Arguments / details")
@@ -60,7 +60,7 @@ Item {
             wrapMode: TextArea.Wrap
             padding: 0
             color: HoloniightPalette.textPrimary
-            font.family: HolonightTheme.fixedFont
+            font.family: HolonightTheme.monospaceFont
             background: Rectangle {
                 color: HoloniightPalette.surfaceElevated
                 radius: height / 2

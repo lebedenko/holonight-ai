@@ -16,7 +16,7 @@ ColumnLayout {
     signal providerSelected(string providerId)
     signal modelSelected(string modelName)
 
-    spacing: HoloniightPalette.controlPadding * 2
+    spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
 
     function providerIndex(): int {
         for (let index = 0; index < root.providerInstances.length; ++index) {

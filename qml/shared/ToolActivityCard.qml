@@ -99,8 +99,8 @@ Item {
         fillColor: HoloniightPalette.surface
         borderColor: root.isError ? HoloniightPalette.borderUrgent : (root.isRunning ? HoloniightPalette.borderActive
                                                                                   : HoloniightPalette.borderSubtle)
-        borderWidth: HoloniightPalette.borderWidth
-        height: content.implicitHeight + HoloniightPalette.controlPadding * 4
+        borderWidth: HnMetrics.borderWidth
+        height: content.implicitHeight + HnMetrics.horizontalPadding(HnControlSize.Normal) * 4
 
         ColumnLayout {
             id: content
@@ -108,15 +108,15 @@ Item {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.margins: HoloniightPalette.controlPadding * 2
-            spacing: HoloniightPalette.controlPadding
+            anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: HoloniightPalette.controlPadding / 2
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal) / 2
 
                 Rectangle {
-                    Layout.preferredWidth: HoloniightPalette.controlHeight * 0.6
+                    Layout.preferredWidth: HnMetrics.controlHeight(HnControlSize.Normal) * 0.6
                     Layout.preferredHeight: Layout.preferredWidth
                     radius: width / 2
                     color: root.isError ? HoloniightPalette.error : (root.isRunning ? HoloniightPalette.accentBlue
@@ -226,7 +226,7 @@ Item {
             RowLayout {
                 Layout.fillWidth: true
                 visible: root.expanded && root.hasRawData
-                spacing: HoloniightPalette.controlPadding
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
                 H.Button {
                     objectName: "toolActivityRawDisclosure"
@@ -256,7 +256,7 @@ Item {
                 objectName: "toolActivityRawDetails"
                 Layout.fillWidth: true
                 visible: root.expanded && root.rawExpanded && root.hasRawData
-                spacing: HoloniightPalette.controlPadding
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
                 Text {
                     visible: root.rawArgumentsText.length > 0
@@ -278,7 +278,7 @@ Item {
                     textFormat: TextArea.PlainText
                     wrapMode: TextArea.Wrap
                     color: HoloniightPalette.textPrimary
-                    font.family: HolonightTheme.fixedFont
+                    font.family: HolonightTheme.monospaceFont
                     Accessible.name: qsTr("Raw tool arguments")
                 }
 
@@ -302,7 +302,7 @@ Item {
                     textFormat: TextArea.PlainText
                     wrapMode: TextArea.Wrap
                     color: HoloniightPalette.textPrimary
-                    font.family: HolonightTheme.fixedFont
+                    font.family: HolonightTheme.monospaceFont
                     Accessible.name: qsTr("Raw tool result")
                 }
             }

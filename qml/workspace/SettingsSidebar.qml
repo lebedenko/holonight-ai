@@ -30,12 +30,12 @@ HnSurfaceFrame {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: HoloniightPalette.controlPadding * 2
-        spacing: HoloniightPalette.controlPadding
+        anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
+        spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
         HnAppTitle {
             Layout.fillWidth: true
-            Layout.bottomMargin: HoloniightPalette.controlPadding
+            Layout.bottomMargin: HnMetrics.horizontalPadding(HnControlSize.Normal)
             applicationName: qsTr("Settings")
             skipBranding: true
             iconSource: "qrc:/HolonightChat/assets/holonight-ai.svg"

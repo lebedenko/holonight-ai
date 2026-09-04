@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls.Basic as QQC2
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
@@ -33,8 +33,8 @@ HnSurfaceFrame {
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.margins: HoloniightPalette.controlPadding * 2
-            spacing: HoloniightPalette.controlPadding * 3
+            Layout.margins: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 3
             Accessible.role: Accessible.Grouping
             Accessible.name: qsTr("Provider instance")
 
@@ -42,7 +42,7 @@ HnSurfaceFrame {
                 Layout.fillWidth: true
                 text: root.headerTitle
                 color: HoloniightPalette.textPrimary
-                font.pointSize: HolonightTheme.titleSize
+                font.pointSize: HolonightTheme.titleFontSize
                 font.bold: true
                 elide: Text.ElideRight
             }
@@ -64,21 +64,21 @@ HnSurfaceFrame {
             id: scrollView
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.leftMargin: HoloniightPalette.controlPadding * 2
-            Layout.rightMargin: HoloniightPalette.controlPadding * 2
+            Layout.leftMargin: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
+            Layout.rightMargin: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
             clip: true
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
             HnSurfaceFrame {
                 width: scrollView.availableWidth
-                implicitHeight: formContentLayout.implicitHeight + HoloniightPalette.controlPadding * 4
+                implicitHeight: formContentLayout.implicitHeight + HnMetrics.horizontalPadding(HnControlSize.Normal) * 4
                 surfaceRole: HnSurfaceRole.Card
 
                 ColumnLayout {
                     id: formContentLayout
                     anchors.fill: parent
-                    anchors.margins: HoloniightPalette.controlPadding * 2
-                    spacing: HoloniightPalette.controlPadding * 2
+                    anchors.margins: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
+                    spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
 
                     HnFormField {
                         objectName: "providerNameField"
@@ -116,7 +116,7 @@ HnSurfaceFrame {
 
         HnActionBar {
             Layout.fillWidth: true
-            Layout.margins: HoloniightPalette.controlPadding * 2
+            Layout.margins: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
             leadingContent: Component {
                 RowLayout {
                     Loader {
@@ -145,13 +145,13 @@ HnSurfaceFrame {
         }
     }
 
-    Dialog {
+    QQC2.Dialog {
         id: deleteDialog
         objectName: "deleteProviderDialog"
         anchors.centerIn: parent
         modal: true
-        padding: HoloniightPalette.controlPadding * 2
-        standardButtons: Dialog.NoButton
+        padding: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
+        standardButtons: QQC2.Dialog.NoButton
         onAccepted: root.providerController.deleteSelected(true)
 
         background: HnSurfaceFrame {
@@ -159,13 +159,13 @@ HnSurfaceFrame {
         }
 
         contentItem: ColumnLayout {
-            spacing: HoloniightPalette.controlPadding * 2
+            spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
 
             Text {
                 Layout.fillWidth: true
                 text: qsTr("Delete provider?")
                 color: HoloniightPalette.textPrimary
-                font.pointSize: HolonightTheme.titleSize
+                font.pointSize: HolonightTheme.titleFontSize
                 font.bold: true
             }
 
@@ -177,7 +177,7 @@ HnSurfaceFrame {
             }
 
             RowLayout {
-                spacing: HoloniightPalette.controlPadding
+                spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
                 H.Button {
                     objectName: "confirmDeleteProviderButton"
