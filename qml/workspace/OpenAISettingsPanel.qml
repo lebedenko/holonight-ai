@@ -1,12 +1,11 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic as QQC2
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
 import Holonight.Controls
-import Holonight
 
 ProviderSettingsScaffold {
     id: root
@@ -31,7 +30,7 @@ ProviderSettingsScaffold {
                     HnFormField {
                         labelText: qsTr("Enable tool calling")
                         helperText: qsTr("Lets the model list files under your home directory.")
-                        Switch {
+                        Controls.Switch {
                             checked: OpenAIProviderSettingsController.toolCallingEnabled
                             onToggled: OpenAIProviderSettingsController.toolCallingEnabled = checked
                         }
@@ -43,7 +42,7 @@ ProviderSettingsScaffold {
                 fieldContent: Component {
                     HnFormField {
                         labelText: qsTr("Base URL")
-                        TextField {
+                        Controls.TextField {
                             Layout.fillWidth: true; text: OpenAIProviderSettingsController.baseUrl
                             placeholderText: qsTr("https://api.openai.com/v1")
                             onTextChanged: OpenAIProviderSettingsController.baseUrl = text
@@ -83,14 +82,14 @@ ProviderSettingsScaffold {
                     HnFormField {
                         labelText: qsTr("Temperature")
                         RowLayout {
-                            SpinBox {
+                            Controls.SpinBox {
                                 from: 0; to: 200; stepSize: 5; editable: true
                                 value: Math.round(OpenAIProviderSettingsController.temperature * 100)
                                 textFromValue: (value, locale) => Number(value / 100).toLocaleString(locale, "f", 2)
                                 valueFromText: (text, locale) => Math.round(Number.fromLocaleString(locale, text) * 100)
                                 onValueModified: OpenAIProviderSettingsController.temperature = value / 100
                             }
-                            Slider {
+                            Controls.Slider {
                                 Layout.fillWidth: true; from: 0; to: 2; stepSize: 0.05
                                 value: OpenAIProviderSettingsController.temperature
                                 onMoved: OpenAIProviderSettingsController.temperature = value
@@ -152,7 +151,7 @@ ProviderSettingsScaffold {
     footerNoticeStatus: OpenAIProviderSettingsController.saveNoticeStatus
     footerContent: Component {
         RowLayout {
-            Button {
+            Controls.Button {
                 objectName: "discardProviderButton"
                 text: ProviderManagementController.addition ? qsTr("Cancel") : qsTr("Discard")
                 enabled: ProviderManagementController.canSave

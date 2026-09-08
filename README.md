@@ -66,16 +66,26 @@ task clean        # remove build/
 ```
 
 `task build:qt-dependency` (a dependency of most other tasks) builds and installs the sibling
-`../holonight-qt` checkout to `/tmp/holonight-qt-prefix` so this project's `find_package
-(HolonightQt REQUIRED)` and QML `import Holonight` can resolve it.
-
-**Without `task`:**
+`../holonight-qt` and `../holonight-config` checkouts at the exact revisions in Taskfile.yml.
+Dependencies are built and staged under `build/dependencies/`, with provider tests/examples off
+and Wayland support enabled. `HolonightQt_DIR` determines the QML path used by tests and lint.
 
 ```bash
-cmake --install ../holonight-qt/build --prefix /tmp/holonight-qt-prefix
-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/tmp/holonight-qt-prefix -S .
-cmake --build build -j$(nproc)
+task configure-tests
+task test
 ```
+
+## Runtime style selection
+
+Runtime standard controls use `import QtQuick.Controls as Controls`; palette/primitives and
+composites remain explicit `Holonight.Core` and `Holonight.Controls` APIs. The executable embeds
+`:/qtquickcontrols2.conf` with `Style=Holonight`. Environment, `-style Fusion` and
+`QT_QUICK_CONTROLS_CONF` overrides remain supported. The build executable uses its configured
+dependency path; installed execution discovers `../lib/qt6/qml` relative to the executable
+(using the configured install libdir). Activation paths are fixed at CMake configure time.
+See [UQC-104 acceptance](docs/sdd/unified-qtquick-controls/SPEC.md).
+
+For machines with limited memory, configure `-DTIDY_JOBS=2` before running the tidy target.
 
 ## Architecture
 

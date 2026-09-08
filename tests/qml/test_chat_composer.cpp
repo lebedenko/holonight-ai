@@ -1,3 +1,5 @@
+#include "qml/fakes/chat_view_model.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QPointF>
@@ -12,66 +14,6 @@
 #include <memory>
 
 namespace {
-
-class FakeChatViewModel final : public QObject {
-  Q_OBJECT
-  Q_PROPERTY(bool canSend READ canSend WRITE setCanSend NOTIFY canSendChanged)
-  Q_PROPERTY(bool canRegenerate READ canRegenerate CONSTANT)
-  Q_PROPERTY(bool isStreaming READ isStreaming WRITE setIsStreaming NOTIFY isStreamingChanged)
-  Q_PROPERTY(QString inputText READ inputText WRITE setInputText NOTIFY inputTextChanged)
-
- public:
-  [[nodiscard]] bool canSend() const { return can_send_; }
-  [[nodiscard]] static bool canRegenerate() { return false; }
-  [[nodiscard]] bool isStreaming() const { return is_streaming_; }
-  [[nodiscard]] QString inputText() const { return input_text_; }
-  [[nodiscard]] int sendCount() const { return send_count_; }
-  [[nodiscard]] QString lastSentText() const { return last_sent_text_; }
-
-  void setCanSend(bool can_send) {
-    if (can_send_ == can_send) {
-      return;
-    }
-    can_send_ = can_send;
-    Q_EMIT canSendChanged();
-  }
-
-  void setIsStreaming(bool is_streaming) {
-    if (is_streaming_ == is_streaming) {
-      return;
-    }
-    is_streaming_ = is_streaming;
-    Q_EMIT isStreamingChanged();
-  }
-
-  void setInputText(const QString& input_text) {
-    if (input_text_ == input_text) {
-      return;
-    }
-    input_text_ = input_text;
-    Q_EMIT inputTextChanged();
-  }
-
-  Q_INVOKABLE void send(const QString& text) {
-    ++send_count_;
-    last_sent_text_ = text;
-    setInputText({});
-  }
-
-  Q_INVOKABLE void regenerate() {}
-
- Q_SIGNALS:
-  void canSendChanged();
-  void isStreamingChanged();
-  void inputTextChanged();
-
- private:
-  bool can_send_ = true;
-  bool is_streaming_ = false;
-  QString input_text_;
-  QString last_sent_text_;
-  int send_count_ = 0;
-};
 
 void clickItem(QQuickWindow* window, QQuickItem* item) {
   const QPointF scene_position = item->mapToScene(QPointF{item->width() / 2, item->height() / 2});
@@ -166,5 +108,3 @@ TEST(ChatComposerQml, DraftSynchronizationAndSubmissionPolicy) {
 }
 
 }  // namespace
-
-#include "test_chat_composer.moc"

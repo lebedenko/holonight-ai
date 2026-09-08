@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
@@ -67,8 +67,9 @@ HnHeaderBar {
         }
     }
 
-    Popup {
+    Controls.Popup {
         id: dropdownPopup
+        objectName: "quickPanelConversationPopup"
 
         parent: root
         x: root.width - width - root.horizontalPadding
@@ -79,7 +80,7 @@ HnHeaderBar {
         padding: 1
         modal: false
         focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
 
         background: HnSurfaceFrame {
             surfaceRole: HnSurfaceRole.Menu

@@ -1,13 +1,15 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
-import Holonight as H
+
 import Holonight.Core
 import Holonight.Controls
 
-H.TextField {
+Controls.TextField {
     id: root
+    objectName: "credentialTextField"
 
     property bool actionsEnabled: true
     signal clearRequested
@@ -25,6 +27,7 @@ H.TextField {
 
         HnIconButton {
             id: revealButton
+            objectName: "revealCredentialButton"
 
             sizeRole: HnControlSize.Compact
             checkable: true
@@ -34,6 +37,7 @@ H.TextField {
         }
 
         HnIconButton {
+            objectName: "clearCredentialButton"
             sizeRole: HnControlSize.Compact
             enabled: root.actionsEnabled
             icon.source: "qrc:/HolonightChat/assets/icons/clear.svg"

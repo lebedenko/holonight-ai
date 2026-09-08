@@ -1,12 +1,11 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic as QQC2
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
 import Holonight.Controls
-import Holonight
 
 HnSurfaceFrame {
     id: root
@@ -64,7 +63,7 @@ HnSurfaceFrame {
             Layout.margins: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
             spacing: HnMetrics.internalSpacing(HnControlSize.Normal) * 2
 
-            Button {
+            Controls.Button {
                 Layout.fillWidth: true
                 highlighted: true
                 text: qsTr("New chat")

@@ -1,9 +1,8 @@
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import Holonight.Core
 import Holonight.Controls
-import Holonight as H
 
 Item {
     id: root
@@ -130,7 +129,7 @@ Item {
             }
         }
 
-        H.Button {
+        Controls.Button {
             objectName: "listFilesViewAll"
             visible: !root.hasError && !root.showAllEntries && root.entries.length > root.previewLimit
             text: qsTr("View all (%1)").arg(root.entries.length)

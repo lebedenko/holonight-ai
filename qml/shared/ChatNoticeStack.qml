@@ -1,10 +1,9 @@
 import QtQuick
-import QtQuick.Controls.Basic as QQC2
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
 import Holonight.Controls
-import Holonight
 
 ColumnLayout {
     id: root
@@ -36,7 +35,7 @@ ColumnLayout {
                 color: HoloniightPalette.textPrimary
             }
 
-            Button {
+            Controls.Button {
                 text: qsTr("Dismiss")
                 onClicked: ChatViewModel.dismissPersistenceBanner()
             }

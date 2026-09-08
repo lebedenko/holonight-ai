@@ -1,10 +1,10 @@
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import Holonight.Core
 import Holonight.Controls
 
-Popup {
+Controls.Popup {
     id: root
 
     // The button (or other item) this popup is anchored below-right of.
@@ -20,7 +20,7 @@ Popup {
     objectName: "responseStatsPopup"
     modal: false
     focus: true
-    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutside
     padding: HnMetrics.horizontalPadding(HnControlSize.Normal)
 
     // Reparent to the window's overlay layer (not ResponseStatsFooter's own parent inside an
@@ -28,7 +28,7 @@ Popup {
     // whatever else that parent later draws on top -- Popup does not do this automatically, only
     // its optional dimming background does. See Qt's Overlay docs: "Overlay provides a layer for
     // popups, ensuring that popups are displayed above other content."
-    parent: Overlay.overlay
+    parent: Controls.Overlay.overlay
 
     // mapToItem() is not a reactive dependency on every ancestor's position. Calculate when the
     // popup opens so delegates that were laid out or scrolled after construction use their current

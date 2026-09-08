@@ -1,12 +1,11 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic as QQC2
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
 import Holonight.Controls
-import Holonight
 
 ProviderSettingsScaffold {
     id: root
@@ -60,7 +59,7 @@ ProviderSettingsScaffold {
                     color: HoloniightPalette.textPrimary
                     font.bold: true
                 }
-                Switch {
+                Controls.Switch {
                     objectName: "chatTitleGenerationEnabledSwitch"
                     text: qsTr("Automatically generate conversation titles")
                     checked: root.controller.chatTitleGenerationEnabled
@@ -88,7 +87,7 @@ ProviderSettingsScaffold {
 
     footerContent: Component {
         RowLayout {
-            Button {
+            Controls.Button {
                 objectName: "discardBackgroundAiButton"
                 text: qsTr("Discard")
                 enabled: root.controller.dirty

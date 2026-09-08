@@ -3,13 +3,13 @@ version: "3"
 vars:
   BUILD_DIR: build
   RELEASE_BUILD_DIR: build-release
-  HOLONIGHT_QT_PREFIX: /tmp/holonight-qt-prefix
-  HOLONIGHT_QT_DIR: /tmp/holonight-qt-prefix/lib/cmake/HolonightQt
-  HOLONIGHT_QT_BUILD_DIR: ../holonight-qt/build-ai-provider
+  HOLONIGHT_QT_PREFIX: '{{.TASKFILE_DIR}}/{{.BUILD_DIR}}/dependencies/prefix'
+  HOLONIGHT_QT_DIR: '{{.TASKFILE_DIR}}/{{.BUILD_DIR}}/dependencies/prefix/lib/cmake/HolonightQt'
+  HOLONIGHT_QT_BUILD_DIR: '{{.BUILD_DIR}}/dependencies/qt'
   HOLONIGHT_QT_SOURCE: '{{default "../holonight-qt" .HOLONIGHT_QT_SOURCE}}'
-  HOLONIGHT_QT_REVISION: 0b1bf7c3e27d1aafb19abe39cbf29f833f66289c
-  HOLONIGHT_CONFIG_PREFIX: /tmp/holonight-config-prefix
-  HOLONIGHT_CONFIG_BUILD_DIR: ../holonight-config/build-ai-provider
+  HOLONIGHT_QT_REVISION: 50c59558bb3817f57a992dd72730dba141db1bc8
+  HOLONIGHT_CONFIG_PREFIX: '{{.TASKFILE_DIR}}/{{.BUILD_DIR}}/dependencies/prefix'
+  HOLONIGHT_CONFIG_BUILD_DIR: '{{.BUILD_DIR}}/dependencies/config'
   HOLONIGHT_CONFIG_SOURCE: '{{default "../holonight-config" .HOLONIGHT_CONFIG_SOURCE}}'
   HOLONIGHT_CONFIG_REVISION: fe69a59e6b73167fd5349223a4d265d75386c139
   SCALE_FACTOR: '{{default "1.0" .SCALE_FACTOR}}'
@@ -54,7 +54,7 @@ tasks:
       - ln -sf {{.BUILD_DIR}}/compile_commands.json .
 
   build:qt-dependency:
-    desc: Build and install holonight-qt debug dependency to /tmp/holonight-qt-prefix
+    desc: Build and install holonight-qt debug dependency to {{.TASKFILE_DIR}}/{{.BUILD_DIR}}/dependencies/prefix
     deps: [build:config-dependency]
     cmds:
       - |
@@ -67,7 +67,7 @@ tasks:
             cmake -E echo "Removing stale {{.HOLONIGHT_QT_BUILD_DIR}} CMake cache from another source directory"
             cmake -E rm -rf "{{.HOLONIGHT_QT_BUILD_DIR}}"
           fi
-          cmake -S {{.HOLONIGHT_QT_SOURCE}} -B {{.HOLONIGHT_QT_BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DCMAKE_PREFIX_PATH={{.HOLONIGHT_CONFIG_PREFIX}}
+          cmake -S {{.HOLONIGHT_QT_SOURCE}} -B {{.HOLONIGHT_QT_BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_DEMO=OFF -DBUILD_CONTROLS_GALLERY=OFF -DBUILD_WAYLAND=ON -DCMAKE_PREFIX_PATH={{.HOLONIGHT_CONFIG_PREFIX}}
           cmake --build {{.HOLONIGHT_QT_BUILD_DIR}} -j{{.NPROC}}
           cmake --install {{.HOLONIGHT_QT_BUILD_DIR}} --prefix {{.HOLONIGHT_QT_PREFIX}}
         else
@@ -110,7 +110,7 @@ tasks:
     desc: Build and run holonight-chat (SCALE_FACTOR defaults to 1.0)
     deps: [build]
     cmds:
-      - QT_SCALE_FACTOR={{.SCALE_FACTOR}} QML_IMPORT_PATH={{.HOLONIGHT_QT_PREFIX}}/lib/qt6/qml${QML_IMPORT_PATH:+:$QML_IMPORT_PATH} ./{{.BUILD_DIR}}/holonight-chat
+      - QT_SCALE_FACTOR={{.SCALE_FACTOR}} ./{{.BUILD_DIR}}/holonight-chat
 
   install:local:
     desc: Build and install to ~/.local
@@ -174,9 +174,10 @@ tasks:
       - cmake --build {{.BUILD_DIR}} --target tidy-tests
 
   tidy-container:
-    desc: Run static checks inside the CI container (Docker/Podman) for predictable results
+    desc: Build pinned dependencies and run static checks inside the CI container
     cmds:
-      - task: build:qt-dependency
+      - test "$(git -C {{.HOLONIGHT_QT_SOURCE}} rev-parse HEAD)" = "{{.HOLONIGHT_QT_REVISION}}"
+      - test "$(git -C {{.HOLONIGHT_CONFIG_SOURCE}} rev-parse HEAD)" = "{{.HOLONIGHT_CONFIG_REVISION}}"
       - |
         if command -v docker >/dev/null 2>&1; then
           CONTAINER_RUNNER="docker"
@@ -186,12 +187,17 @@ tasks:
           echo "ERROR: Neither docker nor podman is available." >&2
           exit 1
         fi
-        $CONTAINER_RUNNER run --rm -v "$(pwd):/workspace" -v "/tmp/holonight-qt-prefix:/tmp/holonight-qt-prefix" -w /workspace ghcr.io/lebedenko/holonight-ai-ci:latest bash -c "
-          rm -rf build-ci-check &&
-          cmake -B build-ci-check -G Ninja -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=ON -DCMAKE_PREFIX_PATH=/tmp/holonight-qt-prefix &&
-          cmake --build build-ci-check --target format-check &&
-          cmake --build build-ci-check --target tidy
-        "
+        $CONTAINER_RUNNER run --rm -v "{{.TASKFILE_DIR}}:/workspace" -v "$(realpath {{.HOLONIGHT_QT_SOURCE}}):/holonight-qt:ro" -v "$(realpath {{.HOLONIGHT_CONFIG_SOURCE}}):/holonight-config:ro" -w /workspace ghcr.io/lebedenko/holonight-ai-ci:latest bash -ec '
+          cmake -S /holonight-config -B build-ci-check/dependencies/config -G Ninja -DBUILD_TESTING=OFF
+          cmake --build build-ci-check/dependencies/config --parallel
+          cmake --install build-ci-check/dependencies/config --prefix /workspace/build-ci-check/dependencies/prefix
+          cmake -S /holonight-qt -B build-ci-check/dependencies/qt -G Ninja -DBUILD_TESTS=OFF -DBUILD_DEMO=OFF -DBUILD_CONTROLS_GALLERY=OFF -DBUILD_WAYLAND=ON -DCMAKE_PREFIX_PATH=/workspace/build-ci-check/dependencies/prefix
+          cmake --build build-ci-check/dependencies/qt --parallel
+          cmake --install build-ci-check/dependencies/qt --prefix /workspace/build-ci-check/dependencies/prefix
+          cmake -S . -B build-ci-check -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=ON -DCMAKE_PREFIX_PATH=/workspace/build-ci-check/dependencies/prefix
+          cmake --build build-ci-check --parallel
+          cmake --build build-ci-check --target format-check tidy
+        '
 
   build-ci-image:
     desc: Build the CI container image locally

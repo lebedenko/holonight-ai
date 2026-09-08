@@ -13,6 +13,7 @@ install(FILES LICENSE LICENSES/GPL-3.0-or-later.txt
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Quick Qml Network Concurrent Sql DBus)
 find_package(HolonightQt REQUIRED COMPONENTS Controls Wayland)
+unset(HOLONIGHT_QML_IMPORT_PATH CACHE)
 find_path(HOLONIGHT_QML_IMPORT_PATH
   NAMES Holonight/qmldir
   HINTS "${HolonightQt_DIR}/../../.."
@@ -161,10 +162,11 @@ endif()
 
 if(CLANG_TIDY)
   include(ProcessorCount)
-  ProcessorCount(TIDY_JOBS)
-  if(TIDY_JOBS EQUAL 0)
-    set(TIDY_JOBS 1)
+  ProcessorCount(TIDY_DEFAULT_JOBS)
+  if(TIDY_DEFAULT_JOBS EQUAL 0)
+    set(TIDY_DEFAULT_JOBS 1)
   endif()
+  set(TIDY_JOBS "${TIDY_DEFAULT_JOBS}" CACHE STRING "Maximum parallel clang-tidy processes")
 
   # run-clang-tidy gained -hide-progress in LLVM 20. On older toolchains
   # (e.g. Debian's clang-tidy) the flag is unknown, and run-clang-tidy's
@@ -234,8 +236,7 @@ if(QMLLINT)
             -I "${CMAKE_CURRENT_SOURCE_DIR}/tests/qmllint"
             -I "${CMAKE_CURRENT_BINARY_DIR}/apps/chat"
             -I "${CMAKE_BINARY_DIR}"
-            -I "/tmp/holonight-qt-prefix/lib/qt6/qml"
-            -I "$ENV{HOME}/.local/lib/qt6/qml"
+            -I "${HOLONIGHT_QML_IMPORT_PATH}"
             ${ALL_QML_FILES}
         DEPENDS
             holonight-chat_qmltyperegistration

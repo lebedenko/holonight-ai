@@ -1,11 +1,10 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import Holonight.Core
 import Holonight.Controls
-import Holonight as H
 
 HnSurfaceFrame {
     id: root
@@ -28,33 +27,33 @@ HnSurfaceFrame {
             dividerVisible: false
         }
 
-        H.Button {
+        Controls.Button {
             id: addButton
             objectName: "addProviderButton"
             Layout.fillWidth: true
             text: qsTr("Add provider")
             onClicked: addMenu.open()
 
-            H.Menu {
+            Controls.Menu {
                 id: addMenu
                 objectName: "addProviderMenu"
                 y: addButton.height
-                H.MenuItem {
+                Controls.MenuItem {
                     objectName: "addOllamaProviderAction"
                     text: qsTr("Ollama")
                     onTriggered: root.providerController.addProvider("ollama")
                 }
-                H.MenuItem {
+                Controls.MenuItem {
                     objectName: "addOpenAIProviderAction"
                     text: qsTr("OpenAI")
                     onTriggered: root.providerController.addProvider("openai")
                 }
-                H.MenuItem {
+                Controls.MenuItem {
                     objectName: "addAnthropicProviderAction"
                     text: qsTr("Anthropic")
                     onTriggered: root.providerController.addProvider("anthropic")
                 }
-                H.MenuItem {
+                Controls.MenuItem {
                     objectName: "addGoogleProviderAction"
                     text: qsTr("Google")
                     onTriggered: root.providerController.addProvider("google")

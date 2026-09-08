@@ -1,13 +1,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic as QQC2
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
 import Holonight.Controls
-import Holonight
-import Holonight as H
+
 
 HnSurfaceFrame {
     id: root
@@ -51,7 +50,7 @@ HnSurfaceFrame {
                 sourceComponent: root.headerStatus
             }
 
-            Switch {
+            Controls.Switch {
                 objectName: "providerEnabledCheckBox"
                 text: qsTr("Enabled")
                 visible: root.showProviderControls
@@ -60,14 +59,14 @@ HnSurfaceFrame {
             }
         }
 
-        ScrollView {
+        Controls.ScrollView {
             id: scrollView
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.leftMargin: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
             Layout.rightMargin: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
             clip: true
-            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+            Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
 
             HnSurfaceFrame {
                 width: scrollView.availableWidth
@@ -87,7 +86,7 @@ HnSurfaceFrame {
                         labelText: qsTr("Instance name")
                         errorText: root.providerController.nameValidationError
                         hasError: errorText.length > 0
-                        TextField {
+                        Controls.TextField {
                             objectName: "providerNameEditor"
                             Layout.fillWidth: true
                             text: root.showProviderControls ? root.providerController.displayName : ""
@@ -122,7 +121,7 @@ HnSurfaceFrame {
                     Loader {
                         sourceComponent: root.resetContent
                     }
-                    Button {
+                    Controls.Button {
                         objectName: "deleteProviderButton"
                         text: qsTr("Delete provider")
                         visible: root.showProviderControls
@@ -145,13 +144,13 @@ HnSurfaceFrame {
         }
     }
 
-    QQC2.Dialog {
+    Controls.Dialog {
         id: deleteDialog
         objectName: "deleteProviderDialog"
         anchors.centerIn: parent
         modal: true
         padding: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
-        standardButtons: QQC2.Dialog.NoButton
+        standardButtons: Controls.Dialog.NoButton
         onAccepted: root.providerController.deleteSelected(true)
 
         background: HnSurfaceFrame {
@@ -179,7 +178,7 @@ HnSurfaceFrame {
             RowLayout {
                 spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
-                H.Button {
+                Controls.Button {
                     objectName: "confirmDeleteProviderButton"
                     Layout.fillWidth: true
                     text: qsTr("Yes")
@@ -187,7 +186,7 @@ HnSurfaceFrame {
                     onClicked: deleteDialog.accept()
                 }
 
-                H.Button {
+                Controls.Button {
                     objectName: "cancelDeleteProviderButton"
                     Layout.fillWidth: true
                     text: qsTr("Cancel")

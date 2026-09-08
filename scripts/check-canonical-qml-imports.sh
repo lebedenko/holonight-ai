@@ -8,7 +8,7 @@ failed=0
 
 core_types='\b(HoloniightPalette|HolonightTheme|HnAppearance|HnShapeProfile|HnSurfaceRole|HnCornerStyle|HnShapeKind|HnCornerMask|HnIconProvider|HnIcon)\b'
 controls_types='\b(HnSurfaceFrame|HnApplicationWindow|HnSearchField|HnIconComboBox|HnTextArea|HnFormField|HnSettingsRow|HnSectionHeader|HnEmptyState|HnLoadingState|HnNavigationDelegate|HnListDelegate|HnCardDelegate|HnActionDelegate|HnStatusIndicator|HnKeyHint|HnPanelHeader|HnSegmentedControl|HnChoiceCard|HnActionBar|HnSeparator)\b'
-style_components='(^|[^.[:alnum:]_])(Button|CheckBox|ComboBox|ItemDelegate|Menu|MenuItem|ProgressBar|RadioButton|ScrollBar|ScrollView|Slider|SpinBox|Switch|TabBar|TabButton|TextArea|TextField|ToolTip)[[:space:]]*\{'
+runtime_types='ApplicationWindow|Label|ToolButton|ToolBar|ToolSeparator|MenuSeparator|Popup|MenuBar|MenuBarItem|Button|CheckBox|ComboBox|ItemDelegate|Menu|MenuItem|ProgressBar|RadioButton|ScrollBar|ScrollView|Slider|SpinBox|Switch|TabBar|TabButton|TextArea|TextField|ToolTip|Control|ButtonGroup|Overlay|RangeSlider|Frame|Pane|Page|Dialog|DialogButtonBox|BusyIndicator|SwipeView|StackView|Action|ActionGroup|RoundButton|DelayButton|Tumbler|SplitView'
 
 while IFS= read -r qml_file; do
   if rg -q "${core_types}" "${qml_file}" && ! rg -q '^import Holonight\.Core($|[[:space:]])' "${qml_file}"; then
@@ -22,14 +22,20 @@ while IFS= read -r qml_file; do
     failed=1
   fi
 
-  if rg -q '^import Holonight$' "${qml_file}" && ! rg -q "${style_components}" "${qml_file}"; then
-    echo "${qml_file}: compatibility import has no style-owned component consumer" >&2
+  if rg -n '^import (Holonight($|[[:space:]])|QtQuick\.Controls\.)' "${qml_file}"; then
+    echo "${qml_file}: direct style import is forbidden" >&2
     failed=1
   fi
-
-  if rg -q '^import Holonight$' "${qml_file}" \
-      && rg -q '^import QtQuick\.Controls\.Basic$' "${qml_file}"; then
-    echo "${qml_file}: unaliased Basic controls shadow the Holonight style module" >&2
+  if rg '^import QtQuick\.Controls($|[[:space:]])' "${qml_file}" | rg -v '^import QtQuick\.Controls as Controls$'; then
+    echo "${qml_file}: runtime import must use Controls namespace" >&2
+    failed=1
+  fi
+  if rg -q '\bControls\.' "${qml_file}" && ! rg -q '^import QtQuick\.Controls as Controls$' "${qml_file}"; then
+    echo "${qml_file}: Controls use requires file-local runtime import" >&2
+    failed=1
+  fi
+  if rg -n "(^|[^.[:alnum:]_])(${runtime_types})([[:space:]]*\{|\.)" "${qml_file}"; then
+    echo "${qml_file}: qualify control instances, enums and attached properties" >&2
     failed=1
   fi
 done < <(find "${qml_dir}" -type f -name '*.qml' -print | sort)

@@ -1,9 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Holonight as H
+import QtQuick.Controls as Controls
 
-H.Button {
+Controls.Button {
     id: root
 
     required property url actionIconSource

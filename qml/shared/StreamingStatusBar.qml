@@ -1,10 +1,9 @@
 import QtQuick
-import QtQuick.Controls.Basic as QQC2
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
 import Holonight.Controls
-import Holonight
 
 HnSurfaceFrame {
     id: root
@@ -29,7 +28,7 @@ HnSurfaceFrame {
             text: qsTr("Generating response…")
         }
 
-        Button {
+        Controls.Button {
             text: qsTr("Stop")
             onClicked: ChatViewModel.stop()
         }

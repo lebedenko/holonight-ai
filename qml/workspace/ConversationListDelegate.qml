@@ -1,11 +1,10 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic as QQC2
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import Holonight.Core
 import Holonight.Controls
-import Holonight
 
 HnNavigationDelegate {
     id: root
@@ -109,12 +108,12 @@ HnNavigationDelegate {
                 Accessible.name: qsTr("Conversation actions")
                 onClicked: actionsMenu.popup()
 
-                Menu {
+                Controls.Menu {
                     id: actionsMenu
 
                     y: parent.height
 
-                    MenuItem {
+                    Controls.MenuItem {
                         text: qsTr("Rename")
                         hoverEnabled: true
                         icon.source: "qrc:/qt/qml/Holonight/Controls/assets/edit.svg"
@@ -126,7 +125,7 @@ HnNavigationDelegate {
                         }
                     }
 
-                    MenuItem {
+                    Controls.MenuItem {
                         objectName: "pinMenuItem"
                         text: root.pinned ? qsTr("Unpin") : qsTr("Pin")
                         hoverEnabled: true
@@ -134,7 +133,7 @@ HnNavigationDelegate {
                         onTriggered: root.pinToggleRequested()
                     }
 
-                    MenuItem {
+                    Controls.MenuItem {
                         text: qsTr("Delete")
                         hoverEnabled: true
                         icon.source: "qrc:/qt/qml/Holonight/Controls/assets/delete.svg"
@@ -158,7 +157,7 @@ HnNavigationDelegate {
         }
     }
 
-    TextField {
+    Controls.TextField {
         id: renameField
 
         anchors.left: root.contentItem.left
@@ -202,7 +201,7 @@ HnNavigationDelegate {
             anchors.verticalCenter: parent.verticalCenter
             spacing: root.semanticSpacing
 
-            Button {
+            Controls.Button {
                 text: qsTr("Yes")
                 onClicked: {
                     root.confirmingDelete = false;
@@ -210,7 +209,7 @@ HnNavigationDelegate {
                 }
             }
 
-            Button {
+            Controls.Button {
                 text: qsTr("No")
                 onClicked: root.confirmingDelete = false
             }

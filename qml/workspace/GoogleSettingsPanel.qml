@@ -1,12 +1,11 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic as QQC2
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
 import Holonight.Controls
-import Holonight
 
 ProviderSettingsScaffold {
     id: root
@@ -30,7 +29,7 @@ ProviderSettingsScaffold {
                 fieldContent: Component {
                     HnFormField {
                         labelText: qsTr("Base URL")
-                        TextField {
+                        Controls.TextField {
                             Layout.fillWidth: true; text: GoogleProviderSettingsController.baseUrl
                             placeholderText: qsTr("https://generativelanguage.googleapis.com")
                             onTextChanged: GoogleProviderSettingsController.baseUrl = text
@@ -72,14 +71,14 @@ ProviderSettingsScaffold {
                         HnFormField {
                             Layout.fillWidth: true; labelText: qsTr("Temperature")
                             RowLayout {
-                                SpinBox {
+                                Controls.SpinBox {
                                     from: 0; to: 200; stepSize: 5; editable: true
                                     value: Math.round(GoogleProviderSettingsController.temperature * 100)
                                     textFromValue: (value, locale) => Number(value / 100).toLocaleString(locale, "f", 2)
                                     valueFromText: (text, locale) => Math.round(Number.fromLocaleString(locale, text) * 100)
                                     onValueModified: GoogleProviderSettingsController.temperature = value / 100
                                 }
-                                Slider {
+                                Controls.Slider {
                                     Layout.fillWidth: true; from: 0; to: 2; stepSize: 0.05
                                     value: GoogleProviderSettingsController.temperature
                                     onMoved: GoogleProviderSettingsController.temperature = value
@@ -88,7 +87,7 @@ ProviderSettingsScaffold {
                         }
                         HnFormField {
                             Layout.fillWidth: true; labelText: qsTr("Max output tokens")
-                            SpinBox {
+                            Controls.SpinBox {
                                 Layout.fillWidth: true; from: 1; to: 200000; stepSize: 256; editable: true
                                 value: GoogleProviderSettingsController.maxOutputTokens
                                 onValueModified: GoogleProviderSettingsController.maxOutputTokens = value
@@ -103,7 +102,7 @@ ProviderSettingsScaffold {
                     HnFormField {
                         labelText: qsTr("Enable tool calling")
                         helperText: qsTr("Lets the model list files under your home directory.")
-                        Switch {
+                        Controls.Switch {
                             checked: GoogleProviderSettingsController.toolCallingEnabled
                             onToggled: GoogleProviderSettingsController.toolCallingEnabled = checked
                         }
@@ -163,7 +162,7 @@ ProviderSettingsScaffold {
     footerNoticeStatus: GoogleProviderSettingsController.saveNoticeStatus
     footerContent: Component {
         RowLayout {
-            Button {
+            Controls.Button {
                 objectName: "discardProviderButton"
                 text: ProviderManagementController.addition ? qsTr("Cancel") : qsTr("Discard")
                 enabled: ProviderManagementController.canSave

@@ -1,6 +1,9 @@
 include(GoogleTest)
 
 add_executable(test_holonight_ai
+  qml/fakes/provider_controller.h
+  qml/fakes/utility_settings_controller.h
+  qml/fakes/chat_view_model.h
   main.cpp
   test_placeholder.cpp
   domain/test_message.cpp
@@ -128,3 +131,36 @@ if(ENABLE_COVERAGE)
     COMMENT "Collecting coverage → build/coverage/index.html"
   )
 endif()
+
+include("${PROJECT_SOURCE_DIR}/cmake/ChatQmlInventory.cmake")
+qt_add_executable(test_runtime_controls
+  runtime/main.cpp
+  runtime/test_runtime_controls.cpp
+  qml/fakes/provider_controller.h
+  qml/fakes/utility_settings_controller.h
+  qml/fakes/chat_view_model.h
+)
+set_target_properties(test_runtime_controls PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/runtime")
+qt_add_qml_module(test_runtime_controls
+  OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/runtime/HolonightChat"
+  URI HolonightChat VERSION 1.0 RESOURCE_PREFIX "/"
+  NO_GENERATE_QMLTYPES NO_IMPORT_SCAN
+  QML_FILES ${HOLONIGHT_CHAT_QML_FILES}
+  RESOURCES ${HOLONIGHT_CHAT_ICONS}
+)
+qt_add_resources(test_runtime_controls runtime_style_config
+  PREFIX "/" BASE "${PROJECT_SOURCE_DIR}/apps/chat"
+  FILES "${PROJECT_SOURCE_DIR}/apps/chat/qtquickcontrols2.conf")
+target_include_directories(test_runtime_controls PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(test_runtime_controls PRIVATE
+  GTest::gtest Qt6::Quick Qt6::Qml Qt6::Test holonight_rendering)
+target_compile_definitions(test_runtime_controls PRIVATE
+  HOLONIGHT_QML_IMPORT_PATH="${HOLONIGHT_QML_IMPORT_PATH}")
+foreach(style IN ITEMS Holonight Fusion)
+  add_test(NAME runtime_controls_${style} COMMAND test_runtime_controls)
+  set_tests_properties(runtime_controls_${style} PROPERTIES
+    TIMEOUT 45 ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_CONTROLS_STYLE=${style}")
+endforeach()
+add_test(NAME canonical_qml_import_policy_fixtures
+  COMMAND python3 "${PROJECT_SOURCE_DIR}/tests/runtime/test_import_policy.py")

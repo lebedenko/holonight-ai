@@ -1,9 +1,9 @@
 import QtQuick
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
 import Holonight.Controls
-import Holonight
 
 ColumnLayout {
     id: root
@@ -56,7 +56,7 @@ ColumnLayout {
             Layout.fillWidth: true
         }
 
-        Button {
+        Controls.Button {
             id: copyButton
 
             property bool copied: false

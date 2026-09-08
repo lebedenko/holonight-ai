@@ -1,9 +1,8 @@
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import Holonight.Core
 import Holonight.Controls
-import Holonight as H
 
 Item {
     id: root
@@ -159,7 +158,7 @@ Item {
                     color: HoloniightPalette.textMuted
                 }
 
-                H.Button {
+                Controls.Button {
                     id: disclosureButton
                     objectName: "toolActivityDisclosure"
                     text: root.expanded ? qsTr("Hide details") : qsTr("Show details")
@@ -172,7 +171,7 @@ Item {
                     }
                 }
 
-                H.Button {
+                Controls.Button {
                     objectName: "toolActivityStop"
                     visible: root.canStop && root.isRunning
                     text: qsTr("Stop")
@@ -228,14 +227,14 @@ Item {
                 visible: root.expanded && root.hasRawData
                 spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
-                H.Button {
+                Controls.Button {
                     objectName: "toolActivityRawDisclosure"
                     text: root.rawExpanded ? qsTr("Hide raw") : qsTr("View raw")
                     Accessible.name: text
                     onClicked: root.rawExpanded = !root.rawExpanded
                 }
 
-                H.Button {
+                Controls.Button {
                     objectName: "toolActivityCopyResult"
                     visible: root.rawResultText.length > 0
                     text: qsTr("Copy result")
@@ -266,7 +265,7 @@ Item {
                     font.bold: true
                 }
 
-                TextArea {
+                Controls.TextArea {
                     id: rawArguments
 
                     objectName: "toolActivityRawArguments"
@@ -275,8 +274,8 @@ Item {
                     readOnly: true
                     selectByMouse: true
                     text: root.rawArgumentsText
-                    textFormat: TextArea.PlainText
-                    wrapMode: TextArea.Wrap
+                    textFormat: Controls.TextArea.PlainText
+                    wrapMode: Controls.TextArea.Wrap
                     color: HoloniightPalette.textPrimary
                     font.family: HolonightTheme.monospaceFont
                     Accessible.name: qsTr("Raw tool arguments")
@@ -290,7 +289,7 @@ Item {
                     font.bold: true
                 }
 
-                TextArea {
+                Controls.TextArea {
                     id: rawResult
 
                     objectName: "toolActivityRawResult"
@@ -299,8 +298,8 @@ Item {
                     readOnly: true
                     selectByMouse: true
                     text: root.rawResultText
-                    textFormat: TextArea.PlainText
-                    wrapMode: TextArea.Wrap
+                    textFormat: Controls.TextArea.PlainText
+                    wrapMode: Controls.TextArea.Wrap
                     color: HoloniightPalette.textPrimary
                     font.family: HolonightTheme.monospaceFont
                     Accessible.name: qsTr("Raw tool result")

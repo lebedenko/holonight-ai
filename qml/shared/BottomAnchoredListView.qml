@@ -1,5 +1,5 @@
 import QtQuick
-import Holonight
+import QtQuick.Controls as Controls
 
 ListView {
     id: root
@@ -57,11 +57,11 @@ ListView {
     // this also avoids first-exposure layout work during ordinary scrolling.
     cacheBuffer: Math.max(height * 2, 8192)
 
-    ScrollBar.vertical: ScrollBar {
+    Controls.ScrollBar.vertical: Controls.ScrollBar {
         id: transcriptScrollBar
 
         objectName: "transcriptScrollBar"
-        policy: ScrollBar.AlwaysOn
+        policy: Controls.ScrollBar.AlwaysOn
     }
 
     WheelHandler {

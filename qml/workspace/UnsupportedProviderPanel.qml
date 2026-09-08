@@ -1,9 +1,8 @@
 import QtQuick
-import QtQuick.Controls.Basic as QQC2
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import Holonight.Core
 import Holonight.Controls
-import Holonight
 
 ColumnLayout {
     id: root
@@ -26,19 +25,19 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
-        Button {
+        Controls.Button {
             text: qsTr("Reset")
             enabled: false
         }
 
         Item { Layout.fillWidth: true }
 
-        Button {
+        Controls.Button {
             text: qsTr("Cancel")
             enabled: false
         }
 
-        Button {
+        Controls.Button {
             text: qsTr("Save")
             enabled: false
         }

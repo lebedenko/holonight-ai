@@ -1,12 +1,11 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic as QQC2
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
 import Holonight.Controls
-import Holonight
 
 HnSurfaceFrame {
     id: root
@@ -51,7 +50,7 @@ HnSurfaceFrame {
         anchors.margins: root.composerPadding
         spacing: root.compact ? HnMetrics.internalSpacing(HnControlSize.Normal) / 2 : HnMetrics.internalSpacing(HnControlSize.Normal)
 
-        ScrollView {
+        Controls.ScrollView {
             id: editorScrollView
 
             Layout.fillWidth: true
@@ -59,11 +58,11 @@ HnSurfaceFrame {
                                              Math.min(root.maximumEditorHeight, inputBox.contentHeight))
             contentWidth: availableWidth
             clip: true
-            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-            ScrollBar.vertical.policy: inputBox.contentHeight > height
-                                       ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff
+            Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
+            Controls.ScrollBar.vertical.policy: inputBox.contentHeight > height
+                                       ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff
 
-            TextArea {
+            Controls.TextArea {
                 id: inputBox
 
                 objectName: "composerEditor"

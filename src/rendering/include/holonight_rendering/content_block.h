@@ -19,6 +19,7 @@ class ContentBlockTypeNs : public QObject {
 
  public:
   explicit ContentBlockTypeNs(QObject* parent = nullptr) : QObject{parent} {}
+  ~ContentBlockTypeNs() override = default;
   Q_DISABLE_COPY_MOVE(ContentBlockTypeNs)
 
   enum class Type : std::uint8_t { Markdown, Code };

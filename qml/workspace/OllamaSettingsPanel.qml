@@ -1,12 +1,11 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic as QQC2
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import HolonightChat
 import Holonight.Core
 import Holonight.Controls
-import Holonight
 
 ProviderSettingsScaffold {
     id: root
@@ -32,7 +31,7 @@ ProviderSettingsScaffold {
                 fieldContent: Component {
                     HnFormField {
                         labelText: qsTr("Server URL")
-                        TextField {
+                        Controls.TextField {
                             Layout.fillWidth: true
                             text: ProviderSettingsController.baseUrl
                             placeholderText: qsTr("http://localhost:11434")
@@ -79,7 +78,7 @@ ProviderSettingsScaffold {
                         HnFormField {
                             Layout.fillWidth: true
                             labelText: qsTr("Context window")
-                            SpinBox {
+                            Controls.SpinBox {
                                 Layout.fillWidth: true
                                 from: 128
                                 to: 1000000
@@ -93,14 +92,14 @@ ProviderSettingsScaffold {
                             Layout.fillWidth: true
                             labelText: qsTr("Temperature")
                             RowLayout {
-                                SpinBox {
+                                Controls.SpinBox {
                                     from: 0; to: 200; stepSize: 5; editable: true
                                     value: Math.round(ProviderSettingsController.temperature * 100)
                                     textFromValue: (value, locale) => Number(value / 100).toLocaleString(locale, "f", 2)
                                     valueFromText: (text, locale) => Math.round(Number.fromLocaleString(locale, text) * 100)
                                     onValueModified: ProviderSettingsController.temperature = value / 100
                                 }
-                                Slider {
+                                Controls.Slider {
                                     Layout.fillWidth: true
                                     from: 0; to: 2; stepSize: 0.05
                                     value: ProviderSettingsController.temperature
@@ -118,7 +117,7 @@ ProviderSettingsScaffold {
                     HnFormField {
                         labelText: qsTr("Enable tool calling")
                         helperText: qsTr("Lets the model list files under your home directory.")
-                        Switch {
+                        Controls.Switch {
                             checked: ProviderSettingsController.toolCallingEnabled
                             onToggled: ProviderSettingsController.toolCallingEnabled = checked
                         }
@@ -182,7 +181,7 @@ ProviderSettingsScaffold {
     footerNoticeStatus: ProviderSettingsController.saveNoticeStatus
     footerContent: Component {
         RowLayout {
-            Button {
+            Controls.Button {
                 objectName: "discardProviderButton"
                 text: ProviderManagementController.addition ? qsTr("Cancel") : qsTr("Discard")
                 enabled: ProviderManagementController.canSave

@@ -19,30 +19,30 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install config-provider build dependency
-        run: pacman -S --noconfirm ripgrep tomlplusplus
+        run: pacman -S --noconfirm ripgrep tomlplusplus dbus python
 
       - name: Checkout holonight-config dependency
         uses: actions/checkout@v4
         with:
           repository: lebedenko/holonight-config
-          ref: 5cd36ec9986801c4b831527a38e7b7414b9a1312
+          ref: fe69a59e6b73167fd5349223a4d265d75386c139
           path: holonight-config-dep
 
       - name: Checkout holonight-qt dependency
         uses: actions/checkout@v4
         with:
           repository: lebedenko/holonight-qt
-          ref: a45f7552054abbc6cbd66609e802b43b9b8ee894
+          ref: 50c59558bb3817f57a992dd72730dba141db1bc8
           path: holonight-qt-dep
 
       - name: Build and install pinned dependencies
         run: |
-          cmake -S holonight-config-dep -B holonight-config-dep/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
-          cmake --build holonight-config-dep/build --parallel
-          cmake --install holonight-config-dep/build --prefix /usr
-          cmake -S holonight-qt-dep -B holonight-qt-dep/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr
-          cmake --build holonight-qt-dep/build --parallel
-          cmake --install holonight-qt-dep/build --prefix /usr
+          cmake -S holonight-config-dep -B build/dependencies/config -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+          cmake --build build/dependencies/config --parallel
+          cmake --install build/dependencies/config --prefix "$PWD/build/dependencies/prefix"
+          cmake -S holonight-qt-dep -B build/dependencies/qt -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/dependencies/prefix" -DBUILD_TESTS=OFF -DBUILD_DEMO=OFF -DBUILD_CONTROLS_GALLERY=OFF -DBUILD_WAYLAND=ON
+          cmake --build build/dependencies/qt --parallel
+          cmake --install build/dependencies/qt --prefix "$PWD/build/dependencies/prefix"
 
       - name: Configure
         run: >
@@ -50,12 +50,29 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           -DBUILD_TESTS=ON
+          -DCMAKE_PREFIX_PATH="$PWD/build/dependencies/prefix"
 
       - name: Build
         run: cmake --build build --parallel
 
       - name: Test
         run: ctest --test-dir build --output-on-failure --no-tests=error
+
+      - name: Existing QML suites under both styles
+        run: |
+          QT_QUICK_CONTROLS_STYLE=Holonight ctest --test-dir build -R 'Qml|CanonicalQmlModules|BottomAnchoredListView|MarkdownBlock' --output-on-failure --no-tests=error
+          QT_QUICK_CONTROLS_STYLE=Fusion ctest --test-dir build -R 'Qml|CanonicalQmlModules|BottomAnchoredListView|MarkdownBlock' --output-on-failure --no-tests=error
+
+      - name: Isolated build and installed launch acceptance
+        run: |
+          python3 scripts/check-runtime-launches.py build/holonight-chat build/dependencies/prefix --logs build/uqc104/build-launch
+          cmake -S . -B build -DCMAKE_INSTALL_PREFIX="$PWD/build/uqc104/stage"
+          cmake --build build --parallel
+          cmake --install build/dependencies/config --prefix "$PWD/build/uqc104/stage"
+          cmake --install build/dependencies/qt --prefix "$PWD/build/uqc104/stage"
+          cmake --install build
+          python3 scripts/check-runtime-launches.py build/uqc104/stage/bin/holonight-chat build/uqc104/stage --forbid-path "$PWD/build" --logs build/uqc104/install-launch
+          test "$(sed -n 's/^Exec=//p' build/uqc104/stage/share/dbus-1/services/org.holonight.Chat.service)" = "$PWD/build/uqc104/stage/bin/holonight-chat"
 
       - name: QML lint
         run: cmake --build build --target qml-lint
@@ -72,30 +89,30 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install config-provider build dependency
-        run: pacman -S --noconfirm ripgrep tomlplusplus
+        run: pacman -S --noconfirm ripgrep tomlplusplus dbus python
 
       - name: Checkout holonight-config dependency
         uses: actions/checkout@v4
         with:
           repository: lebedenko/holonight-config
-          ref: 5cd36ec9986801c4b831527a38e7b7414b9a1312
+          ref: fe69a59e6b73167fd5349223a4d265d75386c139
           path: holonight-config-dep
 
       - name: Checkout holonight-qt dependency
         uses: actions/checkout@v4
         with:
           repository: lebedenko/holonight-qt
-          ref: a45f7552054abbc6cbd66609e802b43b9b8ee894
+          ref: 50c59558bb3817f57a992dd72730dba141db1bc8
           path: holonight-qt-dep
 
       - name: Build and install pinned dependencies
         run: |
-          cmake -S holonight-config-dep -B holonight-config-dep/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
-          cmake --build holonight-config-dep/build --parallel
-          cmake --install holonight-config-dep/build --prefix /usr
-          cmake -S holonight-qt-dep -B holonight-qt-dep/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/usr
-          cmake --build holonight-qt-dep/build --parallel
-          cmake --install holonight-qt-dep/build --prefix /usr
+          cmake -S holonight-config-dep -B build/dependencies/config -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+          cmake --build build/dependencies/config --parallel
+          cmake --install build/dependencies/config --prefix "$PWD/build/dependencies/prefix"
+          cmake -S holonight-qt-dep -B build/dependencies/qt -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$PWD/build/dependencies/prefix" -DBUILD_TESTS=OFF -DBUILD_DEMO=OFF -DBUILD_CONTROLS_GALLERY=OFF -DBUILD_WAYLAND=ON
+          cmake --build build/dependencies/qt --parallel
+          cmake --install build/dependencies/qt --prefix "$PWD/build/dependencies/prefix"
 
       - name: Configure
         run: >
@@ -103,6 +120,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           -DBUILD_TESTS=ON
+          -DCMAKE_PREFIX_PATH="$PWD/build/dependencies/prefix"
 
       - name: Format check
         run: cmake --build build --target format-check

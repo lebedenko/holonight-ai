@@ -1,6 +1,7 @@
 import QtQuick
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
-import QtQuick.Controls.Basic
+
 import Holonight.Core
 import Holonight.Controls
 
@@ -50,14 +51,14 @@ Item {
             Layout.fillWidth: true
         }
 
-        TextArea {
+        Controls.TextArea {
             objectName: "genericToolPayload"
             Layout.fillWidth: true
             readOnly: true
             selectByMouse: true
             text: root.readablePayload()
-            textFormat: TextArea.PlainText
-            wrapMode: TextArea.Wrap
+            textFormat: Controls.TextArea.PlainText
+            wrapMode: Controls.TextArea.Wrap
             padding: 0
             color: HoloniightPalette.textPrimary
             font.family: HolonightTheme.monospaceFont

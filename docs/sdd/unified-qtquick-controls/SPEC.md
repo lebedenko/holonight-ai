@@ -1,6 +1,6 @@
 # UQC-104: Runtime Qt Quick Controls adoption
 
-Status: Accepted design; implementation pending
+Status: Implemented and locally verified
 Date: 2026-09-08
 
 ## Baselines and scope

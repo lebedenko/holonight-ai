@@ -10,44 +10,7 @@ set_target_properties(holonight-chat PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}"
 )
 
-file(GLOB_RECURSE HOLONIGHT_CHAT_QML_FILES
-    LIST_DIRECTORIES false
-    CONFIGURE_DEPENDS
-    "${PROJECT_SOURCE_DIR}/qml/*.qml"
-)
-list(SORT HOLONIGHT_CHAT_QML_FILES)
-
-foreach(qml_file IN LISTS HOLONIGHT_CHAT_QML_FILES)
-    cmake_path(RELATIVE_PATH qml_file
-        BASE_DIRECTORY "${PROJECT_SOURCE_DIR}/qml"
-        OUTPUT_VARIABLE qml_alias)
-    set_source_files_properties("${qml_file}" PROPERTIES QT_RESOURCE_ALIAS "${qml_alias}")
-endforeach()
-
-file(GLOB HOLONIGHT_CHAT_PROVIDER_ICONS
-    CONFIGURE_DEPENDS
-    "${PROJECT_SOURCE_DIR}/assets/providers/*.svg"
-)
-list(SORT HOLONIGHT_CHAT_PROVIDER_ICONS)
-
-file(GLOB HOLONIGHT_CHAT_ACTION_ICONS
-    CONFIGURE_DEPENDS
-    "${PROJECT_SOURCE_DIR}/assets/icons/*.svg"
-)
-list(SORT HOLONIGHT_CHAT_ACTION_ICONS)
-
-set(HOLONIGHT_CHAT_ICONS
-    ${HOLONIGHT_CHAT_PROVIDER_ICONS}
-    ${HOLONIGHT_CHAT_ACTION_ICONS}
-    "${PROJECT_SOURCE_DIR}/assets/holonight-ai.svg"
-)
-
-foreach(icon_file IN LISTS HOLONIGHT_CHAT_ICONS)
-    cmake_path(RELATIVE_PATH icon_file
-        BASE_DIRECTORY "${PROJECT_SOURCE_DIR}"
-        OUTPUT_VARIABLE icon_alias)
-    set_source_files_properties("${icon_file}" PROPERTIES QT_RESOURCE_ALIAS "${icon_alias}")
-endforeach()
+include("${PROJECT_SOURCE_DIR}/cmake/ChatQmlInventory.cmake")
 
 qt_add_qml_module(holonight-chat
     URI HolonightChat
@@ -147,6 +110,8 @@ _qt_internal_qml_type_registration(holonight-chat)
 target_compile_definitions(holonight-chat PRIVATE
     HOLONIGHT_CHAT_VERSION="${PROJECT_VERSION}"
     HOLONIGHT_QML_IMPORT_PATH="${HOLONIGHT_QML_IMPORT_PATH}"
+    HOLONIGHT_BUILD_EXECUTABLE="$<TARGET_FILE:holonight-chat>"
+    HOLONIGHT_INSTALL_QML_PATH="../${CMAKE_INSTALL_LIBDIR}/qt6/qml"
 )
 
 target_include_directories(holonight-chat PRIVATE
@@ -166,3 +131,6 @@ install(
     FILES "${CMAKE_CURRENT_BINARY_DIR}/org.holonight.Chat.service"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/dbus-1/services"
 )
+
+qt_add_resources(holonight-chat controls_style_config
+    PREFIX "/" FILES qtquickcontrols2.conf)

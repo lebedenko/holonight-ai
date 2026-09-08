@@ -1,9 +1,8 @@
 import QtQuick
-import QtQuick.Controls.Basic as QQC2
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import Holonight.Core
 import Holonight.Controls
-import Holonight
 
 RowLayout {
     id: root
@@ -19,7 +18,7 @@ RowLayout {
     objectName: "composerActions"
     spacing: compact ? HnMetrics.internalSpacing(HnControlSize.Normal) / 2 : HnMetrics.internalSpacing(HnControlSize.Normal)
 
-    Button {
+    Controls.Button {
         objectName: "attachmentButton"
         visible: !root.compact
         enabled: false
@@ -31,7 +30,7 @@ RowLayout {
         Accessible.description: qsTr("File attachments are not available yet")
     }
 
-    Button {
+    Controls.Button {
         objectName: "contextButton"
         visible: !root.compact
         enabled: false
@@ -42,7 +41,7 @@ RowLayout {
         Accessible.description: qsTr("Context folder selection is not available yet")
     }
 
-    Button {
+    Controls.Button {
         objectName: "toolsButton"
         visible: !root.compact
         enabled: false
@@ -58,7 +57,7 @@ RowLayout {
         Layout.minimumWidth: 0
     }
 
-    Button {
+    Controls.Button {
         objectName: "retryButton"
         visible: root.showRetryAction && root.canRegenerate
         text: qsTr("Retry")
@@ -75,7 +74,7 @@ RowLayout {
         elide: Text.ElideRight
     }
 
-    Button {
+    Controls.Button {
         objectName: "sendButton"
         highlighted: true
         text: qsTr("Send")

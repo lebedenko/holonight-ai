@@ -7,6 +7,8 @@
 
 #include <QDBusConnection>
 #include <QDBusInterface>
+#include <QDir>
+#include <QFileInfo>
 #include <QObject>
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -21,7 +23,12 @@ ChatApplication::ChatApplication(int& argc, char** argv)
   setApplicationVersion(QStringLiteral(HOLONIGHT_CHAT_VERSION));
   setQuitOnLastWindowClosed(false);
 
-  engine_->addImportPath(QStringLiteral(HOLONIGHT_QML_IMPORT_PATH));
+  if (QFileInfo{applicationFilePath()}.canonicalFilePath() ==
+      QFileInfo{QStringLiteral(HOLONIGHT_BUILD_EXECUTABLE)}.canonicalFilePath()) {
+    engine_->addImportPath(QStringLiteral(HOLONIGHT_QML_IMPORT_PATH));
+  } else {
+    engine_->addImportPath(QDir{applicationDirPath()}.absoluteFilePath(QStringLiteral(HOLONIGHT_INSTALL_QML_PATH)));
+  }
   engine_->rootContext()->setContextProperty(QStringLiteral("ChatApplication"), this);
 
   QDBusConnection bus = QDBusConnection::sessionBus();

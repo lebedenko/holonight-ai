@@ -1,11 +1,10 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls.Basic
+import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import Holonight.Core
 import Holonight.Controls
-import Holonight as H
 
 HnApplicationWindow {
     id: root
@@ -90,13 +89,13 @@ HnApplicationWindow {
         function onCloseApproved(): void { root.close() }
     }
 
-    Dialog {
+    Controls.Dialog {
         objectName: "dirtyNavigationDialog"
         anchors.centerIn: parent
         modal: true
         visible: root.providerController.navigationPromptVisible
         padding: HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
-        standardButtons: Dialog.NoButton
+        standardButtons: Controls.Dialog.NoButton
 
         background: HnSurfaceFrame {
             surfaceRole: HnSurfaceRole.Popup
@@ -116,19 +115,19 @@ HnApplicationWindow {
             RowLayout {
                 spacing: HnMetrics.internalSpacing(HnControlSize.Normal)
 
-                H.Button {
+                Controls.Button {
                     objectName: "cancelDirtyNavigationButton"
                     Layout.fillWidth: true
                     text: qsTr("Cancel")
                     onClicked: root.providerController.cancelNavigation()
                 }
-                H.Button {
+                Controls.Button {
                     objectName: "discardDirtyNavigationButton"
                     Layout.fillWidth: true
                     text: qsTr("Discard")
                     onClicked: root.providerController.discardAndContinue()
                 }
-                H.Button {
+                Controls.Button {
                     objectName: "saveDirtyNavigationButton"
                     Layout.fillWidth: true
                     text: qsTr("Save")
