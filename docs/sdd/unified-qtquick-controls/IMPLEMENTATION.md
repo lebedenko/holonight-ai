@@ -143,3 +143,19 @@ origin/main and confirmed by `git ls-remote origin refs/heads/main` on 2026-09-0
 The AI working tree was clean after publication. This documentation checkpoint
 completes the repository-local handoff; the umbrella coordinator may pin its
 published revision and mark UQC-104 Done. UQC-201 remains the ecosystem gate.
+
+## UQC-108 — adopt the clean-build provider repair (2026-09-08)
+
+Assigned AI baseline `2834665e4c8b9c7681e56a2c8238310f1b6b3157`; provider correction
+`cdc44718fcf1fb4a601c38c8fbf9c8b1ded571cd` was published and pinned before this follow-up.
+Taskfile and both CI jobs now use that exact provider; configuration remains
+`fe69a59e6b73167fd5349223a4d265d75386c139`. No application behavior changes.
+The prior CI run `34251906896` failed building the provider's direct configuration include;
+the provider now declares that dependency and verifies privately staged Release builds.
+Local acceptance passed: 5/5 focused runtime/policy checks; 714 CTest entries (713 executed passes,
+one opt-in real credential skip); 59/59 existing QML checks under each style; four build and four installed
+launch modes with implementation/plugin evidence and isolated HOME/XDG/private bus. Format, QML lint/types
+and full tidy pass. Commands repeat the UQC-104 acceptance above using `task configure-tests NPROC=6`,
+`cmake --build build -j 6`, CTest `-j 6` (full) / `-j 4` (focused and dual style), and launch logs under
+`build/uqc108`. Staging remains `build/uqc104/stage`. No live provider, credentials or desktop activation.
+Remote acceptance remains pending.

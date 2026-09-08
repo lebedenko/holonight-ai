@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: lebedenko/holonight-qt
-          ref: 50c59558bb3817f57a992dd72730dba141db1bc8
+          ref: cdc44718fcf1fb4a601c38c8fbf9c8b1ded571cd
           path: holonight-qt-dep
 
       - name: Build and install pinned dependencies
@@ -102,7 +102,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: lebedenko/holonight-qt
-          ref: 50c59558bb3817f57a992dd72730dba141db1bc8
+          ref: cdc44718fcf1fb4a601c38c8fbf9c8b1ded571cd
           path: holonight-qt-dep
 
       - name: Build and install pinned dependencies
