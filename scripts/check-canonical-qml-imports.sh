@@ -6,6 +6,11 @@ source_dir=${1:-.}
 qml_dir="${source_dir}/qml"
 failed=0
 
+if rg -n '\bHnSelectableDelegate\b' "${qml_dir}"; then
+  echo "Use public composite types and enums instead of internal HnSelectableDelegate" >&2
+  failed=1
+fi
+
 core_types='\b(HoloniightPalette|HolonightTheme|HnAppearance|HnShapeProfile|HnSurfaceRole|HnCornerStyle|HnShapeKind|HnCornerMask|HnIconProvider|HnIcon)\b'
 controls_types='\b(HnSurfaceFrame|HnApplicationWindow|HnSearchField|HnIconComboBox|HnTextArea|HnFormField|HnSettingsRow|HnSectionHeader|HnEmptyState|HnLoadingState|HnNavigationDelegate|HnListDelegate|HnCardDelegate|HnActionDelegate|HnStatusIndicator|HnKeyHint|HnPanelHeader|HnSegmentedControl|HnChoiceCard|HnActionBar|HnSeparator)\b'
 runtime_types='ApplicationWindow|Label|ToolButton|ToolBar|ToolSeparator|MenuSeparator|Popup|MenuBar|MenuBarItem|Button|CheckBox|ComboBox|ItemDelegate|Menu|MenuItem|ProgressBar|RadioButton|ScrollBar|ScrollView|Slider|SpinBox|Switch|TabBar|TabButton|TextArea|TextField|ToolTip|Control|ButtonGroup|Overlay|RangeSlider|Frame|Pane|Page|Dialog|DialogButtonBox|BusyIndicator|SwipeView|StackView|Action|ActionGroup|RoundButton|DelayButton|Tumbler|SplitView'

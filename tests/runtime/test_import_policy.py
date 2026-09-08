@@ -16,6 +16,7 @@ with tempfile.TemporaryDirectory() as directory:
     path = fixture / "qml/PolicyFixture.qml"
     for source in [
         "import Holonight as H\nH.Button {}",
+        "import Holonight.Controls\nHnListDelegate { selectionStyle: HnSelectableDelegate.Outline }",
         "import QtQuick.Controls.Basic as B\nB.Button {}",
         "import QtQuick.Controls\nButton {}",
         "import QtQuick.Controls as Wrong\nWrong.Button {}",

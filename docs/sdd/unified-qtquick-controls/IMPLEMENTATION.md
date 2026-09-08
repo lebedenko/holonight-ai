@@ -159,3 +159,11 @@ and full tidy pass. Commands repeat the UQC-104 acceptance above using `task con
 `cmake --build build -j 6`, CTest `-j 6` (full) / `-j 4` (focused and dual style), and launch logs under
 `build/uqc108`. Staging remains `build/uqc104/stage`. No live provider, credentials or desktop activation.
 Remote acceptance remains pending.
+
+### Installed public-enum correction
+
+AI CI `34264138449` passes dependency/application compilation but its two runtime fixtures reject
+`ProviderListDelegate.qml:23: ReferenceError: HnSelectableDelegate is not defined` under Qt 6.11.1.
+Use the inherited enum through public `HnListDelegate.Outline`. The canonical policy now rejects internal
+HnSelectableDelegate references with an independently failing fixture. This preserves outlined selection
+while removing an installed-module violation that local Qt 6.11.2 did not expose. Remote CI must pass before handoff.

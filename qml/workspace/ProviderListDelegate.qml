@@ -20,7 +20,7 @@ HnListDelegate {
     subtitle: root.providerEnabled ? qsTr("Enabled") : qsTr("Disabled")
     subtitlePresentation: HnListDelegate.SingleLine
     checked: root.isSelected
-    selectionStyle: HnSelectableDelegate.Outline
+    selectionStyle: HnListDelegate.Outline
     leadingContentAlignment: Qt.AlignVCenter
     leadingContent: Component {
         ProviderIcon {
