@@ -167,3 +167,11 @@ AI CI `34264138449` passes dependency/application compilation but its two runtim
 Use the inherited enum through public `HnListDelegate.Outline`. The canonical policy now rejects internal
 HnSelectableDelegate references with an independently failing fixture. This preserves outlined selection
 while removing an installed-module violation that local Qt 6.11.2 did not expose. Remote CI must pass before handoff.
+
+### Source-test discovery correction
+
+CI `34266081919` passes the complete suite, then seven BottomAnchoredListView tests fail only when explicitly
+selecting Holonight: these source-only engines never added the configured provider import path. Set the test
+process QML_IMPORT_PATH from the existing configured macro before constructing QGuiApplication, so all test
+engines and direct test-binary invocations discover the same pinned provider. No production discovery change.
+Verify both source QML selections with the host provider QML directory hidden to prevent another masked local pass.
