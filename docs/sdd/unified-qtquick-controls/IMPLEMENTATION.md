@@ -147,7 +147,7 @@ published revision and mark UQC-104 Done. UQC-201 remains the ecosystem gate.
 ## UQC-108 — adopt the clean-build provider repair (2026-09-08)
 
 Assigned AI baseline `2834665e4c8b9c7681e56a2c8238310f1b6b3157`; provider correction
-`cdc44718fcf1fb4a601c38c8fbf9c8b1ded571cd` was published and pinned before this follow-up.
+`478ef7c40a22c7c3f7ea6f45d9205411b5504834` was published and pinned before this follow-up.
 Taskfile and both CI jobs now use that exact provider; configuration remains
 `fe69a59e6b73167fd5349223a4d265d75386c139`. No application behavior changes.
 The prior CI run `34251906896` failed building the provider's direct configuration include;
