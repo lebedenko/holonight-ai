@@ -6,4 +6,4 @@
 - [x] Align policy, fixtures, Taskfile, CI and usage instructions.
 - [x] Add isolated dual-style application acceptance and production launch matrix.
 - [x] Run focused, full and static verification; record exact results and limitations.
-- [ ] Publish verified AI handoff for umbrella pinning.
+- [x] Publish verified AI handoff for umbrella pinning.

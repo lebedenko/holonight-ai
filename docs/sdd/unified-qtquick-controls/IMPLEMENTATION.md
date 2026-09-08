@@ -1,7 +1,7 @@
 # UQC-104 implementation and local acceptance
 
 Date: 2026-09-08
-Status: Local acceptance passed; publication pending
+Status: Local acceptance passed; implementation published
 
 ## Publication and baselines
 
@@ -135,3 +135,11 @@ Live layer-shell, human-operated Hyprland/Sway, real third-party application and
 ecosystem activation acceptance remain UQC-201. No system installation or other
 consumer implementation is included. The real Secret Service integration test is
 opt-in and deliberately skipped; no live credential test was requested.
+
+## Published handoff
+
+Implementation `286df4791c651ab8842f0d8f278eac9d4f803b81` was pushed to canonical
+origin/main and confirmed by `git ls-remote origin refs/heads/main` on 2026-09-08.
+The AI working tree was clean after publication. This documentation checkpoint
+completes the repository-local handoff; the umbrella coordinator may pin its
+published revision and mark UQC-104 Done. UQC-201 remains the ecosystem gate.
