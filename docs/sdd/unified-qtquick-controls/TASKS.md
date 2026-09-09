@@ -7,3 +7,8 @@
 - [x] Add isolated dual-style application acceptance and production launch matrix.
 - [x] Run focused, full and static verification; record exact results and limitations.
 - [x] Publish verified AI handoff for umbrella pinning.
+
+## Supplemental work
+
+See [UQC-203 tasks and verification](UQC-203.md) for the style-aware composer
+geometry repair and integrated provider alignment.

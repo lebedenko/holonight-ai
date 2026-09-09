@@ -37,3 +37,8 @@ tool executions. Fixtures must finish deterministically; production observation
 is bounded and successful processes explicitly terminated and reaped. Early exits,
 crashes, missing evidence, unexpected QML diagnostics and timeouts fail.
 Live layer-shell, human-operated Hyprland/Sway and ecosystem activation belong to UQC-201.
+
+## Supplemental acceptance
+
+[UQC-203](UQC-203.md) preserves native composer control sizing across HoloNight
+and Fusion and verifies polished row geometry against the integrated provider.
