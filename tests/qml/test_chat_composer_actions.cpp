@@ -59,6 +59,10 @@ TEST_F(ChatComposerActionsQml, PreservesDesktopAndCompactPresentation) {
     child->ensurePolished();
   }
   row->ensurePolished();
+  // Native font metrics can require more space than the fixture's default width.
+  row->setWidth(qMax(row->width(), row->implicitWidth()));
+  window.setWidth(qRound(row->width()));
+  row->ensurePolished();
 
   auto* attachment = actions->findChild<QQuickItem*>(QStringLiteral("attachmentButton"));
   auto* context = actions->findChild<QQuickItem*>(QStringLiteral("contextButton"));
