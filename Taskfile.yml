@@ -7,7 +7,7 @@ vars:
   HOLONIGHT_QT_DIR: '{{.TASKFILE_DIR}}/{{.BUILD_DIR}}/dependencies/prefix/lib/cmake/HolonightQt'
   HOLONIGHT_QT_BUILD_DIR: '{{.BUILD_DIR}}/dependencies/qt'
   HOLONIGHT_QT_SOURCE: '{{default "../holonight-qt" .HOLONIGHT_QT_SOURCE}}'
-  HOLONIGHT_QT_REVISION: 478ef7c40a22c7c3f7ea6f45d9205411b5504834
+  HOLONIGHT_QT_REVISION: 00e6e208b6c9b30d89b66ef3aeb4ef8175050764
   HOLONIGHT_CONFIG_PREFIX: '{{.TASKFILE_DIR}}/{{.BUILD_DIR}}/dependencies/prefix'
   HOLONIGHT_CONFIG_BUILD_DIR: '{{.BUILD_DIR}}/dependencies/config'
   HOLONIGHT_CONFIG_SOURCE: '{{default "../holonight-config" .HOLONIGHT_CONFIG_SOURCE}}'

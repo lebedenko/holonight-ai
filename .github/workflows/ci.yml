@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: lebedenko/holonight-qt
-          ref: 478ef7c40a22c7c3f7ea6f45d9205411b5504834
+          ref: 00e6e208b6c9b30d89b66ef3aeb4ef8175050764
           path: holonight-qt-dep
 
       - name: Build and install pinned dependencies
@@ -57,6 +57,14 @@ jobs:
 
       - name: Test
         run: ctest --test-dir build --output-on-failure --no-tests=error
+
+      - name: Composer geometry under both styles and scales
+        run: |
+          for style in Holonight Fusion; do
+            for scale in 1 1.25; do
+              QT_QUICK_CONTROLS_STYLE="$style" QT_SCALE_FACTOR="$scale" ctest --test-dir build -R ChatComposerActionsQml --output-on-failure --no-tests=error
+            done
+          done
 
       - name: Existing QML suites under both styles
         run: |
@@ -102,7 +110,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: lebedenko/holonight-qt
-          ref: 478ef7c40a22c7c3f7ea6f45d9205411b5504834
+          ref: 00e6e208b6c9b30d89b66ef3aeb4ef8175050764
           path: holonight-qt-dep
 
       - name: Build and install pinned dependencies

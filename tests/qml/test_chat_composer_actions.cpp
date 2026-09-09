@@ -2,9 +2,11 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QQmlComponent>
+#include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlProperty>
 #include <QQuickItem>
+#include <QQuickWindow>
 #include <QSignalSpy>
 #include <QTest>
 #include <QUrl>
@@ -43,9 +45,20 @@ class ChatComposerActionsQml : public testing::Test {
 };
 
 TEST_F(ChatComposerActionsQml, PreservesDesktopAndCompactPresentation) {
+  QQuickWindow window;
+  window.resize(800, 100);
   auto actions = create();
   ASSERT_NE(actions, nullptr);
   EXPECT_EQ(actions->objectName(), QStringLiteral("composerActions"));
+  auto* row = qobject_cast<QQuickItem*>(actions.get());
+  ASSERT_NE(row, nullptr);
+  row->setParentItem(window.contentItem());
+  window.show();
+  ASSERT_TRUE(QTest::qWaitForWindowExposed(&window));
+  for (auto* child : row->childItems()) {
+    child->ensurePolished();
+  }
+  row->ensurePolished();
 
   auto* attachment = actions->findChild<QQuickItem*>(QStringLiteral("attachmentButton"));
   auto* context = actions->findChild<QQuickItem*>(QStringLiteral("contextButton"));
@@ -66,8 +79,36 @@ TEST_F(ChatComposerActionsQml, PreservesDesktopAndCompactPresentation) {
   EXPECT_TRUE((QQmlProperty{attachment, QStringLiteral("icon.color")}.isValid()));
   EXPECT_TRUE((QQmlProperty{context, QStringLiteral("icon.color")}.isValid()));
   EXPECT_TRUE((QQmlProperty{tools, QStringLiteral("icon.color")}.isValid()));
-  EXPECT_EQ(attachment->implicitHeight(), context->implicitHeight());
-  EXPECT_EQ(attachment->implicitHeight(), tools->implicitHeight());
+  auto* background = attachment->property("background").value<QObject*>();
+  ASSERT_NE(background, nullptr);
+  auto* background_context = qmlContext(background);
+  ASSERT_NE(background_context, nullptr);
+  if (background_context->baseUrl().toString().contains(QStringLiteral("/Holonight/"))) {
+    EXPECT_EQ(attachment->implicitHeight(), context->implicitHeight());
+    EXPECT_EQ(attachment->implicitHeight(), tools->implicitHeight());
+    EXPECT_EQ(attachment->height(), context->height());
+    EXPECT_EQ(attachment->height(), tools->height());
+  }
+  EXPECT_GT(row->width(), 0);
+  EXPECT_GT(row->height(), 0);
+  qreal previous_right = 0;
+  for (const auto* name :
+       {"attachmentButton", "contextButton", "toolsButton", "retryButton", "composerHint", "sendButton"}) {
+    auto* control = row->findChild<QQuickItem*>(QString::fromLatin1(name));
+    ASSERT_NE(control, nullptr) << name;
+    SCOPED_TRACE(name);
+    EXPECT_GT(control->implicitWidth(), 0);
+    EXPECT_GT(control->implicitHeight(), 0);
+    EXPECT_GT(control->width(), 0);
+    EXPECT_GT(control->height(), 0);
+    EXPECT_GE(control->x(), previous_right);
+    EXPECT_GE(control->y(), 0);
+    EXPECT_LE(control->x() + control->width(), row->width());
+    EXPECT_LE(control->y() + control->height(), row->height());
+    EXPECT_NEAR(control->y() + (control->height() / 2), row->height() / 2, 1);
+    previous_right = control->x() + control->width();
+  }
+  EXPECT_EQ(attachment->width(), attachment->height());
   EXPECT_EQ(attachment->implicitWidth(), attachment->implicitHeight());
   EXPECT_EQ(iconSource(attachment), QUrl{QStringLiteral("qrc:/qt/qml/Holonight/Controls/assets/paperclip.svg")});
   EXPECT_EQ(iconSource(context), QUrl{QStringLiteral("qrc:/qt/qml/Holonight/Controls/assets/folder.svg")});
@@ -75,6 +116,7 @@ TEST_F(ChatComposerActionsQml, PreservesDesktopAndCompactPresentation) {
 
   actions->setProperty("compact", true);
   QCoreApplication::processEvents();
+  row->ensurePolished();
   EXPECT_FALSE(attachment->property("visible").toBool());
   EXPECT_FALSE(context->property("visible").toBool());
   EXPECT_FALSE(tools->property("visible").toBool());
