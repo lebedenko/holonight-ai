@@ -181,6 +181,7 @@ HnSurfaceFrame {
             }
 
             HnSeparator {
+                crossAxisAlignment: HnSeparator.Trailing
                 Layout.fillWidth: true
                 Layout.leftMargin: -HnMetrics.horizontalPadding(HnControlSize.Normal) * 2
                 Layout.rightMargin: -HnMetrics.horizontalPadding(HnControlSize.Normal) * 2

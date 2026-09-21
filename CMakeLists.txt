@@ -228,8 +228,11 @@ if(CLANG_TIDY)
 endif()
 
 if(QMLLINT)
+  cmake_path(ABSOLUTE_PATH QT6_INSTALL_QML BASE_DIRECTORY "${QT6_INSTALL_PREFIX}"
+             OUTPUT_VARIABLE HOLONIGHT_QT_QML_DIR)
   add_custom_target(qml-lint
         COMMAND ${QMLLINT}
+            --bare
             --max-warnings 0
             --unqualified disable
             --unused-imports disable
@@ -237,6 +240,7 @@ if(QMLLINT)
             -I "${CMAKE_CURRENT_BINARY_DIR}/apps/chat"
             -I "${CMAKE_BINARY_DIR}"
             -I "${HOLONIGHT_QML_IMPORT_PATH}"
+            -I "${HOLONIGHT_QT_QML_DIR}"
             ${ALL_QML_FILES}
         DEPENDS
             holonight-chat_qmltyperegistration

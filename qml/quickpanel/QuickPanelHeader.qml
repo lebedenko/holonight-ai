@@ -104,6 +104,7 @@ HnHeaderBar {
             }
 
             HnSeparator {
+                crossAxisAlignment: HnSeparator.Trailing
                 Layout.fillWidth: true
                 color: HoloniightPalette.borderPassive
             }
