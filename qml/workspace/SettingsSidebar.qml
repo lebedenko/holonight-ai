@@ -61,6 +61,7 @@ HnSurfaceFrame {
                 leadingContent: Component {
                     HnIcon {
                         source: "qrc:/HolonightChat/assets/icons/settings-" + entryDelegate.modelData.icon + ".svg"
+                        rendering: HnIcon.Semantic
                         size: 20
                         iconState: entryDelegate.checked ? HnIcon.Active
                             : (entryDelegate.enabled ? HnIcon.Normal : HnIcon.Disabled)

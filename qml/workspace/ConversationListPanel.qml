@@ -103,6 +103,7 @@ HnSurfaceFrame {
                 leadingContent: Component {
                     HnIcon {
                         source: "qrc:/HolonightChat/assets/icons/pin.svg"
+                        rendering: HnIcon.Semantic
                         size: 16
                         iconState: HnIcon.Muted
                     }
@@ -148,6 +149,7 @@ HnSurfaceFrame {
                 leadingContent: Component {
                     HnIcon {
                         source: "qrc:/HolonightChat/assets/icons/recent.svg"
+                        rendering: HnIcon.Semantic
                         size: 16
                         iconState: HnIcon.Muted
                     }

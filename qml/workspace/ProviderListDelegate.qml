@@ -33,6 +33,7 @@ HnListDelegate {
     trailingContent: Component {
         HnIcon {
             source: "qrc:/HolonightChat/assets/icons/chevron-right.svg"
+            rendering: HnIcon.Semantic
             size: 16
             iconState: root.isSelected ? HnIcon.Active : HnIcon.Muted
         }

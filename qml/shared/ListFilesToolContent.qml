@@ -111,6 +111,7 @@ Item {
                         source: modelData.kind === "directory"
                                 ? "qrc:/qt/qml/Holonight/Controls/assets/folder.svg"
                                 : "qrc:/HolonightChat/assets/icons/documentation.svg"
+                        rendering: HnIcon.Semantic
                         size: 16
                         iconState: HnIcon.Muted
                     }

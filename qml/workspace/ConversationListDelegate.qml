@@ -40,6 +40,7 @@ HnNavigationDelegate {
     leadingContent: Component {
         HnIcon {
             source: "qrc:/HolonightChat/assets/icons/chat.svg"
+            rendering: HnIcon.Semantic
             size: 16
             iconState: HnIcon.Muted
         }
@@ -78,6 +79,7 @@ HnNavigationDelegate {
                 HnIcon {
                     id: namingIcon
                     source: "qrc:/HolonightChat/assets/icons/refresh.svg"
+                    rendering: HnIcon.Semantic
                     size: 14
                     iconState: HnIcon.Active
 
