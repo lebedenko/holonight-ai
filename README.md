@@ -53,7 +53,7 @@ All workflows go through [`task`](https://taskfile.dev):
 
 ```bash
 task configure    # configure CMake
-task build        # build build/holonight-chat
+task build        # build build/debug/holonight-chat
 task run          # build and launch the window
 task test         # build and run unit tests
 task format       # auto-format with clang-format
@@ -67,7 +67,7 @@ task clean        # remove build/
 
 `task build:qt-dependency` (a dependency of most other tasks) builds and installs the sibling
 `../holonight-qt` and `../holonight-config` checkouts at the exact revisions in Taskfile.yml.
-Dependencies are built and staged under `build/dependencies/`, with provider tests/examples off
+Dependencies are built and staged under `build/deps/`, with provider tests/examples off
 and Wayland support enabled. `HolonightQt_DIR` determines the QML path used by tests and lint.
 
 ```bash
@@ -344,3 +344,8 @@ instance — falling through silently (no error) at each unusable tier.
 ## License
 
 GPL-3.0-or-later — see [LICENSE](LICENSE).
+
+## Standalone developer tooling
+
+See [tooling/README.md](tooling/README.md) for presets, local dependency overrides, editor refresh,
+`task tooling:doctor`, and the independent Serena project.

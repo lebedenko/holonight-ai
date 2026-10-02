@@ -16,7 +16,7 @@ under `qml/shared/`, `qml/workspace/`, `qml/quickpanel/`. Design/architecture no
 Use `task` as the primary workflow:
 
 - `task configure` configures a Debug CMake/Ninja build and writes `compile_commands.json`.
-- `task build` builds `build/holonight-chat`.
+- `task build` builds `build/debug/holonight-chat`.
 - `task run` builds and launches the window.
 - `task test` configures tests, builds them, and runs `ctest --output-on-failure`.
 - `task coverage` generates an HTML coverage report in `build/coverage/index.html`.
@@ -25,7 +25,7 @@ Use `task` as the primary workflow:
 - `task clean` removes `build/` after confirmation.
 
 All of the above depend on `task build:qt-dependency`, which builds and installs the sibling
-`../holonight-qt` checkout to `build/dependencies/prefix`.
+`../holonight-qt` checkout to `build/deps/prefix`.
 
 ## Coding Style & Naming Conventions
 
@@ -62,3 +62,6 @@ composites remain explicit `Holonight.Core` and `Holonight.Controls` APIs. The e
 dependency path; installed execution discovers `../lib/qt6/qml` relative to the executable
 (using the configured install libdir). Activation paths are fixed at CMake configure time.
 See [UQC-104 acceptance](docs/sdd/unified-qtquick-controls/SPEC.md).
+
+Developer tooling uses `build/debug`, `build/test`, `build/release` and module-owned `build/deps`.
+See tooling/README.md; run task tooling:refresh explicitly after configuring/building for editor metadata.

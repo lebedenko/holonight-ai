@@ -1,232 +1,188 @@
-version: "3"
-
+version: '3'
 vars:
-  BUILD_DIR: build
-  RELEASE_BUILD_DIR: build-release
-  HOLONIGHT_QT_PREFIX: '{{.TASKFILE_DIR}}/{{.BUILD_DIR}}/dependencies/prefix'
-  HOLONIGHT_QT_DIR: '{{.TASKFILE_DIR}}/{{.BUILD_DIR}}/dependencies/prefix/lib/cmake/HolonightQt'
-  HOLONIGHT_QT_BUILD_DIR: '{{.BUILD_DIR}}/dependencies/qt'
+  BUILD_DIR: build/debug
+  RELEASE_BUILD_DIR: build/release
+  HOLONIGHT_QT_PREFIX: '{{default (printf "%s/build/deps/prefix" .TASKFILE_DIR) .HOLONIGHT_DEPENDENCY_PREFIX}}'
+  HOLONIGHT_QT_DIR: '{{.TASKFILE_DIR}}/build/deps/prefix/lib/cmake/HolonightQt'
+  HOLONIGHT_QT_BUILD_DIR: build/deps/holonight-qt
   HOLONIGHT_QT_SOURCE: '{{default "../holonight-qt" .HOLONIGHT_QT_SOURCE}}'
   HOLONIGHT_QT_REVISION: 0d5bdf094e6e759210531c4babdd2023e5d56485
-  HOLONIGHT_CONFIG_PREFIX: '{{.TASKFILE_DIR}}/{{.BUILD_DIR}}/dependencies/prefix'
-  HOLONIGHT_CONFIG_BUILD_DIR: '{{.BUILD_DIR}}/dependencies/config'
+  HOLONIGHT_CONFIG_PREFIX: '{{default (printf "%s/build/deps/prefix" .TASKFILE_DIR) .HOLONIGHT_DEPENDENCY_PREFIX}}'
+  HOLONIGHT_CONFIG_BUILD_DIR: build/deps/holonight-config
   HOLONIGHT_CONFIG_SOURCE: '{{default "../holonight-config" .HOLONIGHT_CONFIG_SOURCE}}'
   HOLONIGHT_CONFIG_REVISION: 03fa635cedc506e101a148fc54f7eb46d17c6de5
   SCALE_FACTOR: '{{default "1.0" .SCALE_FACTOR}}'
   NPROC:
     sh: nproc
-
+  PRESET: '{{default "debug" .PRESET}}'
 tasks:
   license-check:
     desc: Validate REUSE licensing metadata
-    cmds: [reuse lint]
-
+    cmds:
+    - reuse lint
   configure:
-    desc: Configure CMake (debug, no tests)
-    deps: [build:qt-dependency]
+    desc: configure using standalone tooling
     cmds:
-      - cmake -B {{.BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DENABLE_COVERAGE=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_PREFIX_PATH={{.HOLONIGHT_QT_PREFIX}} -DHolonightQt_DIR={{.HOLONIGHT_QT_DIR}} -S .
-      - ln -sf {{.BUILD_DIR}}/compile_commands.json .
-
+    - python3 tooling/workflow.py configure --preset {{.PRESET}}
   configure:release:
-    desc: Configure (Release)
-    deps: [build:qt-dependency]
+    desc: configure using standalone tooling
     cmds:
-      - |
-        if [ -f "{{.RELEASE_BUILD_DIR}}/CMakeCache.txt" ] && ! grep -Fxq "CMAKE_HOME_DIRECTORY:INTERNAL={{.TASKFILE_DIR}}" "{{.RELEASE_BUILD_DIR}}/CMakeCache.txt"; then
-          cmake -E echo "Removing stale {{.RELEASE_BUILD_DIR}} CMake cache from another source directory"
-          cmake -E rm -rf "{{.RELEASE_BUILD_DIR}}"
-        fi
-      - cmake -S . -B {{.RELEASE_BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DCMAKE_PREFIX_PATH={{.HOLONIGHT_QT_PREFIX}} -DHolonightQt_DIR={{.HOLONIGHT_QT_DIR}}
-
+    - python3 tooling/workflow.py configure --preset release
   configure-tests:
-    desc: Configure CMake with tests enabled
-    deps: [build:qt-dependency]
+    desc: configure using standalone tooling
     cmds:
-      - cmake -B {{.BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DENABLE_COVERAGE=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_PREFIX_PATH={{.HOLONIGHT_QT_PREFIX}} -DHolonightQt_DIR={{.HOLONIGHT_QT_DIR}} -S .
-      - ln -sf {{.BUILD_DIR}}/compile_commands.json .
-
+    - python3 tooling/workflow.py configure --preset test
   configure-coverage:
-    desc: Configure CMake with tests and coverage enabled
-    deps: [build:qt-dependency]
+    desc: Configure coverage preset
     cmds:
-      - cmake -B {{.BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DENABLE_COVERAGE=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_PREFIX_PATH={{.HOLONIGHT_QT_PREFIX}} -DHolonightQt_DIR={{.HOLONIGHT_QT_DIR}} -S .
-      - ln -sf {{.BUILD_DIR}}/compile_commands.json .
-
+    - python3 tooling/workflow.py configure --preset coverage
   build:qt-dependency:
-    desc: Build and install holonight-qt debug dependency to {{.TASKFILE_DIR}}/{{.BUILD_DIR}}/dependencies/prefix
-    deps: [build:config-dependency]
+    desc: deps using standalone tooling
     cmds:
-      - |
-        if [ -d "{{.HOLONIGHT_QT_SOURCE}}" ]; then
-          test "$(git -C {{.HOLONIGHT_QT_SOURCE}} rev-parse HEAD)" = "{{.HOLONIGHT_QT_REVISION}}" || {
-            echo "ERROR: holonight-qt must be checked out at {{.HOLONIGHT_QT_REVISION}}" >&2
-            exit 1
-          }
-          if [ -f "{{.HOLONIGHT_QT_BUILD_DIR}}/CMakeCache.txt" ] && ! grep -Fxq "CMAKE_HOME_DIRECTORY:INTERNAL=$(cd {{.HOLONIGHT_QT_SOURCE}} && pwd)" "{{.HOLONIGHT_QT_BUILD_DIR}}/CMakeCache.txt"; then
-            cmake -E echo "Removing stale {{.HOLONIGHT_QT_BUILD_DIR}} CMake cache from another source directory"
-            cmake -E rm -rf "{{.HOLONIGHT_QT_BUILD_DIR}}"
-          fi
-          cmake -S {{.HOLONIGHT_QT_SOURCE}} -B {{.HOLONIGHT_QT_BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -DBUILD_DEMO=OFF -DBUILD_CONTROLS_GALLERY=OFF -DBUILD_WAYLAND=ON -DCMAKE_PREFIX_PATH={{.HOLONIGHT_CONFIG_PREFIX}}
-          cmake --build {{.HOLONIGHT_QT_BUILD_DIR}} -j{{.NPROC}}
-          cmake --install {{.HOLONIGHT_QT_BUILD_DIR}} --prefix {{.HOLONIGHT_QT_PREFIX}}
-        else
-          echo "Warning: holonight-qt not found at ../holonight-qt"
-        fi
-
+    - python3 tooling/workflow.py deps
   build:config-dependency:
-    desc: Build and install the pinned appearance config dependency
+    desc: deps using standalone tooling
     cmds:
-      - |
-        if [ -d "{{.HOLONIGHT_CONFIG_SOURCE}}" ]; then
-          test "$(git -C {{.HOLONIGHT_CONFIG_SOURCE}} rev-parse HEAD)" = "{{.HOLONIGHT_CONFIG_REVISION}}" || {
-            echo "ERROR: holonight-config must be checked out at {{.HOLONIGHT_CONFIG_REVISION}}" >&2
-            exit 1
-          }
-          if [ -f "{{.HOLONIGHT_CONFIG_BUILD_DIR}}/CMakeCache.txt" ] && ! grep -Fxq "CMAKE_HOME_DIRECTORY:INTERNAL=$(cd {{.HOLONIGHT_CONFIG_SOURCE}} && pwd)" "{{.HOLONIGHT_CONFIG_BUILD_DIR}}/CMakeCache.txt"; then
-            cmake -E echo "Removing stale {{.HOLONIGHT_CONFIG_BUILD_DIR}} CMake cache from another source directory"
-            cmake -E rm -rf "{{.HOLONIGHT_CONFIG_BUILD_DIR}}"
-          fi
-          cmake -S {{.HOLONIGHT_CONFIG_SOURCE}} -B {{.HOLONIGHT_CONFIG_BUILD_DIR}} -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=OFF
-          cmake --build {{.HOLONIGHT_CONFIG_BUILD_DIR}} -j{{.NPROC}}
-          cmake --install {{.HOLONIGHT_CONFIG_BUILD_DIR}} --prefix {{.HOLONIGHT_CONFIG_PREFIX}}
-        else
-          echo "Warning: holonight-config not found at ../holonight-config"
-        fi
-
+    - python3 tooling/workflow.py deps
   build:
-    desc: Build the project
-    deps: [configure]
+    desc: build using standalone tooling
     cmds:
-      - cmake --build {{.BUILD_DIR}} -j{{.NPROC}}
-
+    - python3 tooling/workflow.py build --preset {{.PRESET}}
   build:release:
-    desc: Build (Release)
-    deps: [configure:release]
+    desc: build using standalone tooling
     cmds:
-      - cmake --build {{.RELEASE_BUILD_DIR}} -j{{.NPROC}}
-
+    - python3 tooling/workflow.py build --preset release
   run:
     desc: Build and run holonight-chat (SCALE_FACTOR defaults to 1.0)
-    deps: [build]
+    deps:
+    - build
     cmds:
-      - QT_SCALE_FACTOR={{.SCALE_FACTOR}} ./{{.BUILD_DIR}}/holonight-chat
-
+    - QT_SCALE_FACTOR={{.SCALE_FACTOR}} ./{{.BUILD_DIR}}/holonight-chat
   install:local:
     desc: Build and install to ~/.local
-    deps: [build]
+    deps:
+    - build
     cmds:
-      - cmake -B {{.BUILD_DIR}} -DCMAKE_INSTALL_PREFIX="$HOME/.local"
-      - cmake --build {{.BUILD_DIR}} -j{{.NPROC}}
-      - cmake --install {{.BUILD_DIR}}
-
+    - cmake -B {{.BUILD_DIR}} -DCMAKE_INSTALL_PREFIX="$HOME/.local"
+    - cmake --build {{.BUILD_DIR}} -j{{.NPROC}}
+    - cmake --install {{.BUILD_DIR}}
   install:system:
     desc: Install to /usr (requires sudo)
-    deps: [build:release]
+    deps:
+    - build:release
     cmds:
-      - cmake -B {{.RELEASE_BUILD_DIR}} -DCMAKE_INSTALL_PREFIX=/usr
-      - cmake --build {{.RELEASE_BUILD_DIR}} -j{{.NPROC}}
-      - sudo cmake --install {{.RELEASE_BUILD_DIR}}
-
+    - cmake -B {{.RELEASE_BUILD_DIR}} -DCMAKE_INSTALL_PREFIX=/usr
+    - cmake --build {{.RELEASE_BUILD_DIR}} -j{{.NPROC}}
+    - sudo cmake --install {{.RELEASE_BUILD_DIR}}
   test:
-    desc: Build with tests and run ctest
-    deps: [configure-tests]
+    desc: test using standalone tooling
     cmds:
-      - cmake --build {{.BUILD_DIR}} -j{{.NPROC}}
-      - ctest --test-dir {{.BUILD_DIR}} --output-on-failure
-
+    - python3 tooling/workflow.py test --preset {{.PRESET}}
   coverage:
-    desc: Build with coverage and open HTML report
-    deps: [configure-coverage]
+    desc: Build coverage report
     cmds:
-      - cmake --build {{.BUILD_DIR}} --target coverage
-    generates:
-      - "{{.BUILD_DIR}}/coverage/index.html"
-
+    - task: configure-coverage
+    - cmake --build build/coverage --target coverage
   format:
-    desc: Auto-format source files with clang-format
-    deps: [configure]
+    desc: format using standalone tooling
     cmds:
-      - cmake --build {{.BUILD_DIR}} --target format
-
+    - python3 tooling/workflow.py format
   format-check:
-    desc: Check formatting without writing changes
-    deps: [configure]
+    desc: format-check using standalone tooling
     cmds:
-      - cmake --build {{.BUILD_DIR}} --target format-check
-
+    - python3 tooling/workflow.py format-check
   tidy:
-    desc: Run clang-tidy
-    deps: [configure-tests]
+    desc: tidy using standalone tooling
     cmds:
-      - cmake --build {{.BUILD_DIR}} --target tidy
-
+    - python3 tooling/workflow.py tidy --scope all
   tidy-src:
-    desc: Run clang-tidy on production sources
-    deps: [configure-tests]
+    desc: tidy using standalone tooling
     cmds:
-      - cmake --build {{.BUILD_DIR}} --target tidy-src
-
+    - python3 tooling/workflow.py tidy --scope src
   tidy-tests:
-    desc: Run clang-tidy on tests
-    deps: [configure-tests]
+    desc: tidy using standalone tooling
     cmds:
-      - cmake --build {{.BUILD_DIR}} --target tidy-tests
-
+    - python3 tooling/workflow.py tidy --scope tests
   tidy-container:
     desc: Build pinned dependencies and run static checks inside the CI container
     cmds:
-      - test "$(git -C {{.HOLONIGHT_QT_SOURCE}} rev-parse HEAD)" = "{{.HOLONIGHT_QT_REVISION}}"
-      - test "$(git -C {{.HOLONIGHT_CONFIG_SOURCE}} rev-parse HEAD)" = "{{.HOLONIGHT_CONFIG_REVISION}}"
-      - |
-        if command -v docker >/dev/null 2>&1; then
-          CONTAINER_RUNNER="docker"
-        elif command -v podman >/dev/null 2>&1; then
-          CONTAINER_RUNNER="podman"
-        else
-          echo "ERROR: Neither docker nor podman is available." >&2
-          exit 1
-        fi
-        $CONTAINER_RUNNER run --rm -v "{{.TASKFILE_DIR}}:/workspace" -v "$(realpath {{.HOLONIGHT_QT_SOURCE}}):/holonight-qt:ro" -v "$(realpath {{.HOLONIGHT_CONFIG_SOURCE}}):/holonight-config:ro" -w /workspace ghcr.io/lebedenko/holonight-ai-ci:latest bash -ec '
-          cmake -S /holonight-config -B build-ci-check/dependencies/config -G Ninja -DBUILD_TESTING=OFF
-          cmake --build build-ci-check/dependencies/config --parallel
-          cmake --install build-ci-check/dependencies/config --prefix /workspace/build-ci-check/dependencies/prefix
-          cmake -S /holonight-qt -B build-ci-check/dependencies/qt -G Ninja -DBUILD_TESTS=OFF -DBUILD_DEMO=OFF -DBUILD_CONTROLS_GALLERY=OFF -DBUILD_WAYLAND=ON -DCMAKE_PREFIX_PATH=/workspace/build-ci-check/dependencies/prefix
-          cmake --build build-ci-check/dependencies/qt --parallel
-          cmake --install build-ci-check/dependencies/qt --prefix /workspace/build-ci-check/dependencies/prefix
-          cmake -S . -B build-ci-check -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=ON -DCMAKE_PREFIX_PATH=/workspace/build-ci-check/dependencies/prefix
-          cmake --build build-ci-check --parallel
-          cmake --build build-ci-check --target format-check tidy
-        '
-
+    - test "$(git -C {{.HOLONIGHT_QT_SOURCE}} rev-parse HEAD)" = "{{.HOLONIGHT_QT_REVISION}}"
+    - test "$(git -C {{.HOLONIGHT_CONFIG_SOURCE}} rev-parse HEAD)" = "{{.HOLONIGHT_CONFIG_REVISION}}"
+    - "if command -v docker >/dev/null 2>&1; then\n  CONTAINER_RUNNER=\"docker\"\nelif command -v podman >/dev/null 2>&1;\
+      \ then\n  CONTAINER_RUNNER=\"podman\"\nelse\n  echo \"ERROR: Neither docker nor podman is available.\" >&2\n  exit 1\n\
+      fi\n$CONTAINER_RUNNER run --rm -v \"{{.TASKFILE_DIR}}:/workspace\" -v \"$(realpath {{.HOLONIGHT_QT_SOURCE}}):/holonight-qt:ro\"\
+      \ -v \"$(realpath {{.HOLONIGHT_CONFIG_SOURCE}}):/holonight-config:ro\" -w /workspace ghcr.io/lebedenko/holonight-ai-ci:latest\
+      \ bash -ec '\n  cmake -S /holonight-config -B build-ci-check/dependencies/config -G Ninja -DBUILD_TESTING=OFF\n  cmake\
+      \ --build build-ci-check/dependencies/config --parallel\n  cmake --install build-ci-check/dependencies/config --prefix\
+      \ /workspace/build-ci-check/dependencies/prefix\n  cmake -S /holonight-qt -B build-ci-check/dependencies/qt -G Ninja\
+      \ -DBUILD_TESTS=OFF -DBUILD_DEMO=OFF -DBUILD_CONTROLS_GALLERY=OFF -DBUILD_WAYLAND=ON -DCMAKE_PREFIX_PATH=/workspace/build-ci-check/dependencies/prefix\n\
+      \  cmake --build build-ci-check/dependencies/qt --parallel\n  cmake --install build-ci-check/dependencies/qt --prefix\
+      \ /workspace/build-ci-check/dependencies/prefix\n  cmake -S . -B build-ci-check -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON\
+      \ -DBUILD_TESTS=ON -DCMAKE_PREFIX_PATH=/workspace/build-ci-check/dependencies/prefix\n  cmake --build build-ci-check\
+      \ --parallel\n  cmake --build build-ci-check --target format-check tidy\n'\n"
   build-ci-image:
     desc: Build the CI container image locally
     cmds:
-      - |
-        if command -v docker >/dev/null 2>&1; then
-          CONTAINER_RUNNER="docker"
-        elif command -v podman >/dev/null 2>&1; then
-          CONTAINER_RUNNER="podman"
-        else
-          echo "ERROR: Neither docker nor podman is available." >&2
-          exit 1
-        fi
-        $CONTAINER_RUNNER build -t ghcr.io/lebedenko/holonight-ai-ci:latest -f Dockerfile.ci .
-
+    - "if command -v docker >/dev/null 2>&1; then\n  CONTAINER_RUNNER=\"docker\"\nelif command -v podman >/dev/null 2>&1;\
+      \ then\n  CONTAINER_RUNNER=\"podman\"\nelse\n  echo \"ERROR: Neither docker nor podman is available.\" >&2\n  exit 1\n\
+      fi\n$CONTAINER_RUNNER build -t ghcr.io/lebedenko/holonight-ai-ci:latest -f Dockerfile.ci .\n"
   qml-lint:
-    desc: Run qmllint on all QML files
-    deps: [configure]
+    desc: Build and check QML with configured Qt installation
     cmds:
-      - cmake --build {{.BUILD_DIR}} --target qml-lint
-
+    - task: build
+      vars:
+        PRESET: test
+    - cmake --build build/test --target qml-lint
   qmltypes-check:
     desc: Verify generated HolonightChat QML type metadata
-    deps: [build]
+    deps:
+    - build
     cmds:
-      - scripts/check-qmltypes.sh {{.BUILD_DIR}}
-
+    - bash scripts/check-qmltypes.sh build/{{.PRESET}}
   clean:
     desc: Remove the build directory
     cmds:
-      - rm -rf {{.BUILD_DIR}}
+    - rm -rf {{.BUILD_DIR}}
     prompt: Remove {{.BUILD_DIR}}/ entirely?
+  tooling:doctor:
+    desc: doctor using standalone tooling
+    cmds:
+    - python3 tooling/workflow.py doctor
+  tooling:refresh:
+    desc: refresh using standalone tooling
+    cmds:
+    - python3 tooling/workflow.py refresh --preset {{default "test" .EDITOR_PRESET}}
+  serena:serve:
+    desc: Start independent Serena server in codex context
+    cmds:
+    - serena start-mcp-server --project "{{.TASKFILE_DIR}}" --context codex
+  serena:index:
+    desc: Explicitly index this module
+    cmds:
+    - serena project index "{{.TASKFILE_DIR}}"
+  deps:
+    desc: deps using standalone tooling
+    cmds:
+    - python3 tooling/workflow.py deps --preset {{.PRESET}}
+  qml-import-check:
+    desc: Check QML runtime import contracts
+    cmds:
+    - python3 tooling/qml_policy.py
+  tooling:qmlls:
+    desc: Start configured Qt language server with resolved import paths
+    cmds:
+    - python3 tooling/workflow.py qmlls
+  lint:
+    desc: Run C++ and QML lint
+    cmds:
+    - task: tidy
+    - task: qml-lint
+  check:
+    desc: Run build, tests and static checks
+    cmds:
+    - task: build
+    - task: test
+    - task: format-check
+    - task: lint
+    - task: qml-import-check
+    - task: qmltypes-check

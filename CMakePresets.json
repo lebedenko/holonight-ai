@@ -5,21 +5,21 @@
       "name": "debug",
       "displayName": "Debug",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
+      "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
         "BUILD_TESTS": "OFF",
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "ENABLE_COVERAGE": "OFF"
+        "ENABLE_COVERAGE": "OFF",
+        "CMAKE_INSTALL_PREFIX": "/usr",
+        "CMAKE_INSTALL_LIBDIR": "lib",
+        "CMAKE_PREFIX_PATH": "${sourceDir}/build/deps/prefix",
+        "QML_IMPORT_PATH": "${sourceDir}/build/deps/prefix/lib/qt6/qml"
       }
     },
     {
       "name": "debug-tests",
-      "displayName": "Debug with tests",
-      "inherits": "debug",
-      "cacheVariables": {
-        "BUILD_TESTS": "ON"
-      }
+      "inherits": "test"
     },
     {
       "name": "coverage",
@@ -27,6 +27,35 @@
       "inherits": "debug-tests",
       "cacheVariables": {
         "ENABLE_COVERAGE": "ON"
+      },
+      "binaryDir": "${sourceDir}/build/coverage"
+    },
+    {
+      "name": "test",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/test",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_INSTALL_PREFIX": "/usr",
+        "CMAKE_INSTALL_LIBDIR": "lib",
+        "CMAKE_PREFIX_PATH": "${sourceDir}/build/deps/prefix",
+        "QML_IMPORT_PATH": "${sourceDir}/build/deps/prefix/lib/qt6/qml",
+        "BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_INSTALL_PREFIX": "/usr",
+        "CMAKE_INSTALL_LIBDIR": "lib",
+        "CMAKE_PREFIX_PATH": "${sourceDir}/build/deps/prefix",
+        "QML_IMPORT_PATH": "${sourceDir}/build/deps/prefix/lib/qt6/qml",
+        "BUILD_TESTS": "OFF"
       }
     }
   ],
@@ -42,7 +71,17 @@
     {
       "name": "coverage",
       "configurePreset": "coverage",
-      "targets": ["coverage"]
+      "targets": [
+        "coverage"
+      ]
+    },
+    {
+      "name": "test",
+      "configurePreset": "test"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
     }
   ],
   "testPresets": [
@@ -54,6 +93,19 @@
       },
       "execution": {
         "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "test",
+      "configurePreset": "test",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      },
+      "environment": {
+        "QT_QPA_PLATFORM": "offscreen"
       }
     }
   ]

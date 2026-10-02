@@ -1,0 +1,27 @@
+{
+  "module": "holonight-ai",
+  "cpp": true,
+  "qml": true,
+  "languages": [
+    "cpp",
+    "qml",
+    "python",
+    "bash"
+  ],
+  "dependencies": [
+    {
+      "module": "holonight-config",
+      "package": "HoloNightConfig",
+      "source_variable": "HOLONIGHT_CONFIG_SOURCE"
+    },
+    {
+      "module": "holonight-qt",
+      "package": "HolonightQt",
+      "source_variable": "HOLONIGHT_QT_SOURCE"
+    }
+  ],
+  "qml_modules": [
+    "HolonightChat"
+  ],
+  "wayland": true
+}
