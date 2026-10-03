@@ -60,7 +60,7 @@ HttpRequestHandlePtr QtNetworkHttpClient::send(const HttpRequest& request, HttpB
 
   if (timeout > std::chrono::milliseconds::zero()) {
     timeoutTimer->setInterval(static_cast<int>(timeout.count()));
-    QObject::connect(timeoutTimer, &QTimer::timeout, reply, [reply, resolved, on_error]() {
+    QObject::connect(timeoutTimer, &QTimer::timeout, reply, [reply, resolved, on_error] {
       if (*resolved) {
         return;
       }
@@ -71,7 +71,7 @@ HttpRequestHandlePtr QtNetworkHttpClient::send(const HttpRequest& request, HttpB
     timeoutTimer->start();
   }
 
-  QObject::connect(reply, &QNetworkReply::finished, reply, [reply, timeoutTimer, resolved, on_success, on_error]() {
+  QObject::connect(reply, &QNetworkReply::finished, reply, [reply, timeoutTimer, resolved, on_success, on_error] {
     timeoutTimer->stop();
     if (!*resolved) {
       *resolved = true;
@@ -102,7 +102,7 @@ HttpRequestHandlePtr QtNetworkHttpClient::sendStreaming(const HttpRequest& reque
 
   auto resolved = std::make_shared<bool>(false);
 
-  QObject::connect(idleTimer, &QTimer::timeout, reply, [reply, resolved, on_error]() {
+  QObject::connect(idleTimer, &QTimer::timeout, reply, [reply, resolved, on_error] {
     if (*resolved) {
       return;
     }
@@ -111,7 +111,7 @@ HttpRequestHandlePtr QtNetworkHttpClient::sendStreaming(const HttpRequest& reque
     reply->abort();
   });
 
-  QObject::connect(reply, &QNetworkReply::readyRead, reply, [reply, idleTimer, resolved, on_data]() {
+  QObject::connect(reply, &QNetworkReply::readyRead, reply, [reply, idleTimer, resolved, on_data] {
     if (*resolved) {
       return;
     }
@@ -119,7 +119,7 @@ HttpRequestHandlePtr QtNetworkHttpClient::sendStreaming(const HttpRequest& reque
     on_data(reply->readAll());
   });
 
-  QObject::connect(reply, &QNetworkReply::finished, reply, [reply, idleTimer, resolved, on_finished, on_error]() {
+  QObject::connect(reply, &QNetworkReply::finished, reply, [reply, idleTimer, resolved, on_finished, on_error] {
     idleTimer->stop();
     if (!*resolved) {
       *resolved = true;

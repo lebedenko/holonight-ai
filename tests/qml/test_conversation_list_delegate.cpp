@@ -14,12 +14,13 @@ namespace {
 
 std::unique_ptr<QObject> createDelegate(QQmlComponent& component, bool pinned) {
   QVariantMap model{{QStringLiteral("title"), QStringLiteral("Some title")}};
-  return std::unique_ptr<QObject>(
-      component.createWithInitialProperties({{QStringLiteral("model"), model},
-                                             {QStringLiteral("conversationId"), QStringLiteral("conversation-a")},
-                                             {QStringLiteral("updatedAt"), QStringLiteral("now")},
-                                             {QStringLiteral("titleGenerationInProgress"), false},
-                                             {QStringLiteral("pinned"), pinned}}));
+  return std::unique_ptr<QObject>(component.createWithInitialProperties({
+      {QStringLiteral("model"), model},
+      {QStringLiteral("conversationId"), QStringLiteral("conversation-a")},
+      {QStringLiteral("updatedAt"), QStringLiteral("now")},
+      {QStringLiteral("titleGenerationInProgress"), false},
+      {QStringLiteral("pinned"), pinned},
+  }));
 }
 
 TEST(ConversationListDelegateQml, NamingStatusTracksGenerationStateAndAccessibility) {
@@ -32,12 +33,13 @@ TEST(ConversationListDelegateQml, NamingStatusTracksGenerationStateAndAccessibil
   ASSERT_TRUE(component.isReady()) << qPrintable(component.errorString());
 
   QVariantMap model{{QStringLiteral("title"), QStringLiteral("Fallback title")}};
-  std::unique_ptr<QObject> delegate(
-      component.createWithInitialProperties({{QStringLiteral("model"), model},
-                                             {QStringLiteral("conversationId"), QStringLiteral("conversation-a")},
-                                             {QStringLiteral("updatedAt"), QStringLiteral("now")},
-                                             {QStringLiteral("titleGenerationInProgress"), false},
-                                             {QStringLiteral("pinned"), false}}));
+  std::unique_ptr<QObject> delegate(component.createWithInitialProperties({
+      {QStringLiteral("model"), model},
+      {QStringLiteral("conversationId"), QStringLiteral("conversation-a")},
+      {QStringLiteral("updatedAt"), QStringLiteral("now")},
+      {QStringLiteral("titleGenerationInProgress"), false},
+      {QStringLiteral("pinned"), false},
+  }));
   ASSERT_NE(delegate, nullptr) << qPrintable(component.errorString());
   auto* timestamp = delegate->findChild<QQuickItem*>(QStringLiteral("updatedAtLabel"));
   auto* namingStatus = delegate->findChild<QQuickItem*>(QStringLiteral("namingStatus"));

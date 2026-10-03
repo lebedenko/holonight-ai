@@ -1,8 +1,10 @@
+// Fixture state is visible to derived test cases and deterministic assertions.
 #pragma once
 
 #include <QAbstractListModel>
 #include <QString>
 
+#include <cstdint>
 #include <vector>
 
 struct ProviderRow {
@@ -16,7 +18,12 @@ class FakeProviderModel final : public QAbstractListModel {
   Q_OBJECT
 
  public:
-  enum Role { InstanceIdRole = Qt::UserRole + 1, ProviderTypeRole, DisplayNameRole, EnabledRole };
+  enum Role : std::uint16_t {  // NOLINT(cppcoreguidelines-use-enum-class): Qt model role constants.
+    InstanceIdRole = Qt::UserRole + 1,
+    ProviderTypeRole,
+    DisplayNameRole,
+    EnabledRole
+  };
 
   [[nodiscard]] int rowCount(const QModelIndex& parent = {}) const override {
     return parent.isValid() ? 0 : static_cast<int>(rows_.size());
@@ -42,10 +49,12 @@ class FakeProviderModel final : public QAbstractListModel {
   }
 
   [[nodiscard]] QHash<int, QByteArray> roleNames() const override {
-    return {{InstanceIdRole, "instanceId"},
-            {ProviderTypeRole, "providerType"},
-            {DisplayNameRole, "displayName"},
-            {EnabledRole, "enabled"}};
+    return {
+        {InstanceIdRole, "instanceId"},
+        {ProviderTypeRole, "providerType"},
+        {DisplayNameRole, "displayName"},
+        {EnabledRole, "enabled"},
+    };
   }
 
   void prepend(ProviderRow row) {
@@ -77,6 +86,7 @@ class FakeProviderController final : public QObject {
                  navigationPromptVisibleChanged)
 
  public:
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   bool addition = false;
   [[nodiscard]] QAbstractItemModel* instances() { return &model; }
   [[nodiscard]] QString selectedInstanceId() const { return selected_instance_id_; }
@@ -125,10 +135,12 @@ class FakeProviderController final : public QObject {
 
   Q_INVOKABLE bool addProvider(const QString& provider_type) {
     const QString instance_id = QStringLiteral("new-%1").arg(provider_type);
-    model.prepend({.instance_id = instance_id,
-                   .provider_type = provider_type,
-                   .display_name = QStringLiteral("New provider"),
-                   .enabled = true});
+    model.prepend({
+        .instance_id = instance_id,
+        .provider_type = provider_type,
+        .display_name = QStringLiteral("New provider"),
+        .enabled = true,
+    });
     selected_instance_id_ = instance_id;
     selected_provider_type_ = provider_type;
     Q_EMIT selectionChanged();
@@ -149,11 +161,17 @@ class FakeProviderController final : public QObject {
     return confirmed;
   }
 
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   FakeProviderModel model;
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   int request_close_count = 0;
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   int cancel_count = 0;
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   int discard_count = 0;
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   int save_count = 0;
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   int delete_count = 0;
 
  Q_SIGNALS:

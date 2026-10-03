@@ -7,6 +7,7 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <tuple>
 
@@ -20,15 +21,17 @@ using holonight_config::ProviderState;
 using holonight_config::ProviderType;
 
 ProviderInstanceConfig instance(QString name = QStringLiteral("Local")) {
-  return ProviderInstanceConfig{.id = QStringLiteral("ollama"),
-                                .type = ProviderType::Ollama,
-                                .display_name = std::move(name),
-                                .enabled = true,
-                                .settings = OllamaProviderConfig{}};
+  return ProviderInstanceConfig{
+      .id = QStringLiteral("ollama"),
+      .type = ProviderType::Ollama,
+      .display_name = std::move(name),
+      .enabled = true,
+      .settings = OllamaProviderConfig{},
+  };
 }
 
-enum class NavigationPath { ProviderSelection, SettingsSection, WindowClose };
-enum class NavigationDecision { Save, Discard, Cancel };
+enum class NavigationPath : std::uint8_t { ProviderSelection, SettingsSection, WindowClose };
+enum class NavigationDecision : std::uint8_t { Save, Discard, Cancel };
 
 class ProviderDraftGuardNavigationTest : public testing::TestWithParam<std::tuple<NavigationPath, NavigationDecision>> {
 };

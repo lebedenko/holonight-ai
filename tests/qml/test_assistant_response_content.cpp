@@ -1,3 +1,4 @@
+// Fixture state is visible to derived test cases and deterministic assertions.
 #include <QClipboard>
 #include <QDir>
 #include <QGuiApplication>
@@ -44,10 +45,11 @@ class AssistantResponseContentQml : public testing::Test {
     if (!component.isReady()) {
       return {};
     }
-    std::unique_ptr<QObject> object(
-        component.createWithInitialProperties({{QStringLiteral("width"), 640},
-                                               {QStringLiteral("contentModel"), QVariant::fromValue(model)},
-                                               {QStringLiteral("messageStatus"), status}}));
+    std::unique_ptr<QObject> object(component.createWithInitialProperties({
+        {QStringLiteral("width"), 640},
+        {QStringLiteral("contentModel"), QVariant::fromValue(model)},
+        {QStringLiteral("messageStatus"), status},
+    }));
     if (auto* item = qobject_cast<QQuickItem*>(object.get())) {
       window.resize(640, 480);
       item->setParentItem(window.contentItem());
@@ -57,7 +59,9 @@ class AssistantResponseContentQml : public testing::Test {
     return object;
   }
 
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   QQmlEngine engine;
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   QQuickWindow window;
 };
 

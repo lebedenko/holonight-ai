@@ -164,11 +164,14 @@ TEST(MessageListModel, ToolCallRoleIsInvalidForOrdinaryTextMessage) {
 TEST(MessageListModel, ToolCallRoleExposesInvocationNameAndInput) {
   MessageListModel model;
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString(), MessageStatus::Complete);
-  invocation.setToolCalls(
-      {ToolCallEntry{.kind = ToolCallKind::Invocation,
-                     .tool_use_id = QStringLiteral("toolu_01"),
-                     .tool_name = QStringLiteral("ListFiles"),
-                     .input = QJsonObject{{QStringLiteral("path"), QStringLiteral("~/Documents")}}}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("toolu_01"),
+          .tool_name = QStringLiteral("ListFiles"),
+          .input = QJsonObject{{QStringLiteral("path"), QStringLiteral("~/Documents")}},
+      },
+  });
   model.insertNewestMessage(invocation);
 
   const QVariantMap toolCall = model.data(model.index(0), MessageListModel::ToolCallRole).toMap();
@@ -181,11 +184,15 @@ TEST(MessageListModel, ToolCallRoleExposesInvocationNameAndInput) {
 TEST(MessageListModel, HistoricalListFilesAliasKeepsSpecializedRenderer) {
   MessageListModel model;
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString(), MessageStatus::Complete);
-  invocation.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                         .tool_use_id = QStringLiteral("toolu_legacy_list"),
-                                         .tool_name = QStringLiteral("ListFiles"),
-                                         .input = QJsonObject{{QStringLiteral("path"), QStringLiteral("~")}},
-                                         .status = holonight_domain::ToolInvocationStatus::Cancelled}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("toolu_legacy_list"),
+          .tool_name = QStringLiteral("ListFiles"),
+          .input = QJsonObject{{QStringLiteral("path"), QStringLiteral("~")}},
+          .status = holonight_domain::ToolInvocationStatus::Cancelled,
+      },
+  });
 
   model.resetFromChronological({invocation});
 
@@ -199,11 +206,15 @@ TEST(MessageListModel, HistoricalListFilesAliasKeepsSpecializedRenderer) {
 TEST(MessageListModel, UnknownAndMalformedHistoricalToolsRemainVisibleThroughGenericFallback) {
   MessageListModel model;
   Message unknown(MessageId::generate(), MessageRole::Assistant, QString(), MessageStatus::Complete);
-  unknown.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                      .tool_use_id = QStringLiteral("toolu_removed"),
-                                      .tool_name = QStringLiteral("RemovedTool"),
-                                      .input = QJsonObject{{QStringLiteral("legacy"), true}},
-                                      .status = holonight_domain::ToolInvocationStatus::Completed}});
+  unknown.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("toolu_removed"),
+          .tool_name = QStringLiteral("RemovedTool"),
+          .input = QJsonObject{{QStringLiteral("legacy"), true}},
+          .status = holonight_domain::ToolInvocationStatus::Completed,
+      },
+  });
   Message malformed(MessageId::generate(), MessageRole::Assistant, QString(), MessageStatus::Complete);
   malformed.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation}});
 
@@ -224,12 +235,15 @@ TEST(MessageListModel, UnknownAndMalformedHistoricalToolsRemainVisibleThroughGen
 TEST(MessageListModel, ToolCallRoleExposesErrorResult) {
   MessageListModel model;
   Message result(MessageId::generate(), MessageRole::User, QString(), MessageStatus::Complete);
-  result.setToolCalls({ToolCallEntry{
-      .kind = ToolCallKind::Result,
-      .tool_use_id = QStringLiteral("toolu_01"),
-      .result =
-          QJsonObject{{QStringLiteral("error"), QJsonObject{{QStringLiteral("code"), QStringLiteral("NOT_FOUND")}}}},
-      .is_error = true}});
+  result.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Result,
+          .tool_use_id = QStringLiteral("toolu_01"),
+          .result = QJsonObject{{QStringLiteral("error"),
+                                 QJsonObject{{QStringLiteral("code"), QStringLiteral("NOT_FOUND")}}}},
+          .is_error = true,
+      },
+  });
   model.insertNewestMessage(result);
 
   const QVariantMap toolCall = model.data(model.index(0), MessageListModel::ToolCallRole).toMap();
@@ -247,19 +261,26 @@ TEST(MessageListModel, ToolCallRoleExposesErrorResult) {
 TEST(MessageListModel, MatchingInvocationAndResultMergeIntoSingleProjectionRow) {
   MessageListModel model;
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString(), MessageStatus::Complete);
-  invocation.setToolCalls(
-      {ToolCallEntry{.kind = ToolCallKind::Invocation,
-                     .tool_use_id = QStringLiteral("toolu_merge"),
-                     .tool_name = QStringLiteral("ListFiles"),
-                     .input = QJsonObject{{QStringLiteral("path"), QStringLiteral("~/Downloads")}}}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("toolu_merge"),
+          .tool_name = QStringLiteral("ListFiles"),
+          .input = QJsonObject{{QStringLiteral("path"), QStringLiteral("~/Downloads")}},
+      },
+  });
   model.insertNewestMessage(invocation);
 
   QSignalSpy changedSpy(&model, &QAbstractItemModel::dataChanged);
   Message result(MessageId::generate(), MessageRole::User, QString(), MessageStatus::Complete);
-  result.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Result,
-                                     .tool_use_id = QStringLiteral("toolu_merge"),
-                                     .result = QJsonObject{{QStringLiteral("error"), QStringLiteral("no_permission")}},
-                                     .is_error = true}});
+  result.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Result,
+          .tool_use_id = QStringLiteral("toolu_merge"),
+          .result = QJsonObject{{QStringLiteral("error"), QStringLiteral("no_permission")}},
+          .is_error = true,
+      },
+  });
   model.insertNewestMessage(result);
 
   EXPECT_EQ(model.rowCount(), 1);
@@ -282,19 +303,22 @@ TEST(MessageListModel, MatchingInvocationAndResultMergeIntoSingleProjectionRow) 
 TEST(MessageListModel, ToolActivityRolesExposeCanonicalAndDurationMetadata) {
   MessageListModel model;
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString(), MessageStatus::Complete);
-  invocation.setToolCalls(
-      {ToolCallEntry{.kind = ToolCallKind::Invocation,
-                     .tool_use_id = QStringLiteral("toolu_details"),
-                     .tool_id = QStringLiteral("filesystem.list"),
-                     .function_name = QStringLiteral("list_files"),
-                     .input =
-                         QJsonObject{
-                             {QStringLiteral("path"), QStringLiteral("~/Pictures")},
-                         },
-                     .status = holonight_domain::ToolInvocationStatus::Completed,
-                     .requested_at = QDateTime(QDate(2026, 8, 5), QTime(12, 0), QTimeZone::UTC),
-                     .started_at = QDateTime(QDate(2026, 8, 5), QTime(12, 0, 2), QTimeZone::UTC),
-                     .finished_at = QDateTime(QDate(2026, 8, 5), QTime(12, 0, 5), QTimeZone::UTC)}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("toolu_details"),
+          .tool_id = QStringLiteral("filesystem.list"),
+          .function_name = QStringLiteral("list_files"),
+          .input =
+              QJsonObject{
+                  {QStringLiteral("path"), QStringLiteral("~/Pictures")},
+              },
+          .status = holonight_domain::ToolInvocationStatus::Completed,
+          .requested_at = QDateTime(QDate(2026, 8, 5), QTime(12, 0), QTimeZone::UTC),
+          .started_at = QDateTime(QDate(2026, 8, 5), QTime(12, 0, 2), QTimeZone::UTC),
+          .finished_at = QDateTime(QDate(2026, 8, 5), QTime(12, 0, 5), QTimeZone::UTC),
+      },
+  });
   model.insertNewestMessage(invocation);
 
   const QModelIndex index = model.index(0);
@@ -321,11 +345,15 @@ TEST(MessageListModel, ToolActivityRolesExposeCanonicalAndDurationMetadata) {
 TEST(MessageListModel, RestoredInterruptedInvocationDisplaysAsCancelled) {
   MessageListModel model;
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString(), MessageStatus::Complete);
-  invocation.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                         .tool_use_id = QStringLiteral("toolu_interrupted"),
-                                         .tool_id = QStringLiteral("filesystem.list"),
-                                         .function_name = QStringLiteral("list_files"),
-                                         .status = holonight_domain::ToolInvocationStatus::Cancelled}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("toolu_interrupted"),
+          .tool_id = QStringLiteral("filesystem.list"),
+          .function_name = QStringLiteral("list_files"),
+          .status = holonight_domain::ToolInvocationStatus::Cancelled,
+      },
+  });
 
   model.resetFromChronological({invocation});
 
@@ -398,10 +426,16 @@ TEST(MessageListModel, ResetFromChronologicalPreservesOrderWhileProjectingToolRo
 }
 
 TEST(MessageListModel, DeletedProviderUsesFrozenTombstoneAttributionWithoutChangingProviderId) {
-  MessageListModel model(
-      holonight_config::ProviderState{.tombstones = {{.instance_id = QStringLiteral("openai"),
-                                                      .type = holonight_config::ProviderType::OpenAi,
-                                                      .last_display_name = QStringLiteral("Former work account")}}});
+  MessageListModel model(holonight_config::ProviderState{
+      .tombstones =
+          {
+              {
+                  .instance_id = QStringLiteral("openai"),
+                  .type = holonight_config::ProviderType::OpenAi,
+                  .last_display_name = QStringLiteral("Former work account"),
+              },
+          },
+  });
   model.insertNewestMessage(
       Message(MessageId::generate(), MessageRole::Assistant, QStringLiteral("response"), MessageStatus::Complete, {},
               ModelId{.provider_id = QStringLiteral("openai"), .model_name = QStringLiteral("gpt")}));
@@ -413,13 +447,18 @@ TEST(MessageListModel, DeletedProviderUsesFrozenTombstoneAttributionWithoutChang
 }
 
 TEST(MessageListModel, RenamedLiveProviderUsesCurrentAttributionWithoutChangingProviderId) {
-  MessageListModel model(holonight_config::ProviderState{.instances = {
-                                                             {.id = QStringLiteral("work-openai"),
-                                                              .type = holonight_config::ProviderType::OpenAi,
-                                                              .display_name = QStringLiteral("Renamed work account"),
-                                                              .enabled = true,
-                                                              .settings = holonight_config::OpenAIProviderConfig{}},
-                                                         }});
+  MessageListModel model(holonight_config::ProviderState{
+      .instances =
+          {
+              {
+                  .id = QStringLiteral("work-openai"),
+                  .type = holonight_config::ProviderType::OpenAi,
+                  .display_name = QStringLiteral("Renamed work account"),
+                  .enabled = true,
+                  .settings = holonight_config::OpenAIProviderConfig{},
+              },
+          },
+  });
   model.insertNewestMessage(
       Message(MessageId::generate(), MessageRole::Assistant, QStringLiteral("response"), MessageStatus::Complete, {},
               ModelId{.provider_id = QStringLiteral("work-openai"), .model_name = QStringLiteral("gpt")}));
@@ -437,13 +476,18 @@ TEST(MessageListModel, ProviderStateRefreshesUnknownAttributionAndOnlyChangedRol
               ModelId{.provider_id = QStringLiteral("ollama-mac"), .model_name = QStringLiteral("gemma4:12b-mlx")}));
   QSignalSpy changedSpy(&model, &QAbstractItemModel::dataChanged);
 
-  model.setProviderState(holonight_config::ProviderState{.instances = {
-                                                             {.id = QStringLiteral("ollama-mac"),
-                                                              .type = holonight_config::ProviderType::Ollama,
-                                                              .display_name = QStringLiteral("Ollama Mac"),
-                                                              .enabled = true,
-                                                              .settings = holonight_config::OllamaProviderConfig{}},
-                                                         }});
+  model.setProviderState(holonight_config::ProviderState{
+      .instances =
+          {
+              {
+                  .id = QStringLiteral("ollama-mac"),
+                  .type = holonight_config::ProviderType::Ollama,
+                  .display_name = QStringLiteral("Ollama Mac"),
+                  .enabled = true,
+                  .settings = holonight_config::OllamaProviderConfig{},
+              },
+          },
+  });
 
   ASSERT_EQ(changedSpy.count(), 1);
   EXPECT_EQ(changedRoles(changedSpy),
@@ -456,11 +500,18 @@ TEST(MessageListModel, ProviderStateRefreshesUnknownAttributionAndOnlyChangedRol
 
 TEST(MessageListModel, ProviderStateRefreshesRenameAndDeletionAttribution) {
   const QString providerId = QStringLiteral("ollama-mac");
-  holonight_config::ProviderState state{.instances = {{.id = providerId,
-                                                       .type = holonight_config::ProviderType::Ollama,
-                                                       .display_name = QStringLiteral("Ollama Mac"),
-                                                       .enabled = true,
-                                                       .settings = holonight_config::OllamaProviderConfig{}}}};
+  holonight_config::ProviderState state{
+      .instances =
+          {
+              {
+                  .id = providerId,
+                  .type = holonight_config::ProviderType::Ollama,
+                  .display_name = QStringLiteral("Ollama Mac"),
+                  .enabled = true,
+                  .settings = holonight_config::OllamaProviderConfig{},
+              },
+          },
+  };
   MessageListModel model(state);
   model.insertNewestMessage(
       Message(MessageId::generate(), MessageRole::Assistant, QStringLiteral("response"), MessageStatus::Complete, {},
@@ -472,9 +523,15 @@ TEST(MessageListModel, ProviderStateRefreshesRenameAndDeletionAttribution) {
   EXPECT_EQ(model.data(model.index(0), MessageListModel::ProviderIdRole).toString(), providerId);
 
   model.setProviderState(holonight_config::ProviderState{
-      .tombstones = {{.instance_id = providerId,
-                      .type = holonight_config::ProviderType::Ollama,
-                      .last_display_name = QStringLiteral("Studio Ollama (deleted)")}}});
+      .tombstones =
+          {
+              {
+                  .instance_id = providerId,
+                  .type = holonight_config::ProviderType::Ollama,
+                  .last_display_name = QStringLiteral("Studio Ollama (deleted)"),
+              },
+          },
+  });
   EXPECT_EQ(model.data(model.index(0), MessageListModel::ProviderNameRole).toString(),
             QStringLiteral("Studio Ollama (deleted)"));
   EXPECT_EQ(model.data(model.index(0), MessageListModel::ProviderTypeRole).toString(), QStringLiteral("ollama"));

@@ -396,12 +396,15 @@ TEST(ChatViewModel, AsyncToolActivityPublishesRunningThenCompletesInPlaceAndPers
   auto executor = std::make_shared<DeferredListFilesExecutor>();
   auto toolRegistry = std::make_shared<ToolRegistry>();
   toolRegistry->registerTool(ToolRegistration{
-      .definition = ToolDefinition{.id = QStringLiteral("filesystem.list"),
-                                   .function_name = QStringLiteral("list_files"),
-                                   .display_name = QStringLiteral("List files"),
-                                   .renderer_key = QStringLiteral("filesystem.list"),
-                                   .description = QStringLiteral("Lists directory entries."),
-                                   .input_schema = QJsonObject{}},
+      .definition =
+          ToolDefinition{
+              .id = QStringLiteral("filesystem.list"),
+              .function_name = QStringLiteral("list_files"),
+              .display_name = QStringLiteral("List files"),
+              .renderer_key = QStringLiteral("filesystem.list"),
+              .description = QStringLiteral("Lists directory entries."),
+              .input_schema = QJsonObject{},
+          },
       .executor = executor,
       .presenter = std::make_shared<ListFilesPresenter>(),
   });
@@ -448,8 +451,16 @@ TEST(ChatViewModel, AsyncToolActivityPublishesRunningThenCompletesInPlaceAndPers
 
   QSignalSpy changed(viewModel.messages(), &QAbstractItemModel::dataChanged);
   executor->complete(QJsonObject{
-      {QStringLiteral("entries"), QJsonArray{QJsonObject{{QStringLiteral("name"), QStringLiteral("photo.jpg")},
-                                                         {QStringLiteral("type"), QStringLiteral("file")}}}}});
+      {
+          QStringLiteral("entries"),
+          QJsonArray{
+              QJsonObject{
+                  {QStringLiteral("name"), QStringLiteral("photo.jpg")},
+                  {QStringLiteral("type"), QStringLiteral("file")},
+              },
+          },
+      },
+  });
 
   ASSERT_EQ(anthropicHttpClient->streamingCallCount(), 2U);
   const QJsonDocument followUp = QJsonDocument::fromJson(anthropicHttpClient->streamingCall(1).request.body);
@@ -682,8 +693,10 @@ TEST(ChatViewModel, ModelRefreshPreservesRestoredConversationModel) {
   auto repositoryOwner = std::make_unique<FakeConversationRepository>();
   repositoryOwner->createConversation(QStringLiteral("Existing"));
   const QString existingId = repositoryOwner->allConversations().front().id;
-  repositoryOwner->updateLastModelId(existingId, holonight_domain::ModelId{.provider_id = QStringLiteral("ollama"),
-                                                                           .model_name = QStringLiteral("saved")});
+  repositoryOwner->updateLastModelId(existingId, holonight_domain::ModelId{
+                                                     .provider_id = QStringLiteral("ollama"),
+                                                     .model_name = QStringLiteral("saved"),
+                                                 });
 
   ChatViewModel viewModel{provider, makeEmptyOpenAiProvider(), makeEmptyAnthropicProvider(), makeEmptyGoogleProvider(),
                           std::move(repositoryOwner)};
@@ -1230,16 +1243,25 @@ TEST(ChatViewModel, InstanceIdsDriveProjectionDefaultsMemoryAndSendRouting) {
   firstSettings.default_model = QStringLiteral("first-default");
   holonight_config::OllamaProviderConfig secondSettings;
   secondSettings.default_model = QStringLiteral("second-default");
-  holonight_config::ProviderState state{.instances = {{.id = QStringLiteral("ollama-home"),
-                                                       .type = holonight_config::ProviderType::Ollama,
-                                                       .display_name = QStringLiteral("Home Ollama"),
-                                                       .enabled = true,
-                                                       .settings = firstSettings},
-                                                      {.id = QStringLiteral("ollama-lab"),
-                                                       .type = holonight_config::ProviderType::Ollama,
-                                                       .display_name = QStringLiteral("Lab Ollama"),
-                                                       .enabled = true,
-                                                       .settings = secondSettings}}};
+  holonight_config::ProviderState state{
+      .instances =
+          {
+              {
+                  .id = QStringLiteral("ollama-home"),
+                  .type = holonight_config::ProviderType::Ollama,
+                  .display_name = QStringLiteral("Home Ollama"),
+                  .enabled = true,
+                  .settings = firstSettings,
+              },
+              {
+                  .id = QStringLiteral("ollama-lab"),
+                  .type = holonight_config::ProviderType::Ollama,
+                  .display_name = QStringLiteral("Lab Ollama"),
+                  .enabled = true,
+                  .settings = secondSettings,
+              },
+          },
+  };
   auto firstClient = std::make_shared<FakeHttpClient>();
   auto secondClient = std::make_shared<FakeHttpClient>();
   auto router = std::make_unique<ProviderAdapterRouter>();
@@ -1291,28 +1313,39 @@ TEST(ChatViewModel, InstanceIdsDriveProjectionDefaultsMemoryAndSendRouting) {
 }
 
 TEST(ChatViewModel, InstanceProjectionExcludesDisabledAndModelLessProvidersInSavedOrder) {
-  holonight_config::ProviderState state{.instances = {
-                                            {.id = QStringLiteral("enabled-second"),
-                                             .type = holonight_config::ProviderType::Ollama,
-                                             .display_name = QStringLiteral("Zulu"),
-                                             .enabled = true,
-                                             .settings = holonight_config::OllamaProviderConfig{}},
-                                            {.id = QStringLiteral("disabled"),
-                                             .type = holonight_config::ProviderType::Ollama,
-                                             .display_name = QStringLiteral("Disabled"),
-                                             .enabled = false,
-                                             .settings = holonight_config::OllamaProviderConfig{}},
-                                            {.id = QStringLiteral("model-less"),
-                                             .type = holonight_config::ProviderType::Ollama,
-                                             .display_name = QStringLiteral("Model-less"),
-                                             .enabled = true,
-                                             .settings = holonight_config::OllamaProviderConfig{}},
-                                            {.id = QStringLiteral("enabled-fourth"),
-                                             .type = holonight_config::ProviderType::Ollama,
-                                             .display_name = QStringLiteral("Alpha"),
-                                             .enabled = true,
-                                             .settings = holonight_config::OllamaProviderConfig{}},
-                                        }};
+  holonight_config::ProviderState state{
+      .instances =
+          {
+              {
+                  .id = QStringLiteral("enabled-second"),
+                  .type = holonight_config::ProviderType::Ollama,
+                  .display_name = QStringLiteral("Zulu"),
+                  .enabled = true,
+                  .settings = holonight_config::OllamaProviderConfig{},
+              },
+              {
+                  .id = QStringLiteral("disabled"),
+                  .type = holonight_config::ProviderType::Ollama,
+                  .display_name = QStringLiteral("Disabled"),
+                  .enabled = false,
+                  .settings = holonight_config::OllamaProviderConfig{},
+              },
+              {
+                  .id = QStringLiteral("model-less"),
+                  .type = holonight_config::ProviderType::Ollama,
+                  .display_name = QStringLiteral("Model-less"),
+                  .enabled = true,
+                  .settings = holonight_config::OllamaProviderConfig{},
+              },
+              {
+                  .id = QStringLiteral("enabled-fourth"),
+                  .type = holonight_config::ProviderType::Ollama,
+                  .display_name = QStringLiteral("Alpha"),
+                  .enabled = true,
+                  .settings = holonight_config::OllamaProviderConfig{},
+              },
+          },
+  };
   auto router = std::make_unique<ProviderAdapterRouter>();
   for (const auto& instance : state.instances) {
     ASSERT_TRUE(router->add(instance, std::make_shared<FakeHttpClient>()));
@@ -1349,18 +1382,25 @@ TEST(ChatViewModel, InstanceProjectionExcludesDisabledAndModelLessProvidersInSav
 }
 
 TEST(ChatViewModel, ApplyingCommittedProviderStateUpdatesChatProjectionWithoutRestart) {
-  holonight_config::ProviderState state{.instances = {
-                                            {.id = QStringLiteral("first-instance"),
-                                             .type = holonight_config::ProviderType::Ollama,
-                                             .display_name = QStringLiteral("First name"),
-                                             .enabled = true,
-                                             .settings = holonight_config::OllamaProviderConfig{}},
-                                            {.id = QStringLiteral("second-instance"),
-                                             .type = holonight_config::ProviderType::Ollama,
-                                             .display_name = QStringLiteral("Second name"),
-                                             .enabled = true,
-                                             .settings = holonight_config::OllamaProviderConfig{}},
-                                        }};
+  holonight_config::ProviderState state{
+      .instances =
+          {
+              {
+                  .id = QStringLiteral("first-instance"),
+                  .type = holonight_config::ProviderType::Ollama,
+                  .display_name = QStringLiteral("First name"),
+                  .enabled = true,
+                  .settings = holonight_config::OllamaProviderConfig{},
+              },
+              {
+                  .id = QStringLiteral("second-instance"),
+                  .type = holonight_config::ProviderType::Ollama,
+                  .display_name = QStringLiteral("Second name"),
+                  .enabled = true,
+                  .settings = holonight_config::OllamaProviderConfig{},
+              },
+          },
+  };
   auto router = std::make_unique<ProviderAdapterRouter>();
   for (const auto& instance : state.instances) {
     ASSERT_TRUE(router->add(instance, std::make_shared<FakeHttpClient>()));
@@ -1384,8 +1424,10 @@ TEST(ChatViewModel, ApplyingCommittedProviderStateUpdatesChatProjectionWithoutRe
   viewModel.messages()->insertNewestMessage(
       holonight_domain::Message(holonight_domain::MessageId::generate(), holonight_domain::MessageRole::Assistant,
                                 QStringLiteral("historical response"), holonight_domain::MessageStatus::Complete, {},
-                                holonight_domain::ModelId{.provider_id = QStringLiteral("second-instance"),
-                                                          .model_name = QStringLiteral("a-model")}));
+                                holonight_domain::ModelId{
+                                    .provider_id = QStringLiteral("second-instance"),
+                                    .model_name = QStringLiteral("a-model"),
+                                }));
   EXPECT_EQ(viewModel.messages()->data(viewModel.messages()->index(0), MessageListModel::ProviderNameRole).toString(),
             QStringLiteral("Second name"));
 
@@ -1410,11 +1452,18 @@ TEST(ChatViewModel, ApplyingCommittedProviderStateUpdatesChatProjectionWithoutRe
 TEST(ChatViewModel, InvalidRestoredInstanceFallsBackWithoutRewritingHistory) {
   holonight_config::OllamaProviderConfig settings;
   settings.default_model = QStringLiteral("configured-default");
-  holonight_config::ProviderState state{.instances = {{.id = QStringLiteral("available-instance"),
-                                                       .type = holonight_config::ProviderType::Ollama,
-                                                       .display_name = QStringLiteral("Available"),
-                                                       .enabled = true,
-                                                       .settings = settings}}};
+  holonight_config::ProviderState state{
+      .instances =
+          {
+              {
+                  .id = QStringLiteral("available-instance"),
+                  .type = holonight_config::ProviderType::Ollama,
+                  .display_name = QStringLiteral("Available"),
+                  .enabled = true,
+                  .settings = settings,
+              },
+          },
+  };
   auto router = std::make_unique<ProviderAdapterRouter>();
   ASSERT_TRUE(router->add(state.instances.front(), std::make_shared<FakeHttpClient>()));
   ASSERT_TRUE(router->restoreAvailableModels(
@@ -1424,8 +1473,10 @@ TEST(ChatViewModel, InvalidRestoredInstanceFallsBackWithoutRewritingHistory) {
   auto repository = std::make_unique<FakeConversationRepository>();
   repository->createConversation(QStringLiteral("Historical"));
   const QString conversationId = repository->allConversations().front().id;
-  const holonight_domain::ModelId historical{.provider_id = QStringLiteral("deleted-instance"),
-                                             .model_name = QStringLiteral("historical-model")};
+  const holonight_domain::ModelId historical{
+      .provider_id = QStringLiteral("deleted-instance"),
+      .model_name = QStringLiteral("historical-model"),
+  };
   repository->updateLastModelId(conversationId, historical);
   const holonight_domain::Message historicalMessage(
       holonight_domain::MessageId::generate(), holonight_domain::MessageRole::Assistant,
@@ -1461,9 +1512,10 @@ TEST(ChatViewModel, InvalidRestoredInstanceClearsSelectionWhenNoProviderHasModel
   auto repository = std::make_unique<FakeConversationRepository>();
   repository->createConversation(QStringLiteral("Historical"));
   const QString conversationId = repository->allConversations().front().id;
-  repository->updateLastModelId(conversationId,
-                                holonight_domain::ModelId{.provider_id = QStringLiteral("deleted-instance"),
-                                                          .model_name = QStringLiteral("historical-model")});
+  repository->updateLastModelId(conversationId, holonight_domain::ModelId{
+                                                    .provider_id = QStringLiteral("deleted-instance"),
+                                                    .model_name = QStringLiteral("historical-model"),
+                                                });
 
   ChatViewModel viewModel{makeProviderWithNoModels(std::make_shared<FakeHttpClient>()),
                           makeEmptyOpenAiProvider(),

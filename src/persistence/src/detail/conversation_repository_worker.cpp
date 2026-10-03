@@ -242,58 +242,64 @@ holonight_domain::ToolCallKind toolCallKindFromText(const QString& text) {
 
 // tool_calls is stored as a JSON-array-in-a-TEXT-column; NULL (empty QVariant) means "no tool
 // calls on this message" -- the common case for every ordinary text message.
+QJsonObject encodeToolCall(const holonight_domain::ToolCallEntry& entry) {
+  QJsonObject object{
+      {QStringLiteral("kind"), toolCallKindToText(entry.kind)},
+      {QStringLiteral("tool_use_id"), entry.tool_use_id},
+  };
+  if (!entry.tool_id.isEmpty()) {
+    object[QStringLiteral("tool_id")] = entry.tool_id;
+  }
+  if (!entry.function_name.isEmpty()) {
+    object[QStringLiteral("function_name")] = entry.function_name;
+  }
+  object[QStringLiteral("status")] = toolCallStatusToText(entry.status);
+  object[QStringLiteral("execution_location")] = toolExecutionLocationToText(entry.execution_location);
+  if (entry.can_cancel) {
+    object[QStringLiteral("can_cancel")] = true;
+  }
+  if (entry.thought_signature.has_value()) {
+    object[QStringLiteral("thought_signature")] = *entry.thought_signature;
+  }
+  if (entry.provider_call_id_synthesized) {
+    object[QStringLiteral("provider_call_id_synthesized")] = true;
+  }
+  if (entry.provider_item_id.has_value()) {
+    object[QStringLiteral("provider_item_id")] = *entry.provider_item_id;
+  }
+  if (!entry.provider_context.empty()) {
+    QJsonArray context;
+    for (const auto& item : entry.provider_context) {
+      context.append(item);
+    }
+    object[QStringLiteral("provider_context")] = context;
+  }
+  if (entry.requested_at.isValid()) {
+    object[QStringLiteral("requested_at")] = entry.requested_at.toString(Qt::ISODateWithMs);
+  }
+  if (entry.started_at.has_value() && entry.started_at->isValid()) {
+    object[QStringLiteral("started_at")] = entry.started_at->toString(Qt::ISODateWithMs);
+  }
+  if (entry.finished_at.has_value() && entry.finished_at->isValid()) {
+    object[QStringLiteral("finished_at")] = entry.finished_at->toString(Qt::ISODateWithMs);
+  }
+  if (entry.kind == holonight_domain::ToolCallKind::Invocation) {
+    object[QStringLiteral("tool_name")] = entry.tool_name;
+    object[QStringLiteral("input")] = entry.input;
+  } else {
+    object[QStringLiteral("result")] = entry.result;
+    object[QStringLiteral("is_error")] = entry.is_error;
+  }
+  return object;
+}
+
 QVariant encodeToolCalls(const std::vector<holonight_domain::ToolCallEntry>& entries) {
   if (entries.empty()) {
     return {};
   }
   QJsonArray array;
   for (const auto& entry : entries) {
-    QJsonObject object{{QStringLiteral("kind"), toolCallKindToText(entry.kind)},
-                       {QStringLiteral("tool_use_id"), entry.tool_use_id}};
-    if (!entry.tool_id.isEmpty()) {
-      object[QStringLiteral("tool_id")] = entry.tool_id;
-    }
-    if (!entry.function_name.isEmpty()) {
-      object[QStringLiteral("function_name")] = entry.function_name;
-    }
-    object[QStringLiteral("status")] = toolCallStatusToText(entry.status);
-    object[QStringLiteral("execution_location")] = toolExecutionLocationToText(entry.execution_location);
-    if (entry.can_cancel) {
-      object[QStringLiteral("can_cancel")] = true;
-    }
-    if (entry.thought_signature.has_value()) {
-      object[QStringLiteral("thought_signature")] = *entry.thought_signature;
-    }
-    if (entry.provider_call_id_synthesized) {
-      object[QStringLiteral("provider_call_id_synthesized")] = true;
-    }
-    if (entry.provider_item_id.has_value()) {
-      object[QStringLiteral("provider_item_id")] = *entry.provider_item_id;
-    }
-    if (!entry.provider_context.empty()) {
-      QJsonArray context;
-      for (const auto& item : entry.provider_context) {
-        context.append(item);
-      }
-      object[QStringLiteral("provider_context")] = context;
-    }
-    if (entry.requested_at.isValid()) {
-      object[QStringLiteral("requested_at")] = entry.requested_at.toString(Qt::ISODateWithMs);
-    }
-    if (entry.started_at.has_value() && entry.started_at->isValid()) {
-      object[QStringLiteral("started_at")] = entry.started_at->toString(Qt::ISODateWithMs);
-    }
-    if (entry.finished_at.has_value() && entry.finished_at->isValid()) {
-      object[QStringLiteral("finished_at")] = entry.finished_at->toString(Qt::ISODateWithMs);
-    }
-    if (entry.kind == holonight_domain::ToolCallKind::Invocation) {
-      object[QStringLiteral("tool_name")] = entry.tool_name;
-      object[QStringLiteral("input")] = entry.input;
-    } else {
-      object[QStringLiteral("result")] = entry.result;
-      object[QStringLiteral("is_error")] = entry.is_error;
-    }
-    array.append(object);
+    array.append(encodeToolCall(entry));
   }
   return QString::fromUtf8(QJsonDocument(array).toJson(QJsonDocument::Compact));
 }

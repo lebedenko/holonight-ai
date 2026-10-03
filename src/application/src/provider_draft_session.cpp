@@ -49,7 +49,7 @@ bool ProviderDraftSession::setSettings(ProviderSettings settings) {
   if (!matching_type) {
     return false;
   }
-  mutate([this, settings = std::move(settings)]() mutable { editable_.settings = std::move(settings); });
+  mutate([this, settings = std::move(settings)] mutable { editable_.settings = std::move(settings); });
   return true;
 }
 
@@ -90,6 +90,35 @@ void ProviderDraftSession::discard() {
   });
 }
 
+namespace {
+template <typename Settings>
+void appendSettingsErrors(const Settings& settings, QStringList& errors) {
+  if (settings.base_url.trimmed().isEmpty()) {
+    errors.push_back(ProviderDraftSession::tr("Base URL is required."));
+  }
+  if (settings.temperature < 0.0 || settings.temperature > 2.0) {
+    errors.push_back(ProviderDraftSession::tr("Temperature must be between 0 and 2."));
+  }
+
+  if constexpr (std::is_same_v<Settings, OllamaProviderConfig>) {
+    if (settings.context_window < 128 || settings.context_window > 1'000'000) {
+      errors.push_back(ProviderDraftSession::tr("Context window must be between 128 and 1,000,000."));
+    }
+  } else if constexpr (std::is_same_v<Settings, AnthropicProviderConfig>) {
+    if (settings.temperature > 1.0) {
+      errors.push_back(ProviderDraftSession::tr("Anthropic temperature must be between 0 and 1."));
+    }
+    if (settings.max_output_tokens <= 0) {
+      errors.push_back(ProviderDraftSession::tr("Maximum output tokens must be positive."));
+    }
+  } else if constexpr (std::is_same_v<Settings, GoogleProviderConfig>) {
+    if (settings.max_output_tokens <= 0) {
+      errors.push_back(ProviderDraftSession::tr("Maximum output tokens must be positive."));
+    }
+  }
+}
+}  // namespace
+
 bool ProviderDraftSession::validate() {
   QStringList errors;
   editable_.display_name = editable_.display_name.trimmed();
@@ -99,33 +128,7 @@ bool ProviderDraftSession::validate() {
     errors.push_back(tr("Name must be unique."));
   }
 
-  std::visit(
-      [&errors, this](const auto& settings) {
-        if (settings.base_url.trimmed().isEmpty()) {
-          errors.push_back(tr("Base URL is required."));
-        }
-        if (settings.temperature < 0.0 || settings.temperature > 2.0) {
-          errors.push_back(tr("Temperature must be between 0 and 2."));
-        }
-        using Settings = std::decay_t<decltype(settings)>;
-        if constexpr (std::is_same_v<Settings, OllamaProviderConfig>) {
-          if (settings.context_window < 128 || settings.context_window > 1'000'000) {
-            errors.push_back(tr("Context window must be between 128 and 1,000,000."));
-          }
-        } else if constexpr (std::is_same_v<Settings, AnthropicProviderConfig>) {
-          if (settings.temperature > 1.0) {
-            errors.push_back(tr("Anthropic temperature must be between 0 and 1."));
-          }
-          if (settings.max_output_tokens <= 0) {
-            errors.push_back(tr("Maximum output tokens must be positive."));
-          }
-        } else if constexpr (std::is_same_v<Settings, GoogleProviderConfig>) {
-          if (settings.max_output_tokens <= 0) {
-            errors.push_back(tr("Maximum output tokens must be positive."));
-          }
-        }
-      },
-      editable_.settings);
+  std::visit([&errors](const auto& settings) { appendSettingsErrors(settings, errors); }, editable_.settings);
   if (credential_edit_ == CredentialEdit::Store && credential_value_.isEmpty()) {
     errors.push_back(tr("Credential cannot be empty."));
   }

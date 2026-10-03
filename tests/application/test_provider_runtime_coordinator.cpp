@@ -43,7 +43,7 @@ ProviderRuntimeOperations operations(int* refresh_count, QString* credential = n
             ++*refresh_count;
             success();
           },
-      .models = []() -> const std::vector<holonight_domain::ModelId>& { return kNoModels; },
+      .models = [] -> const std::vector<holonight_domain::ModelId>& { return kNoModels; },
       .persist_models = [] {},
   };
 }
@@ -197,7 +197,7 @@ TEST(ProviderRuntimeCoordinator, LateRefreshCompletionAfterDisableKeepsNeutralSt
       ProviderRuntimeOperations{
           .set_credential = [](const QString&) {},
           .refresh = [&completeRefresh](const auto& success, const auto&) { completeRefresh = success; },
-          .models = []() -> const std::vector<holonight_domain::ModelId>& { return kNoModels; },
+          .models = [] -> const std::vector<holonight_domain::ModelId>& { return kNoModels; },
           .persist_models = [] {},
       });
   coordinator.prepare(QStringLiteral("local-one"));

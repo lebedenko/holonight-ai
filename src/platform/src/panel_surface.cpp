@@ -25,8 +25,8 @@ class SharedPanelSurfaceHost final : public detail::PanelSurfaceHost {
  public:
   SharedPanelSurfaceHost() {
     QObject::connect(&host_, &Holonight::Wayland::LayerSurfaceHost::configured, &host_,
-                     [this]() { configured_handler_(); });
-    QObject::connect(&host_, &Holonight::Wayland::LayerSurfaceHost::closed, &host_, [this]() { closed_handler_(); });
+                     [this] { configured_handler_(); });
+    QObject::connect(&host_, &Holonight::Wayland::LayerSurfaceHost::closed, &host_, [this] { closed_handler_(); });
     QObject::connect(&host_, &Holonight::Wayland::LayerSurfaceHost::failed, &host_,
                      [this](const QString& reason) { failed_handler_(reason); });
   }
@@ -108,7 +108,7 @@ bool PanelSurface::open(const QString& output_name) {
 
   auto host = host_factory_();
   auto identity = std::make_shared<char>();
-  host->setHandlers([this, identity]() { handleConfigured(identity); }, [this, identity]() { queueClosed(identity); },
+  host->setHandlers([this, identity] { handleConfigured(identity); }, [this, identity] { queueClosed(identity); },
                     [this, identity](const QString& reason) { queueFailed(identity, reason); });
   output_name_ = screen->name();
   configured_ = false;
@@ -161,7 +161,7 @@ void PanelSurface::handleConfigured(const std::shared_ptr<const void>& identity)
 void PanelSurface::queueClosed(const std::shared_ptr<const void>& identity) {
   QMetaObject::invokeMethod(
       this,
-      [this, identity]() {
+      [this, identity] {
         if (host_identity_ != identity) {
           return;
         }
@@ -174,7 +174,7 @@ void PanelSurface::queueClosed(const std::shared_ptr<const void>& identity) {
 void PanelSurface::queueFailed(const std::shared_ptr<const void>& identity, const QString& reason) {
   QMetaObject::invokeMethod(
       this,
-      [this, identity, reason]() {
+      [this, identity, reason] {
         if (host_identity_ != identity) {
           return;
         }

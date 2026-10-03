@@ -38,7 +38,7 @@ ProviderSettingsController::ProviderSettingsController(const std::shared_ptr<Oll
                                              [probe_provider](const auto& on_success, const auto& on_error) {
                                                probe_provider->refresh(on_success, on_error);
                                              },
-                                         .probe_models = [probe_provider]() -> const std::vector<ModelId>& {
+                                         .probe_models = [probe_provider] -> const std::vector<ModelId>& {
                                            return probe_provider->availableModels();
                                          },
                                      },
@@ -120,12 +120,13 @@ void ProviderSettingsController::updateDraft() {
   if (draftSession() == nullptr || loading_draft_) {
     return;
   }
-  (void)draftSession()->setSettings(
-      holonight_config::OllamaProviderConfig{.base_url = baseUrl(),
-                                             .default_model = defaultModel(),
-                                             .context_window = context_window_,
-                                             .temperature = temperature_,
-                                             .tool_calling_enabled = tool_calling_enabled_});
+  (void)draftSession()->setSettings(holonight_config::OllamaProviderConfig{
+      .base_url = baseUrl(),
+      .default_model = defaultModel(),
+      .context_window = context_window_,
+      .temperature = temperature_,
+      .tool_calling_enabled = tool_calling_enabled_,
+  });
 }
 
 void ProviderSettingsController::load() {

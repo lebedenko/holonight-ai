@@ -18,11 +18,13 @@ using holonight_config::ProviderState;
 using holonight_config::ProviderType;
 
 ProviderInstanceConfig instance(QString name = QStringLiteral("Local")) {
-  return ProviderInstanceConfig{.id = QStringLiteral("ollama"),
-                                .type = ProviderType::Ollama,
-                                .display_name = std::move(name),
-                                .enabled = true,
-                                .settings = OllamaProviderConfig{}};
+  return ProviderInstanceConfig{
+      .id = QStringLiteral("ollama"),
+      .type = ProviderType::Ollama,
+      .display_name = std::move(name),
+      .enabled = true,
+      .settings = OllamaProviderConfig{},
+  };
 }
 
 class RetryCredentialStore final : public holonight_credentials::CredentialStore {

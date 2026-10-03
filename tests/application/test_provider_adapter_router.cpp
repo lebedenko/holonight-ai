@@ -25,43 +25,57 @@ using holonight_config::ProviderType;
 using holonight_domain::ModelId;
 using holonight_providers::FakeHttpClient;
 
-ProviderInstanceConfig openAiConfig(QString id, QString baseUrl = QStringLiteral("https://example.test/v1"),
+ProviderInstanceConfig openAiConfig(QString instance_id, QString baseUrl = QStringLiteral("https://example.test/v1"),
                                     bool toolCallingEnabled = false) {
   return ProviderInstanceConfig{
-      .id = std::move(id),
+      .id = std::move(instance_id),
       .type = ProviderType::OpenAi,
       .display_name = QStringLiteral("OpenAI"),
       .enabled = true,
-      .settings = OpenAIProviderConfig{.base_url = std::move(baseUrl), .tool_calling_enabled = toolCallingEnabled}};
+      .settings = OpenAIProviderConfig{.base_url = std::move(baseUrl), .tool_calling_enabled = toolCallingEnabled},
+  };
 }
 
-ProviderInstanceConfig anthropicConfig(QString id, bool toolCallingEnabled) {
+ProviderInstanceConfig anthropicConfig(QString instance_id, bool toolCallingEnabled) {
   return ProviderInstanceConfig{
-      .id = std::move(id),
+      .id = std::move(instance_id),
       .type = ProviderType::Anthropic,
       .display_name = QStringLiteral("Anthropic"),
       .enabled = true,
-      .settings = AnthropicProviderConfig{.base_url = QStringLiteral("https://example.test/anthropic"),
-                                          .tool_calling_enabled = toolCallingEnabled}};
+      .settings =
+          AnthropicProviderConfig{
+              .base_url = QStringLiteral("https://example.test/anthropic"),
+              .tool_calling_enabled = toolCallingEnabled,
+          },
+  };
 }
 
-ProviderInstanceConfig googleConfig(QString id, bool toolCallingEnabled) {
+ProviderInstanceConfig googleConfig(QString instance_id, bool toolCallingEnabled) {
   return ProviderInstanceConfig{
-      .id = std::move(id),
+      .id = std::move(instance_id),
       .type = ProviderType::Google,
       .display_name = QStringLiteral("Google"),
       .enabled = true,
-      .settings = GoogleProviderConfig{.base_url = QStringLiteral("https://example.test/google"),
-                                       .tool_calling_enabled = toolCallingEnabled}};
+      .settings =
+          GoogleProviderConfig{
+              .base_url = QStringLiteral("https://example.test/google"),
+              .tool_calling_enabled = toolCallingEnabled,
+          },
+  };
 }
 
-ProviderInstanceConfig ollamaConfig(QString id, bool toolCallingEnabled) {
-  return ProviderInstanceConfig{.id = std::move(id),
-                                .type = ProviderType::Ollama,
-                                .display_name = QStringLiteral("Ollama"),
-                                .enabled = true,
-                                .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://localhost:11434"),
-                                                                 .tool_calling_enabled = toolCallingEnabled}};
+ProviderInstanceConfig ollamaConfig(QString instance_id, bool toolCallingEnabled) {
+  return ProviderInstanceConfig{
+      .id = std::move(instance_id),
+      .type = ProviderType::Ollama,
+      .display_name = QStringLiteral("Ollama"),
+      .enabled = true,
+      .settings =
+          OllamaProviderConfig{
+              .base_url = QStringLiteral("http://localhost:11434"),
+              .tool_calling_enabled = toolCallingEnabled,
+          },
+  };
 }
 
 class FakeTool : public ITool {
@@ -147,7 +161,10 @@ TEST(ProviderAdapterRouter, ReconfiguresExistingAdapterWithoutChangingItsIdentit
   ASSERT_TRUE(router.add(config, http));
 
   config.settings = OpenAIProviderConfig{
-      .base_url = QStringLiteral("https://replacement.test/v1"), .default_model = {}, .temperature = 0.25};
+      .base_url = QStringLiteral("https://replacement.test/v1"),
+      .default_model = {},
+      .temperature = 0.25,
+  };
   ASSERT_TRUE(router.reconfigure(config));
   http->enqueueBufferedSuccess(R"({"data":[{"id":"gpt-new"}]})");
   ASSERT_TRUE(router.refresh(config.id));

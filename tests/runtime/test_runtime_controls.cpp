@@ -43,13 +43,29 @@ TEST(RuntimeControls, ApplicationSurfacesAndBehavior) {
   FakeProviderController providers;
   FakeUtilitySettingsController utility;
   const std::unique_ptr<QQmlPropertyMap> provider_form{QQmlPropertyMap::create()};
-  for (const auto* key : {"baseUrl", "defaultModel", "authToken", "modelRefreshError", "saveNotice", "saveNoticeStatus",
-                          "testConnectionMessage", "testConnectionStatus", "ollamaConnectionStatus",
-                          "openAiConnectionStatus", "anthropicConnectionStatus", "googleConnectionStatus"}) {
+  for (const auto* key : {
+           "baseUrl",
+           "defaultModel",
+           "authToken",
+           "modelRefreshError",
+           "saveNotice",
+           "saveNoticeStatus",
+           "testConnectionMessage",
+           "testConnectionStatus",
+           "ollamaConnectionStatus",
+           "openAiConnectionStatus",
+           "anthropicConnectionStatus",
+           "googleConnectionStatus",
+       }) {
     provider_form->insert(QString::fromLatin1(key), QString{});
   }
-  for (const auto* key : {"toolCallingEnabled", "credentialOperationInProgress", "hasStoredToken",
-                          "modelRefreshInProgress", "testConnectionInProgress"}) {
+  for (const auto* key : {
+           "toolCallingEnabled",
+           "credentialOperationInProgress",
+           "hasStoredToken",
+           "modelRefreshInProgress",
+           "testConnectionInProgress",
+       }) {
     provider_form->insert(QString::fromLatin1(key), false);
   }
   provider_form->insert(QStringLiteral("credentialStoreAvailable"), true);
@@ -60,8 +76,12 @@ TEST(RuntimeControls, ApplicationSurfacesAndBehavior) {
   qmlRegisterSingletonInstance("HolonightChat", 1, 0, "ChatViewModel", &chat);
   qmlRegisterSingletonInstance("HolonightChat", 1, 0, "ProviderManagementController", &providers);
   qmlRegisterSingletonInstance("HolonightChat", 1, 0, "UtilitySettingsController", &utility);
-  for (const auto* name : {"ProviderSettingsController", "OpenAIProviderSettingsController",
-                           "AnthropicProviderSettingsController", "GoogleProviderSettingsController"}) {
+  for (const auto* name : {
+           "ProviderSettingsController",
+           "OpenAIProviderSettingsController",
+           "AnthropicProviderSettingsController",
+           "GoogleProviderSettingsController",
+       }) {
     qmlRegisterSingletonInstance("HolonightChat", 1, 0, name, provider_form.get());
   }
   qmlRegisterTypesAndRevisions<holonight_rendering::CodeHighlighter>("HolonightChat", 1);
@@ -229,8 +249,15 @@ TEST(RuntimeControls, ApplicationSurfacesAndBehavior) {
   EXPECT_TRUE(transcript->property("followingLatest").toBool());
 
   QVariantMap statistics{{QStringLiteral("anchorItem"), QVariant::fromValue(host.contentItem())}};
-  for (const auto* key : {"inputTokenCount", "outputTokenCount", "reasoningTokenCount", "cacheCreationTokenCount",
-                          "cacheReadTokenCount", "totalTokenCount", "durationMs"}) {
+  for (const auto* key : {
+           "inputTokenCount",
+           "outputTokenCount",
+           "reasoningTokenCount",
+           "cacheCreationTokenCount",
+           "cacheReadTokenCount",
+           "totalTokenCount",
+           "durationMs",
+       }) {
     statistics.insert(QString::fromLatin1(key), 100);
   }
   auto stats = create(engine, QStringLiteral("shared/ResponseStatsPopup.qml"), statistics);
@@ -239,14 +266,20 @@ TEST(RuntimeControls, ApplicationSurfacesAndBehavior) {
   activate(stats.get(), "open");
   QTRY_VERIFY(stats->property("visible").toBool());
   activate(stats.get(), "close");
-  auto tool =
-      create(engine, QStringLiteral("shared/ToolActivityCard.qml"),
-             {{QStringLiteral("createdAt"), QDateTime::fromSecsSinceEpoch(0)},
-              {QStringLiteral("toolCall"), QVariantMap{{QStringLiteral("toolUseId"), QStringLiteral("fixture-tool")},
-                                                       {QStringLiteral("status"), QStringLiteral("complete")},
-                                                       {QStringLiteral("functionName"), QStringLiteral("fixture_tool")},
-                                                       {QStringLiteral("kind"), QStringLiteral("result")},
-                                                       {QStringLiteral("rawResultJson"), QStringLiteral("{}")}}}});
+  auto tool = create(engine, QStringLiteral("shared/ToolActivityCard.qml"),
+                     {
+                         {QStringLiteral("createdAt"), QDateTime::fromSecsSinceEpoch(0)},
+                         {
+                             QStringLiteral("toolCall"),
+                             QVariantMap{
+                                 {QStringLiteral("toolUseId"), QStringLiteral("fixture-tool")},
+                                 {QStringLiteral("status"), QStringLiteral("complete")},
+                                 {QStringLiteral("functionName"), QStringLiteral("fixture_tool")},
+                                 {QStringLiteral("kind"), QStringLiteral("result")},
+                                 {QStringLiteral("rawResultJson"), QStringLiteral("{}")},
+                             },
+                         },
+                     });
   ASSERT_NE(tool, nullptr);
   activate(tool->findChild<QObject*>(QStringLiteral("toolActivityDisclosure")), "clicked");
   EXPECT_TRUE(tool->property("expanded").toBool());

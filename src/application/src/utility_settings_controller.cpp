@@ -82,12 +82,13 @@ UtilitySettingsController::UtilitySettingsController(QQmlEngine* qml_engine, QOb
                            const auto& success,
                            const auto& error) { static_cast<void>(router->refresh(instance_id, success, error)); },
             .models = [router = router_.get(),
-                       instance_id = instance.id]() -> const std::vector<holonight_domain::ModelId>& {
+                       instance_id = instance.id] -> const std::vector<holonight_domain::ModelId>& {
               static const std::vector<holonight_domain::ModelId> empty;
               const auto* models = router->availableModels(instance_id);
               return models == nullptr ? empty : *models;
             },
-            .persist_models = [] {}});
+            .persist_models = [] {},
+        });
     runtime_coordinator_->prepare(instance.id);
   }
 }
@@ -102,8 +103,10 @@ QVariantList UtilitySettingsController::providerInstances() const {
     if (!instance.enabled) {
       continue;
     }
-    instances.append(QVariantMap{{QStringLiteral("provider_id"), instance.id},
-                                 {QStringLiteral("display_name"), instance.display_name}});
+    instances.append(QVariantMap{
+        {QStringLiteral("provider_id"), instance.id},
+        {QStringLiteral("display_name"), instance.display_name},
+    });
   }
   return instances;
 }
@@ -291,12 +294,13 @@ void UtilitySettingsController::applyProviderState(holonight_config::ProviderSta
                              const auto& success,
                              const auto& error) { static_cast<void>(router->refresh(instance_id, success, error)); },
               .models = [router = router_.get(),
-                         instance_id = instance.id]() -> const std::vector<holonight_domain::ModelId>& {
+                         instance_id = instance.id] -> const std::vector<holonight_domain::ModelId>& {
                 static const std::vector<holonight_domain::ModelId> empty;
                 const auto* models = router->availableModels(instance_id);
                 return models == nullptr ? empty : *models;
               },
-              .persist_models = [] {}});
+              .persist_models = [] {},
+          });
     } else {
       static_cast<void>(router_->reconfigure(utility_instance));
       static_cast<void>(router_->setEnabled(instance.id, instance.enabled));

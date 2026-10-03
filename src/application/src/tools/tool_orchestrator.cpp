@@ -150,7 +150,7 @@ class OrchestratorHandle final : public holonight_application::ToolExecutionHand
     }
 
     const ToolInvocation cancelled = cancelledFromInvocation(*invocation_);
-    deliverOnApplicationThread([callback = on_terminal_, invocation = cancelled]() {
+    deliverOnApplicationThread([callback = on_terminal_, invocation = cancelled] {
       if (callback) {
         callback(invocation);
       }
@@ -186,7 +186,7 @@ ToolExecutionHandlePtr ToolOrchestrator::execute(const ToolRegistry& registry, c
     }
 
     deliverOnApplicationThread(
-        [callback = callbacks.on_running, invocation = runningInvocation]() { callback(invocation); });
+        [callback = callbacks.on_running, invocation = runningInvocation] { callback(invocation); });
   };
 
   auto emitTerminal = [callbacks, invocation_ptr = invocation, terminal_emitted](const ToolOutcome& outcome) mutable {
@@ -198,7 +198,7 @@ ToolExecutionHandlePtr ToolOrchestrator::execute(const ToolRegistry& registry, c
       return;
     }
 
-    deliverOnApplicationThread([callback = callbacks.on_terminal, invocation = terminal]() { callback(invocation); });
+    deliverOnApplicationThread([callback = callbacks.on_terminal, invocation = terminal] { callback(invocation); });
   };
 
   const auto publishError = [invocation, callbacks, terminal_emitted](const QString& code, const QString& message) {
@@ -210,7 +210,7 @@ ToolExecutionHandlePtr ToolOrchestrator::execute(const ToolRegistry& registry, c
     static_cast<void>(terminal.transitionTo(ToolInvocationStatus::Failed));
     terminal.error = ToolError{.code = code, .message = message, .details = {}};
     if (callbacks.on_terminal != nullptr) {
-      deliverOnApplicationThread([callback = callbacks.on_terminal, terminalInvocation = std::move(terminal)]() {
+      deliverOnApplicationThread([callback = callbacks.on_terminal, terminalInvocation = std::move(terminal)] {
         callback(terminalInvocation);
       });
     }
@@ -255,7 +255,7 @@ ToolExecutionHandlePtr ToolOrchestrator::execute(const ToolRegistry& registry, c
 
   invocation->can_cancel = execution_handle->canCancel();
   if (callbacks.on_capabilities_changed != nullptr) {
-    deliverOnApplicationThread([callback = callbacks.on_capabilities_changed, invocation]() { callback(*invocation); });
+    deliverOnApplicationThread([callback = callbacks.on_capabilities_changed, invocation] { callback(*invocation); });
   }
 
   return std::make_unique<OrchestratorHandle>(invocation, terminal_emitted, cancel_requested, execution_handle,

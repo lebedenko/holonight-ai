@@ -29,7 +29,8 @@ class ProviderInstanceRegistry : public QObject {
   Q_OBJECT
 
  public:
-  explicit ProviderInstanceRegistry(holonight_config::ProviderState state = {}, QObject* parent = nullptr);
+  explicit ProviderInstanceRegistry(holonight_config::ProviderState state = holonight_config::ProviderState(),
+                                    QObject* parent = nullptr);
 
   [[nodiscard]] ProviderInstanceListModel* instances();
   [[nodiscard]] const ProviderInstanceListModel* instances() const;

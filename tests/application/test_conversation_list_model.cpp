@@ -54,8 +54,10 @@ TEST(ConversationListModel, SetAllPopulatesModelAndEmitsReset) {
   QSignalSpy resetSpy(&model, &QAbstractItemModel::modelReset);
 
   const QDateTime now = QDateTime::currentDateTimeUtc();
-  model.setAll({makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
-                makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10))});
+  model.setAll({
+      makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
+      makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10)),
+  });
 
   EXPECT_EQ(resetSpy.count(), 1);
   ASSERT_EQ(model.rowCount(), 2);
@@ -79,8 +81,10 @@ TEST(ConversationListModel, UpsertToFrontInsertsNewConversationAtRowZero) {
 TEST(ConversationListModel, UpsertToFrontMovesExistingConversationToFront) {
   ConversationListModel model;
   const QDateTime now = QDateTime::currentDateTimeUtc();
-  model.setAll({makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
-                makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10))});
+  model.setAll({
+      makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
+      makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10)),
+  });
 
   QSignalSpy moveSpy(&model, &QAbstractItemModel::rowsMoved);
   model.upsertToFront(makeSummary(QStringLiteral("b"), QStringLiteral("B renamed"), now.addSecs(5)));
@@ -95,8 +99,10 @@ TEST(ConversationListModel, UpsertToFrontMovesExistingConversationToFront) {
 TEST(ConversationListModel, TouchToFrontPreservesTitleAndUpdatesTimestamp) {
   ConversationListModel model;
   const QDateTime now = QDateTime::currentDateTimeUtc();
-  model.setAll({makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
-                makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10))});
+  model.setAll({
+      makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
+      makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10)),
+  });
 
   const QDateTime touchedAt = now.addSecs(20);
   model.touchToFront(QStringLiteral("b"), touchedAt);
@@ -109,8 +115,10 @@ TEST(ConversationListModel, TouchToFrontPreservesTitleAndUpdatesTimestamp) {
 TEST(ConversationListModel, RemoveByIdRemovesRow) {
   ConversationListModel model;
   const QDateTime now = QDateTime::currentDateTimeUtc();
-  model.setAll({makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
-                makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10))});
+  model.setAll({
+      makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
+      makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10)),
+  });
 
   QSignalSpy removeSpy(&model, &QAbstractItemModel::rowsRemoved);
   model.removeById(QStringLiteral("a"));
@@ -134,8 +142,10 @@ TEST(ConversationListModel, RoleNamesExposeExpectedRoles) {
 TEST(ConversationListModel, TitleGenerationProgressUpdatesOnlyMatchingRowAndRole) {
   ConversationListModel model;
   const QDateTime now = QDateTime::currentDateTimeUtc();
-  model.setAll({makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
-                makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10))});
+  model.setAll({
+      makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
+      makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10)),
+  });
   QSignalSpy changedSpy(&model, &QAbstractItemModel::dataChanged);
 
   EXPECT_FALSE(titleGenerationInProgressAt(model, 0));
@@ -155,26 +165,32 @@ TEST(ConversationListModel, TitleGenerationProgressUpdatesOnlyMatchingRowAndRole
 TEST(ConversationListModel, TitleGenerationProgressSurvivesUpsertMoveAndReset) {
   ConversationListModel model;
   const QDateTime now = QDateTime::currentDateTimeUtc();
-  model.setAll({makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
-                makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10))});
+  model.setAll({
+      makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
+      makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10)),
+  });
   model.setTitleGenerationInProgress(QStringLiteral("b"), true);
 
   model.upsertToFront(makeSummary(QStringLiteral("b"), QStringLiteral("Renamed"), now.addSecs(10)));
   EXPECT_TRUE(titleGenerationInProgressAt(model, 0));
 
-  model.setAll({makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
-                makeSummary(QStringLiteral("b"), QStringLiteral("Renamed"), now.addSecs(10))});
+  model.setAll({
+      makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
+      makeSummary(QStringLiteral("b"), QStringLiteral("Renamed"), now.addSecs(10)),
+  });
   EXPECT_TRUE(titleGenerationInProgressAt(model, 1));
 }
 
 TEST(ConversationListModel, PinUnpinReorder) {
   ConversationListModel model;
   const QDateTime now = QDateTime::currentDateTimeUtc();
-  model.setAll({makeSummary(QStringLiteral("a"), QStringLiteral("A"), now.addSecs(-5)),
-                makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10)),
-                makeSummary(QStringLiteral("c"), QStringLiteral("C"), now.addSecs(-15)),
-                makeSummary(QStringLiteral("d"), QStringLiteral("D"), now.addSecs(-20)),
-                makeSummary(QStringLiteral("e"), QStringLiteral("E"), now.addSecs(-25))});
+  model.setAll({
+      makeSummary(QStringLiteral("a"), QStringLiteral("A"), now.addSecs(-5)),
+      makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10)),
+      makeSummary(QStringLiteral("c"), QStringLiteral("C"), now.addSecs(-15)),
+      makeSummary(QStringLiteral("d"), QStringLiteral("D"), now.addSecs(-20)),
+      makeSummary(QStringLiteral("e"), QStringLiteral("E"), now.addSecs(-25)),
+  });
 
   model.markPinned(QStringLiteral("a"), now.addSecs(-3));
   model.markPinned(QStringLiteral("b"), now.addSecs(-2));
@@ -212,8 +228,10 @@ TEST(ConversationListModel, PinUnpinReorder) {
 TEST(ConversationListModel, UpsertToFrontDoesNotMovePinnedRow) {
   ConversationListModel model;
   const QDateTime now = QDateTime::currentDateTimeUtc();
-  model.setAll({makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
-                makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10))});
+  model.setAll({
+      makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
+      makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10)),
+  });
   model.markPinned(QStringLiteral("b"), now.addSecs(-1));
   ASSERT_EQ(idAt(model, 0), QStringLiteral("b"));
   ASSERT_EQ(idAt(model, 1), QStringLiteral("a"));
@@ -246,8 +264,10 @@ TEST(ConversationListModel, UpsertToFrontInsertsNewConversationAfterPinnedBlock)
 TEST(ConversationListModel, TouchToFrontDoesNotMovePinnedRow) {
   ConversationListModel model;
   const QDateTime now = QDateTime::currentDateTimeUtc();
-  model.setAll({makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
-                makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10))});
+  model.setAll({
+      makeSummary(QStringLiteral("a"), QStringLiteral("A"), now),
+      makeSummary(QStringLiteral("b"), QStringLiteral("B"), now.addSecs(-10)),
+  });
   model.markPinned(QStringLiteral("b"), now.addSecs(-1));
 
   QSignalSpy moveSpy(&model, &QAbstractItemModel::rowsMoved);
@@ -261,10 +281,12 @@ TEST(ConversationListModel, TouchToFrontDoesNotMovePinnedRow) {
 TEST(ConversationListModel, FormatsUpdatedAtAsCompactRelativeTime) {
   ConversationListModel model;
   const QDateTime now = QDateTime::currentDateTimeUtc();
-  model.setAll({makeSummary(QStringLiteral("now"), QStringLiteral("Now"), now),
-                makeSummary(QStringLiteral("minutes"), QStringLiteral("Minutes"), now.addSecs(-2 * 60)),
-                makeSummary(QStringLiteral("hours"), QStringLiteral("Hours"), now.addSecs(-3 * 60 * 60)),
-                makeSummary(QStringLiteral("days"), QStringLiteral("Days"), now.addDays(-4))});
+  model.setAll({
+      makeSummary(QStringLiteral("now"), QStringLiteral("Now"), now),
+      makeSummary(QStringLiteral("minutes"), QStringLiteral("Minutes"), now.addSecs(-2 * 60)),
+      makeSummary(QStringLiteral("hours"), QStringLiteral("Hours"), now.addSecs(-3 * 60 * 60)),
+      makeSummary(QStringLiteral("days"), QStringLiteral("Days"), now.addDays(-4)),
+  });
 
   EXPECT_EQ(updatedAtAt(model, 0), QStringLiteral("now"));
   EXPECT_EQ(updatedAtAt(model, 1), QStringLiteral("2m ago"));

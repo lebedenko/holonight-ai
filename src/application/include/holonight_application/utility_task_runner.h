@@ -45,7 +45,8 @@ class UtilityTaskRunner : public QObject {
  public:
   explicit UtilityTaskRunner(holonight_credentials::CredentialStore* credential_store,
                              holonight_config::UtilityConfig utility_config, const UtilityProviderEndpoints& endpoints,
-                             QObject* parent = nullptr, holonight_config::ProviderState provider_state = {},
+                             QObject* parent = nullptr,
+                             holonight_config::ProviderState provider_state = holonight_config::ProviderState(),
                              const QHash<QString, std::vector<holonight_domain::ModelId>>& available_models = {});
 
   // Fire-and-forget (REQ-NF-003). No-op if conversationId was already attempted (REQ-NF-004/005).

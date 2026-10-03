@@ -239,32 +239,44 @@ TEST(SqliteConversationRepository, PersistNewMessageRoundTripsToolCallsThroughLo
   const QDateTime& startedAt = invocationCreatedAt;
   const QDateTime& finishedAt = resultCreatedAt;
 
-  holonight_domain::ToolCallEntry invocationEntry{.kind = holonight_domain::ToolCallKind::Invocation,
-                                                  .tool_use_id = QStringLiteral("toolu_123"),
-                                                  .tool_name = QStringLiteral("ListFiles"),
-                                                  .tool_id = QStringLiteral("filesystem.list"),
-                                                  .function_name = QStringLiteral("list_files"),
-                                                  .status = ToolInvocationStatus::Running,
-                                                  .requested_at = requestedAt,
-                                                  .execution_location = ToolExecutionLocation::LocalClient};
+  holonight_domain::ToolCallEntry invocationEntry{
+      .kind = holonight_domain::ToolCallKind::Invocation,
+      .tool_use_id = QStringLiteral("toolu_123"),
+      .tool_name = QStringLiteral("ListFiles"),
+      .tool_id = QStringLiteral("filesystem.list"),
+      .function_name = QStringLiteral("list_files"),
+      .status = ToolInvocationStatus::Running,
+      .requested_at = requestedAt,
+      .execution_location = ToolExecutionLocation::LocalClient,
+  };
   invocationEntry.input = QJsonObject{{QStringLiteral("path"), QStringLiteral("~/Documents")}};
   invocationEntry.started_at = startedAt;
   Message invocationMessage(MessageId::generate(), MessageRole::Assistant, QString(), MessageStatus::Complete,
                             invocationCreatedAt);
   invocationMessage.setToolCalls({invocationEntry});
 
-  holonight_domain::ToolCallEntry resultEntry{.kind = holonight_domain::ToolCallKind::Result,
-                                              .tool_use_id = QStringLiteral("toolu_123"),
-                                              .tool_id = QStringLiteral("filesystem.list"),
-                                              .function_name = QStringLiteral("list_files"),
-                                              .status = ToolInvocationStatus::Completed,
-                                              .requested_at = requestedAt,
-                                              .execution_location = ToolExecutionLocation::LocalClient};
+  holonight_domain::ToolCallEntry resultEntry{
+      .kind = holonight_domain::ToolCallKind::Result,
+      .tool_use_id = QStringLiteral("toolu_123"),
+      .tool_id = QStringLiteral("filesystem.list"),
+      .function_name = QStringLiteral("list_files"),
+      .status = ToolInvocationStatus::Completed,
+      .requested_at = requestedAt,
+      .execution_location = ToolExecutionLocation::LocalClient,
+  };
   resultEntry.started_at = startedAt;
   resultEntry.finished_at = finishedAt;
   resultEntry.result = QJsonObject{
-      {QStringLiteral("entries"), QJsonArray{QJsonObject{{QStringLiteral("name"), QStringLiteral("notes.txt")},
-                                                         {QStringLiteral("type"), QStringLiteral("file")}}}}};
+      {
+          QStringLiteral("entries"),
+          QJsonArray{
+              QJsonObject{
+                  {QStringLiteral("name"), QStringLiteral("notes.txt")},
+                  {QStringLiteral("type"), QStringLiteral("file")},
+              },
+          },
+      },
+  };
   resultEntry.is_error = false;
   Message resultMessage(MessageId::generate(), MessageRole::User, QString(), MessageStatus::Complete, resultCreatedAt);
   resultMessage.setToolCalls({resultEntry});
@@ -298,16 +310,18 @@ TEST(SqliteConversationRepository, PersistNewMessageRoundTripsThoughtSignatureAn
 
   const QDateTime invocationCreatedAt(QDate(2026, 8, 5), QTime(9, 0, 0), QTimeZone::UTC);
 
-  holonight_domain::ToolCallEntry invocationEntry{.kind = holonight_domain::ToolCallKind::Invocation,
-                                                  .tool_use_id = QStringLiteral("f47ac10b-58cc-4372-a567-0e02b2c3d479"),
-                                                  .tool_name = QStringLiteral("ListFiles"),
-                                                  .tool_id = QStringLiteral("filesystem.list"),
-                                                  .function_name = QStringLiteral("list_files"),
-                                                  .status = ToolInvocationStatus::Completed,
-                                                  .requested_at = invocationCreatedAt,
-                                                  .execution_location = ToolExecutionLocation::LocalClient,
-                                                  .thought_signature = QStringLiteral("sig-xyz"),
-                                                  .provider_call_id_synthesized = true};
+  holonight_domain::ToolCallEntry invocationEntry{
+      .kind = holonight_domain::ToolCallKind::Invocation,
+      .tool_use_id = QStringLiteral("f47ac10b-58cc-4372-a567-0e02b2c3d479"),
+      .tool_name = QStringLiteral("ListFiles"),
+      .tool_id = QStringLiteral("filesystem.list"),
+      .function_name = QStringLiteral("list_files"),
+      .status = ToolInvocationStatus::Completed,
+      .requested_at = invocationCreatedAt,
+      .execution_location = ToolExecutionLocation::LocalClient,
+      .thought_signature = QStringLiteral("sig-xyz"),
+      .provider_call_id_synthesized = true,
+  };
   invocationEntry.input = QJsonObject{{QStringLiteral("path"), QStringLiteral("~/Documents")}};
   Message invocationMessage(MessageId::generate(), MessageRole::Assistant, QString(), MessageStatus::Complete,
                             invocationCreatedAt);

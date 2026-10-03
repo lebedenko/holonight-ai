@@ -19,10 +19,12 @@ QJsonObject textContentBlock(const QString& text) {
 }
 
 QJsonObject invocationBlock(const ToolCallEntry& entry) {
-  return QJsonObject{{QStringLiteral("type"), QStringLiteral("tool_use")},
-                     {QStringLiteral("id"), entry.tool_use_id},
-                     {QStringLiteral("name"), entry.function_name.isEmpty() ? entry.tool_name : entry.function_name},
-                     {QStringLiteral("input"), entry.input}};
+  return QJsonObject{
+      {QStringLiteral("type"), QStringLiteral("tool_use")},
+      {QStringLiteral("id"), entry.tool_use_id},
+      {QStringLiteral("name"), entry.function_name.isEmpty() ? entry.tool_name : entry.function_name},
+      {QStringLiteral("input"), entry.input},
+  };
 }
 
 QJsonObject toolBlock(const ToolCallEntry& entry) {
@@ -84,9 +86,11 @@ class MessageGroupBuilder {
 QJsonArray AnthropicToolCodec::encodeDefinitions(const holonight_domain::ToolCatalogSnapshot& catalog) {
   QJsonArray encoded;
   for (const auto& definition : catalog.client_tools) {
-    encoded.append(QJsonObject{{QStringLiteral("name"), definition.function_name},
-                               {QStringLiteral("description"), definition.description},
-                               {QStringLiteral("input_schema"), definition.input_schema}});
+    encoded.append(QJsonObject{
+        {QStringLiteral("name"), definition.function_name},
+        {QStringLiteral("description"), definition.description},
+        {QStringLiteral("input_schema"), definition.input_schema},
+    });
   }
   return encoded;
 }

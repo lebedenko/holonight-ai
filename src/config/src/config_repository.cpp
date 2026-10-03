@@ -52,12 +52,12 @@ constexpr auto kProviderIdKey = "provider_id";
 constexpr auto kModelNameKey = "model_name";
 constexpr int kProviderSchemaVersion = 1;
 
-bool isValidInstanceId(const QString& id) {
-  if (id == QLatin1String(kOllamaKey) || id == QLatin1String(kOpenAiKey) || id == QLatin1String(kAnthropicKey) ||
-      id == QLatin1String(kGoogleKey)) {
+bool isValidInstanceId(const QString& instance_id) {
+  if (instance_id == QLatin1String(kOllamaKey) || instance_id == QLatin1String(kOpenAiKey) ||
+      instance_id == QLatin1String(kAnthropicKey) || instance_id == QLatin1String(kGoogleKey)) {
     return true;
   }
-  return !id.isEmpty() && !QUuid::fromString(id).isNull();
+  return !instance_id.isEmpty() && !QUuid::fromString(instance_id).isNull();
 }
 
 bool hasType(const QJsonObject& object, const char* key, QJsonValue::Type type) {
@@ -126,17 +126,21 @@ std::optional<ProviderSettings> parseSettings(ProviderType type, const QJsonObje
       // parsing. Applies identically to both Anthropic and Google.
       const bool toolCallingEnabled = object.value(QLatin1String(kToolCallingEnabledKey)).toBool(false);
       if (type == ProviderType::Anthropic) {
-        return AnthropicProviderConfig{.base_url = baseUrl,
-                                       .default_model = defaultModel,
-                                       .temperature = temperature,
-                                       .max_output_tokens = maxOutputTokens,
-                                       .tool_calling_enabled = toolCallingEnabled};
+        return AnthropicProviderConfig{
+            .base_url = baseUrl,
+            .default_model = defaultModel,
+            .temperature = temperature,
+            .max_output_tokens = maxOutputTokens,
+            .tool_calling_enabled = toolCallingEnabled,
+        };
       }
-      return GoogleProviderConfig{.base_url = baseUrl,
-                                  .default_model = defaultModel,
-                                  .temperature = temperature,
-                                  .max_output_tokens = maxOutputTokens,
-                                  .tool_calling_enabled = toolCallingEnabled};
+      return GoogleProviderConfig{
+          .base_url = baseUrl,
+          .default_model = defaultModel,
+          .temperature = temperature,
+          .max_output_tokens = maxOutputTokens,
+          .tool_calling_enabled = toolCallingEnabled,
+      };
     }
   }
   return std::nullopt;
@@ -145,9 +149,11 @@ std::optional<ProviderSettings> parseSettings(ProviderType type, const QJsonObje
 QJsonObject serializeSettings(const ProviderSettings& settings) {
   return std::visit(
       [](const auto& config) {
-        QJsonObject object{{QLatin1String(kBaseUrlKey), config.base_url},
-                           {QLatin1String(kDefaultModelKey), config.default_model},
-                           {QLatin1String(kTemperatureKey), config.temperature}};
+        QJsonObject object{
+            {QLatin1String(kBaseUrlKey), config.base_url},
+            {QLatin1String(kDefaultModelKey), config.default_model},
+            {QLatin1String(kTemperatureKey), config.temperature},
+        };
         using Config = std::decay_t<decltype(config)>;
         if constexpr (std::is_same_v<Config, OllamaProviderConfig>) {
           object[QLatin1String(kContextWindowKey)] = config.context_window;
@@ -226,37 +232,76 @@ std::expected<void, QString> ConfigRepository::writeRootObject(const QJsonObject
   return {};
 }
 
+namespace {
+ProviderState migrateLegacyProviders(const QJsonObject& root) {
+  ProviderState migrated;
+  const QJsonObject legacyProviders = root.value(QLatin1String(kProvidersKey)).toObject();
+  const std::array legacyTypes{
+      ProviderType::Ollama,
+      ProviderType::OpenAi,
+      ProviderType::Anthropic,
+      ProviderType::Google,
+  };
+  for (const ProviderType type : legacyTypes) {
+    const QString instance_id = providerTypeToString(type);
+    const QJsonValue legacyValue = legacyProviders.value(instance_id);
+    if (legacyValue.isUndefined()) {
+      continue;
+    }
+    if (!legacyValue.isObject()) {
+      warnSkipped(QStringLiteral("legacy provider '%1'").arg(instance_id));
+      continue;
+    }
+    const auto settings = parseSettings(type, legacyValue.toObject());
+    if (!settings.has_value()) {
+      warnSkipped(QStringLiteral("legacy provider '%1'").arg(instance_id));
+      continue;
+    }
+    migrated.instances.push_back(ProviderInstanceConfig{
+        .id = instance_id,
+        .type = type,
+        .display_name = defaultProviderDisplayName(type),
+        .enabled = true,
+        .settings = *settings,
+    });
+  }
+  return migrated;
+}
+}  // namespace
+
+namespace {
+void loadProviderTombstones(const QJsonObject& stateObject, ProviderState& state) {
+  QSet<QString> tombstoneIds;
+  const QJsonValue tombstonesValue = stateObject.value(QLatin1String(kTombstonesKey));
+  if (tombstonesValue.isArray()) {
+    for (const auto& value : tombstonesValue.toArray()) {
+      if (!value.isObject()) {
+        warnSkipped(QStringLiteral("provider tombstone"));
+        continue;
+      }
+      const QJsonObject object = value.toObject();
+      const QString instance_id = object.value(QLatin1String(kIdKey)).toString();
+      const auto type = providerTypeFromString(object.value(QLatin1String(kTypeKey)).toString());
+      const QString name = object.value(QLatin1String(kNameKey)).toString().trimmed();
+      if (!isValidInstanceId(instance_id) || !type.has_value() || name.isEmpty() ||
+          tombstoneIds.contains(instance_id)) {
+        warnSkipped(QStringLiteral("provider tombstone '%1'").arg(instance_id));
+        continue;
+      }
+      tombstoneIds.insert(instance_id);
+      state.tombstones.push_back(
+          ProviderTombstone{.instance_id = instance_id, .type = *type, .last_display_name = name});
+    }
+  }
+}
+}  // namespace
+
 ProviderState ConfigRepository::loadProviderState() const {
   const QJsonObject root = readRootObject();
   const QJsonValue stateValue = root.value(QLatin1String(kProviderInstancesKey));
 
   if (stateValue.isUndefined()) {
-    ProviderState migrated;
-    const QJsonObject legacyProviders = root.value(QLatin1String(kProvidersKey)).toObject();
-    const std::array legacyTypes{ProviderType::Ollama, ProviderType::OpenAi, ProviderType::Anthropic,
-                                 ProviderType::Google};
-    for (const ProviderType type : legacyTypes) {
-      const QString id = providerTypeToString(type);
-      const QJsonValue legacyValue = legacyProviders.value(id);
-      if (legacyValue.isUndefined()) {
-        continue;
-      }
-      if (!legacyValue.isObject()) {
-        warnSkipped(QStringLiteral("legacy provider '%1'").arg(id));
-        continue;
-      }
-      const auto settings = parseSettings(type, legacyValue.toObject());
-      if (!settings.has_value()) {
-        warnSkipped(QStringLiteral("legacy provider '%1'").arg(id));
-        continue;
-      }
-      migrated.instances.push_back(ProviderInstanceConfig{.id = id,
-                                                          .type = type,
-                                                          .display_name = defaultProviderDisplayName(type),
-                                                          .enabled = true,
-                                                          .settings = *settings});
-    }
-    return migrated;
+    return migrateLegacyProviders(root);
   }
 
   if (!stateValue.isObject()) {
@@ -280,49 +325,35 @@ ProviderState ConfigRepository::loadProviderState() const {
         continue;
       }
       const QJsonObject object = value.toObject();
-      const QString id = object.value(QLatin1String(kIdKey)).toString();
+      const QString instance_id = object.value(QLatin1String(kIdKey)).toString();
       const auto type = providerTypeFromString(object.value(QLatin1String(kTypeKey)).toString());
       const QString name = object.value(QLatin1String(kNameKey)).toString().trimmed();
       const QString foldedName = name.toCaseFolded();
       const QJsonValue enabledValue = object.value(QLatin1String(kEnabledKey));
       const QJsonValue settingsValue = object.value(QLatin1String(kSettingsKey));
-      if (!isValidInstanceId(id) || !type.has_value() || name.isEmpty() || ids.contains(id) ||
+      if (!isValidInstanceId(instance_id) || !type.has_value() || name.isEmpty() || ids.contains(instance_id) ||
           names.contains(foldedName) || !enabledValue.isBool() || !settingsValue.isObject()) {
-        warnSkipped(QStringLiteral("provider instance '%1'").arg(id));
+        warnSkipped(QStringLiteral("provider instance '%1'").arg(instance_id));
         continue;
       }
       const auto settings = parseSettings(*type, settingsValue.toObject());
       if (!settings.has_value()) {
-        warnSkipped(QStringLiteral("provider instance '%1' settings").arg(id));
+        warnSkipped(QStringLiteral("provider instance '%1' settings").arg(instance_id));
         continue;
       }
-      ids.insert(id);
+      ids.insert(instance_id);
       names.insert(foldedName);
       state.instances.push_back(ProviderInstanceConfig{
-          .id = id, .type = *type, .display_name = name, .enabled = enabledValue.toBool(), .settings = *settings});
+          .id = instance_id,
+          .type = *type,
+          .display_name = name,
+          .enabled = enabledValue.toBool(),
+          .settings = *settings,
+      });
     }
   }
 
-  QSet<QString> tombstoneIds;
-  const QJsonValue tombstonesValue = stateObject.value(QLatin1String(kTombstonesKey));
-  if (tombstonesValue.isArray()) {
-    for (const auto& value : tombstonesValue.toArray()) {
-      if (!value.isObject()) {
-        warnSkipped(QStringLiteral("provider tombstone"));
-        continue;
-      }
-      const QJsonObject object = value.toObject();
-      const QString id = object.value(QLatin1String(kIdKey)).toString();
-      const auto type = providerTypeFromString(object.value(QLatin1String(kTypeKey)).toString());
-      const QString name = object.value(QLatin1String(kNameKey)).toString().trimmed();
-      if (!isValidInstanceId(id) || !type.has_value() || name.isEmpty() || tombstoneIds.contains(id)) {
-        warnSkipped(QStringLiteral("provider tombstone '%1'").arg(id));
-        continue;
-      }
-      tombstoneIds.insert(id);
-      state.tombstones.push_back(ProviderTombstone{.instance_id = id, .type = *type, .last_display_name = name});
-    }
-  }
+  loadProviderTombstones(stateObject, state);
   return state;
 }
 
@@ -341,11 +372,13 @@ std::expected<QJsonObject, QString> serializeProviderState(const ProviderState& 
     }
     ids.insert(instance.id);
     names.insert(foldedName);
-    instances.append(QJsonObject{{QLatin1String(kIdKey), instance.id},
-                                 {QLatin1String(kTypeKey), providerTypeToString(instance.type)},
-                                 {QLatin1String(kNameKey), name},
-                                 {QLatin1String(kEnabledKey), instance.enabled},
-                                 {QLatin1String(kSettingsKey), serializeSettings(instance.settings)}});
+    instances.append(QJsonObject{
+        {QLatin1String(kIdKey), instance.id},
+        {QLatin1String(kTypeKey), providerTypeToString(instance.type)},
+        {QLatin1String(kNameKey), name},
+        {QLatin1String(kEnabledKey), instance.enabled},
+        {QLatin1String(kSettingsKey), serializeSettings(instance.settings)},
+    });
   }
 
   QSet<QString> tombstoneIds;
@@ -356,22 +389,27 @@ std::expected<QJsonObject, QString> serializeProviderState(const ProviderState& 
       return std::unexpected(QStringLiteral("Invalid provider tombstone '%1'").arg(tombstone.instance_id));
     }
     tombstoneIds.insert(tombstone.instance_id);
-    tombstones.append(QJsonObject{{QLatin1String(kIdKey), tombstone.instance_id},
-                                  {QLatin1String(kTypeKey), providerTypeToString(tombstone.type)},
-                                  {QLatin1String(kNameKey), name}});
+    tombstones.append(QJsonObject{
+        {QLatin1String(kIdKey), tombstone.instance_id},
+        {QLatin1String(kTypeKey), providerTypeToString(tombstone.type)},
+        {QLatin1String(kNameKey), name},
+    });
   }
 
-  return QJsonObject{{QLatin1String(kSchemaVersionKey), kProviderSchemaVersion},
-                     {QLatin1String(kInstancesKey), instances},
-                     {QLatin1String(kTombstonesKey), tombstones}};
+  return QJsonObject{
+      {QLatin1String(kSchemaVersionKey), kProviderSchemaVersion},
+      {QLatin1String(kInstancesKey), instances},
+      {QLatin1String(kTombstonesKey), tombstones},
+  };
 }
 
 void applyUtilityConfig(QJsonObject& root, const UtilityConfig& config) {
   QJsonObject utility = root.value(QLatin1String(kUtilityKey)).toObject();
   if (config.default_utility_model.has_value()) {
-    utility[QLatin1String(kDefaultUtilityModelKey)] =
-        QJsonObject{{QLatin1String(kProviderIdKey), config.default_utility_model->provider_id},
-                    {QLatin1String(kModelNameKey), config.default_utility_model->model_name}};
+    utility[QLatin1String(kDefaultUtilityModelKey)] = QJsonObject{
+        {QLatin1String(kProviderIdKey), config.default_utility_model->provider_id},
+        {QLatin1String(kModelNameKey), config.default_utility_model->model_name},
+    };
   } else {
     utility.remove(QLatin1String(kDefaultUtilityModelKey));
   }
@@ -381,9 +419,10 @@ void applyUtilityConfig(QJsonObject& root, const UtilityConfig& config) {
     utility.remove(QLatin1String(kChatTitleGenerationEnabledKey));
   }
   if (config.chat_title_model_override.has_value()) {
-    utility[QLatin1String(kChatTitleModelOverrideKey)] =
-        QJsonObject{{QLatin1String(kProviderIdKey), config.chat_title_model_override->provider_id},
-                    {QLatin1String(kModelNameKey), config.chat_title_model_override->model_name}};
+    utility[QLatin1String(kChatTitleModelOverrideKey)] = QJsonObject{
+        {QLatin1String(kProviderIdKey), config.chat_title_model_override->provider_id},
+        {QLatin1String(kModelNameKey), config.chat_title_model_override->model_name},
+    };
   } else {
     utility.remove(QLatin1String(kChatTitleModelOverrideKey));
   }

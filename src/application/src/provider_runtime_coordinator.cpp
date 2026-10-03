@@ -36,9 +36,11 @@ ProviderRuntimeCoordinator::ProviderRuntimeCoordinator(CredentialStore* credenti
 void ProviderRuntimeCoordinator::registerProvider(QString provider_id, QString display_name,
                                                   CredentialPolicy credential_policy,
                                                   ProviderRuntimeOperations operations) {
-  registrations_.insert(std::move(provider_id), Registration{.display_name = std::move(display_name),
-                                                             .credential_policy = credential_policy,
-                                                             .operations = std::move(operations)});
+  registrations_.insert(std::move(provider_id), Registration{
+                                                    .display_name = std::move(display_name),
+                                                    .credential_policy = credential_policy,
+                                                    .operations = std::move(operations),
+                                                });
 }
 
 bool ProviderRuntimeCoordinator::unregisterProvider(const QString& provider_id) {

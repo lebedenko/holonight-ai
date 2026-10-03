@@ -1,3 +1,4 @@
+// Fixture state is visible to derived test cases and deterministic assertions.
 #include "qml/fakes/provider_controller.h"
 
 #include <QAbstractListModel>
@@ -54,15 +55,18 @@ class ProviderManagementQml : public testing::Test {
     engine.addImportPath(QDir{QStringLiteral(PROJECT_SOURCE_DIR)}.filePath(QStringLiteral("qml")));
   }
 
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   QQmlEngine engine;
 };
 
 TEST_F(ProviderManagementQml, EmptyAndPopulatedListsDoNotAutomaticallySelectAProvider) {
   FakeProviderController controller;
-  controller.model.prepend({.instance_id = QStringLiteral("existing"),
-                            .provider_type = QStringLiteral("ollama"),
-                            .display_name = QStringLiteral("Local"),
-                            .enabled = true});
+  controller.model.prepend({
+      .instance_id = QStringLiteral("existing"),
+      .provider_type = QStringLiteral("ollama"),
+      .display_name = QStringLiteral("Local"),
+      .enabled = true,
+  });
 
   auto panel = createComponent(engine, QStringLiteral("ProviderListPanel.qml"),
                                {{QStringLiteral("providerController"), QVariant::fromValue(&controller)}});
@@ -85,10 +89,12 @@ TEST_F(ProviderManagementQml, EmptyAndPopulatedListsDoNotAutomaticallySelectAPro
 
 TEST_F(ProviderManagementQml, AddMenuListsEveryProviderAndPrependsAndSelectsTheDraft) {
   FakeProviderController controller;
-  controller.model.prepend({.instance_id = QStringLiteral("existing"),
-                            .provider_type = QStringLiteral("ollama"),
-                            .display_name = QStringLiteral("Local"),
-                            .enabled = true});
+  controller.model.prepend({
+      .instance_id = QStringLiteral("existing"),
+      .provider_type = QStringLiteral("ollama"),
+      .display_name = QStringLiteral("Local"),
+      .enabled = true,
+  });
   auto panel = createComponent(engine, QStringLiteral("ProviderListPanel.qml"),
                                {{QStringLiteral("providerController"), QVariant::fromValue(&controller)}});
   ASSERT_NE(panel, nullptr);
@@ -118,9 +124,11 @@ TEST_F(ProviderManagementQml, ValidationAndDeletionStateArePresentedInline) {
   controller.setCanDelete(false);
   controller.setDeletionExplanation(QStringLiteral("Deletion is blocked while a response is streaming."));
   auto scaffold = createComponent(engine, QStringLiteral("ProviderSettingsScaffold.qml"),
-                                  {{QStringLiteral("providerController"), QVariant::fromValue(&controller)},
-                                   {QStringLiteral("providerType"), QStringLiteral("ollama")},
-                                   {QStringLiteral("title"), QStringLiteral("Ollama")}});
+                                  {
+                                      {QStringLiteral("providerController"), QVariant::fromValue(&controller)},
+                                      {QStringLiteral("providerType"), QStringLiteral("ollama")},
+                                      {QStringLiteral("title"), QStringLiteral("Ollama")},
+                                  });
   ASSERT_NE(scaffold, nullptr);
 
   auto* name_field = scaffold->findChild<QObject*>(QStringLiteral("providerNameField"));
@@ -151,10 +159,12 @@ TEST_F(ProviderManagementQml, ValidationAndDeletionStateArePresentedInline) {
 
 TEST_F(ProviderManagementQml, DisabledProviderUsesNeutralDisabledStatus) {
   auto delegate = createComponent(engine, QStringLiteral("ProviderListDelegate.qml"),
-                                  {{QStringLiteral("providerName"), QStringLiteral("Offline provider")},
-                                   {QStringLiteral("providerId"), QStringLiteral("offline")},
-                                   {QStringLiteral("providerType"), QStringLiteral("unsupported")},
-                                   {QStringLiteral("providerEnabled"), false}});
+                                  {
+                                      {QStringLiteral("providerName"), QStringLiteral("Offline provider")},
+                                      {QStringLiteral("providerId"), QStringLiteral("offline")},
+                                      {QStringLiteral("providerType"), QStringLiteral("unsupported")},
+                                      {QStringLiteral("providerEnabled"), false},
+                                  });
   ASSERT_NE(delegate, nullptr);
   EXPECT_EQ(delegate->property("subtitle").toString(), QStringLiteral("Disabled"));
   EXPECT_EQ(delegate->property("status").toInt(), 0);
@@ -199,22 +209,24 @@ TEST_F(ProviderManagementQml, DirtyPromptDisablesSaveForInvalidDraft) {
 
 TEST_F(ProviderManagementQml, HistoricalAttributionShowsResolvedNameModelAndProviderType) {
   auto bubble = createComponent(engine, QStringLiteral("../shared/MessageBubble.qml"),
-                                {{QStringLiteral("messageRole"), QStringLiteral("assistant")},
-                                 {QStringLiteral("messageText"), QStringLiteral("Historical response")},
-                                 {QStringLiteral("messageStatus"), QStringLiteral("complete")},
-                                 {QStringLiteral("modelName"), QStringLiteral("gpt-5")},
-                                 {QStringLiteral("providerId"), QStringLiteral("deleted-instance")},
-                                 {QStringLiteral("providerType"), QStringLiteral("openai")},
-                                 {QStringLiteral("providerName"), QStringLiteral("Former work account")},
-                                 {QStringLiteral("createdAt"), QDateTime::currentDateTime()},
-                                 {QStringLiteral("contentBlocks"), QVariantList{}},
-                                 {QStringLiteral("inputTokenCount"), QVariant()},
-                                 {QStringLiteral("outputTokenCount"), QVariant()},
-                                 {QStringLiteral("reasoningTokenCount"), QVariant()},
-                                 {QStringLiteral("cacheCreationTokenCount"), QVariant()},
-                                 {QStringLiteral("cacheReadTokenCount"), QVariant()},
-                                 {QStringLiteral("totalTokenCount"), QVariant()},
-                                 {QStringLiteral("durationMs"), QVariant()}});
+                                {
+                                    {QStringLiteral("messageRole"), QStringLiteral("assistant")},
+                                    {QStringLiteral("messageText"), QStringLiteral("Historical response")},
+                                    {QStringLiteral("messageStatus"), QStringLiteral("complete")},
+                                    {QStringLiteral("modelName"), QStringLiteral("gpt-5")},
+                                    {QStringLiteral("providerId"), QStringLiteral("deleted-instance")},
+                                    {QStringLiteral("providerType"), QStringLiteral("openai")},
+                                    {QStringLiteral("providerName"), QStringLiteral("Former work account")},
+                                    {QStringLiteral("createdAt"), QDateTime::currentDateTime()},
+                                    {QStringLiteral("contentBlocks"), QVariantList{}},
+                                    {QStringLiteral("inputTokenCount"), QVariant()},
+                                    {QStringLiteral("outputTokenCount"), QVariant()},
+                                    {QStringLiteral("reasoningTokenCount"), QVariant()},
+                                    {QStringLiteral("cacheCreationTokenCount"), QVariant()},
+                                    {QStringLiteral("cacheReadTokenCount"), QVariant()},
+                                    {QStringLiteral("totalTokenCount"), QVariant()},
+                                    {QStringLiteral("durationMs"), QVariant()},
+                                });
   ASSERT_NE(bubble, nullptr);
 
   auto* attribution = bubble->findChild<QObject*>(QStringLiteral("providerAttribution"));
@@ -230,22 +242,24 @@ TEST_F(ProviderManagementQml, HistoricalAttributionShowsResolvedNameModelAndProv
 
 TEST_F(ProviderManagementQml, EmptyCancelledAssistantPlaceholderIsNotRendered) {
   auto bubble = createComponent(engine, QStringLiteral("../shared/MessageBubble.qml"),
-                                {{QStringLiteral("messageRole"), QStringLiteral("assistant")},
-                                 {QStringLiteral("messageText"), QStringLiteral("   \n")},
-                                 {QStringLiteral("messageStatus"), QStringLiteral("cancelled")},
-                                 {QStringLiteral("modelName"), QStringLiteral("claude-haiku")},
-                                 {QStringLiteral("providerId"), QStringLiteral("anthropic")},
-                                 {QStringLiteral("providerType"), QStringLiteral("anthropic")},
-                                 {QStringLiteral("providerName"), QStringLiteral("Anthropic")},
-                                 {QStringLiteral("createdAt"), QDateTime::currentDateTime()},
-                                 {QStringLiteral("contentBlocks"), QVariantList{}},
-                                 {QStringLiteral("inputTokenCount"), QVariant()},
-                                 {QStringLiteral("outputTokenCount"), QVariant()},
-                                 {QStringLiteral("reasoningTokenCount"), QVariant()},
-                                 {QStringLiteral("cacheCreationTokenCount"), QVariant()},
-                                 {QStringLiteral("cacheReadTokenCount"), QVariant()},
-                                 {QStringLiteral("totalTokenCount"), QVariant()},
-                                 {QStringLiteral("durationMs"), QVariant()}});
+                                {
+                                    {QStringLiteral("messageRole"), QStringLiteral("assistant")},
+                                    {QStringLiteral("messageText"), QStringLiteral("   \n")},
+                                    {QStringLiteral("messageStatus"), QStringLiteral("cancelled")},
+                                    {QStringLiteral("modelName"), QStringLiteral("claude-haiku")},
+                                    {QStringLiteral("providerId"), QStringLiteral("anthropic")},
+                                    {QStringLiteral("providerType"), QStringLiteral("anthropic")},
+                                    {QStringLiteral("providerName"), QStringLiteral("Anthropic")},
+                                    {QStringLiteral("createdAt"), QDateTime::currentDateTime()},
+                                    {QStringLiteral("contentBlocks"), QVariantList{}},
+                                    {QStringLiteral("inputTokenCount"), QVariant()},
+                                    {QStringLiteral("outputTokenCount"), QVariant()},
+                                    {QStringLiteral("reasoningTokenCount"), QVariant()},
+                                    {QStringLiteral("cacheCreationTokenCount"), QVariant()},
+                                    {QStringLiteral("cacheReadTokenCount"), QVariant()},
+                                    {QStringLiteral("totalTokenCount"), QVariant()},
+                                    {QStringLiteral("durationMs"), QVariant()},
+                                });
   ASSERT_NE(bubble, nullptr);
 
   EXPECT_FALSE(bubble->property("visible").toBool());

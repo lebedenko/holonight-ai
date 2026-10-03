@@ -55,7 +55,7 @@ ChatApplication::ChatApplication(int& argc, char** argv)
                        workspace_window_->hide();
                      }
                    });
-  QObject::connect(panel_surface_.get(), &holonight_platform::PanelSurface::closed, this, [this]() {
+  QObject::connect(panel_surface_.get(), &holonight_platform::PanelSurface::closed, this, [this] {
     collapse_pending_ = false;
     Q_EMIT PanelVisibilityChanged(false, QString{});
     if (restore_workspace_on_panel_close_) {
@@ -95,7 +95,7 @@ ChatApplication::ChatApplication(int& argc, char** argv)
                      });
   }
 
-  QObject::connect(this, &QGuiApplication::aboutToQuit, this, [engine = engine_.get()]() {
+  QObject::connect(this, &QGuiApplication::aboutToQuit, this, [engine = engine_.get()] {
     if (auto* view_model =
             engine->singletonInstance<holonight_application::ChatViewModel*>("HolonightChat", "ChatViewModel")) {
       view_model->stop();

@@ -27,10 +27,12 @@ HistoricalProviderIdentity resolveHistoricalProviderIdentity(const ProviderState
   const auto deleted =
       std::ranges::find(state.tombstones, instance_id, &holonight_config::ProviderTombstone::instance_id);
   if (deleted != state.tombstones.end()) {
-    return {.instance_id = instance_id,
-            .type = deleted->type,
-            .display_name = deleted->last_display_name,
-            .tombstone = true};
+    return {
+        .instance_id = instance_id,
+        .type = deleted->type,
+        .display_name = deleted->last_display_name,
+        .tombstone = true,
+    };
   }
 
   return {.instance_id = instance_id, .type = std::nullopt, .display_name = QStringLiteral("Unknown provider")};

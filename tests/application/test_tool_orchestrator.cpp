@@ -48,7 +48,7 @@ class MultiFinishExecutor : public IToolExecutor {
     (void)request;
     auto on_finished_ptr = std::make_shared<ToolOutcomeCallback>(std::move(on_finished));
     const bool duplicate = duplicate_terminal_;
-    std::thread([on_finished_ptr, duplicate]() {
+    std::thread([on_finished_ptr, duplicate] {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
       if (on_finished_ptr && *on_finished_ptr) {
         ToolOutcome first;
@@ -86,7 +86,7 @@ class SlowCancellableExecutor : public IToolExecutor {
                                              ToolOutcomeCallback on_finished) override {
     (void)request;
     auto on_finished_ptr = std::make_shared<ToolOutcomeCallback>(std::move(on_finished));
-    std::thread([on_finished_ptr]() {
+    std::thread([on_finished_ptr] {
       std::this_thread::sleep_for(std::chrono::milliseconds(80));
       if (on_finished_ptr && *on_finished_ptr) {
         ToolOutcome lateOutcome;
@@ -104,13 +104,16 @@ class SlowCancellableExecutor : public IToolExecutor {
 ToolRegistration testRegistration(const QString& registration_id, const QString& function_name,
                                   std::shared_ptr<IToolExecutor> executor) {
   return ToolRegistration{
-      .definition = {.id = registration_id,
-                     .function_name = function_name,
-                     .display_name = function_name,
-                     .renderer_key = QStringLiteral("generic"),
-                     .description = QStringLiteral("test tool"),
-                     .input_schema = QJsonObject{},
-                     .risk = holonight_application::ToolDefinition::ToolRisk::Safe},
+      .definition =
+          {
+              .id = registration_id,
+              .function_name = function_name,
+              .display_name = function_name,
+              .renderer_key = QStringLiteral("generic"),
+              .description = QStringLiteral("test tool"),
+              .input_schema = QJsonObject{},
+              .risk = holonight_application::ToolDefinition::ToolRisk::Safe,
+          },
       .executor = std::move(executor),
       .presenter = std::make_shared<GenericToolPresenter>(),
   };
@@ -126,10 +129,12 @@ TEST(ToolOrchestrator, ListFilesExecutorRunsOffMainThread) {
 
   auto callback_thread_promise = std::make_shared<std::promise<std::thread::id>>();
   auto callback_thread_future = callback_thread_promise->get_future();
-  const ToolExecutionRequest request{.invocation_id = QStringLiteral("invocation-listfiles-01"),
-                                     .provider_call_id = QStringLiteral("toolu_01"),
-                                     .function_name = QStringLiteral("list_files"),
-                                     .parameters = QJsonObject{{QStringLiteral("path"), QStringLiteral(".")}}};
+  const ToolExecutionRequest request{
+      .invocation_id = QStringLiteral("invocation-listfiles-01"),
+      .provider_call_id = QStringLiteral("toolu_01"),
+      .function_name = QStringLiteral("list_files"),
+      .parameters = QJsonObject{{QStringLiteral("path"), QStringLiteral(".")}},
+  };
 
   const ToolExecutionHandlePtr handle =
       registration->executor->start(request, [promise = callback_thread_promise](const ToolOutcome&) {
@@ -152,11 +157,13 @@ TEST(ToolOrchestrator, RunningAndTerminalCallbacksUseOrderedLifecycleTransitions
                                          std::make_shared<MultiFinishExecutor>(true)));
 
   ToolOrchestrator orchestrator;
-  const ToolOrchestrator::ExecutionRequest request{.invocation_id = QStringLiteral("invocation-running-1"),
-                                                   .provider_call_id = QStringLiteral("toolu_running"),
-                                                   .function_name = QStringLiteral("running_tool"),
-                                                   .arguments = QJsonObject{},
-                                                   .requested_at = QDateTime::currentDateTimeUtc()};
+  const ToolOrchestrator::ExecutionRequest request{
+      .invocation_id = QStringLiteral("invocation-running-1"),
+      .provider_call_id = QStringLiteral("toolu_running"),
+      .function_name = QStringLiteral("running_tool"),
+      .arguments = QJsonObject{},
+      .requested_at = QDateTime::currentDateTimeUtc(),
+  };
 
   std::vector<holonight_domain::ToolInvocationStatus> status_log;
   std::vector<holonight_domain::ToolInvocationStatus> terminal_statuses;
@@ -174,7 +181,7 @@ TEST(ToolOrchestrator, RunningAndTerminalCallbacksUseOrderedLifecycleTransitions
           },
   };
 
-  const ToolExecutionHandlePtr handle = orchestrator.execute(registry, request, callbacks);
+  const ToolExecutionHandlePtr handle = holonight_application::ToolOrchestrator::execute(registry, request, callbacks);
   ASSERT_NE(handle, nullptr);
 
   for (int i = 0; i < 100 && terminal_statuses.empty(); ++i) {
@@ -198,11 +205,13 @@ TEST(ToolOrchestrator, CancelledHandleSuppressesLateExecutorCallbacks) {
                                          std::make_shared<SlowCancellableExecutor>(canceled)));
 
   ToolOrchestrator orchestrator;
-  const ToolOrchestrator::ExecutionRequest request{.invocation_id = QStringLiteral("invocation-cancel-1"),
-                                                   .provider_call_id = QStringLiteral("toolu_cancel"),
-                                                   .function_name = QStringLiteral("cancel_tool"),
-                                                   .arguments = QJsonObject{},
-                                                   .requested_at = QDateTime::currentDateTimeUtc()};
+  const ToolOrchestrator::ExecutionRequest request{
+      .invocation_id = QStringLiteral("invocation-cancel-1"),
+      .provider_call_id = QStringLiteral("toolu_cancel"),
+      .function_name = QStringLiteral("cancel_tool"),
+      .arguments = QJsonObject{},
+      .requested_at = QDateTime::currentDateTimeUtc(),
+  };
 
   std::vector<holonight_domain::ToolInvocationStatus> terminal_statuses;
   bool cancellation_capability_published = false;
@@ -217,7 +226,7 @@ TEST(ToolOrchestrator, CancelledHandleSuppressesLateExecutorCallbacks) {
           },
   };
 
-  const ToolExecutionHandlePtr handle = orchestrator.execute(registry, request, callbacks);
+  const ToolExecutionHandlePtr handle = holonight_application::ToolOrchestrator::execute(registry, request, callbacks);
   ASSERT_NE(handle, nullptr);
   ASSERT_TRUE(handle->canCancel());
   EXPECT_TRUE(cancellation_capability_published);
@@ -240,11 +249,13 @@ TEST(ToolOrchestrator, ExecutorThrowPublishesFailedTerminalState) {
                                          std::make_shared<ThrowingExecutor>()));
 
   ToolOrchestrator orchestrator;
-  const ToolOrchestrator::ExecutionRequest request{.invocation_id = QStringLiteral("invocation-throw-1"),
-                                                   .provider_call_id = QStringLiteral("toolu_throw"),
-                                                   .function_name = QStringLiteral("throw_tool"),
-                                                   .arguments = QJsonObject{},
-                                                   .requested_at = QDateTime::currentDateTimeUtc()};
+  const ToolOrchestrator::ExecutionRequest request{
+      .invocation_id = QStringLiteral("invocation-throw-1"),
+      .provider_call_id = QStringLiteral("toolu_throw"),
+      .function_name = QStringLiteral("throw_tool"),
+      .arguments = QJsonObject{},
+      .requested_at = QDateTime::currentDateTimeUtc(),
+  };
 
   std::vector<holonight_domain::ToolInvocationStatus> terminal_statuses;
   std::vector<QString> terminal_errors;

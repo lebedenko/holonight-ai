@@ -246,7 +246,8 @@ ToolPresentation GenericToolPresenter::present(const holonight_domain::ToolInvoc
       .detail_data = std::move(detailData),
       .raw_arguments_json = jsonCompact(invocation.arguments),
       .raw_result_json = invocation.result.has_value() ? jsonCompact(*invocation.result) : QString(),
-      .is_error = isError};
+      .is_error = isError,
+  };
 }
 
 ToolPresentation ListFilesPresenter::present(const holonight_domain::ToolInvocation& invocation) const {
@@ -298,9 +299,12 @@ ToolPresentation ListFilesPresenter::present(const holonight_domain::ToolInvocat
   }
 
   const bool terminal = isTerminalFailure;
-  const QString summary =
-      terminal ? (errorMessage.isEmpty() ? QStringLiteral("Listing failed") : QStringLiteral("%1").arg(errorMessage))
-               : fileFolderSummary(fileCount, directoryCount);
+  QString summary;
+  if (terminal) {
+    summary = errorMessage.isEmpty() ? QStringLiteral("Listing failed") : QStringLiteral("%1").arg(errorMessage);
+  } else {
+    summary = fileFolderSummary(fileCount, directoryCount);
+  }
 
   QVariantMap detailData;
   detailData.insert(QStringLiteral("path"), toolPath);
@@ -324,7 +328,8 @@ ToolPresentation ListFilesPresenter::present(const holonight_domain::ToolInvocat
       .raw_arguments_json = jsonCompact(invocation.arguments),
       .raw_result_json = invocation.result.has_value() ? jsonCompact(*invocation.result) : QString(),
       .is_error = terminal,
-      .can_cancel = false};
+      .can_cancel = false,
+  };
 }
 
 }  // namespace holonight_application

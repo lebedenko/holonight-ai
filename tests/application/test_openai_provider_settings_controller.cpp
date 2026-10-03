@@ -27,19 +27,23 @@ struct Backends {
 };
 
 ProviderDraftSession makeDraft(OpenAIProviderConfig settings = {}) {
-  return ProviderDraftSession(std::nullopt, {.id = QStringLiteral("openai-work"),
-                                             .type = holonight_config::ProviderType::OpenAi,
-                                             .display_name = QStringLiteral("Work"),
-                                             .settings = std::move(settings)});
+  return ProviderDraftSession(std::nullopt, {
+                                                .id = QStringLiteral("openai-work"),
+                                                .type = holonight_config::ProviderType::OpenAi,
+                                                .display_name = QStringLiteral("Work"),
+                                                .settings = std::move(settings),
+                                            });
 }
 
 TEST(OpenAIProviderSettingsController, DraftSessionRetargetsAndStagesOpenAiFields) {
   Backends backends;
   OpenAIProviderSettingsController controller(backends.probe_provider, &backends.credential_store);
-  auto draft = makeDraft({.base_url = QStringLiteral("https://work"),
-                          .default_model = QStringLiteral("gpt-4o"),
-                          .temperature = 0.5,
-                          .tool_calling_enabled = true});
+  auto draft = makeDraft({
+      .base_url = QStringLiteral("https://work"),
+      .default_model = QStringLiteral("gpt-4o"),
+      .temperature = 0.5,
+      .tool_calling_enabled = true,
+  });
 
   controller.setDraftSession(&draft);
 

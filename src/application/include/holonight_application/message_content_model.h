@@ -17,7 +17,7 @@ class MessageContentModel : public QAbstractListModel {
   Q_PROPERTY(QString rawMarkdown READ rawMarkdown NOTIFY rawMarkdownChanged)
 
  public:
-  enum Roles : std::uint16_t {
+  enum Roles : std::uint16_t {  // NOLINT(cppcoreguidelines-use-enum-class): Qt model roles are int-compatible.
     BlockIdRole = Qt::UserRole + 1,
     TypeRole,
     TextRole,

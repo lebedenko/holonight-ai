@@ -33,18 +33,18 @@ class FakeConversationRepository : public ConversationRepository {
   }
 
   void createConversation(QString title) override {
-    const QString id = holonight_domain::ConversationId::generate().toString();
+    const QString conversation_id = holonight_domain::ConversationId::generate().toString();
     const QDateTime now = QDateTime::currentDateTimeUtc();
     const ConversationSummary summary{
-        .id = id,
+        .id = conversation_id,
         .title = title.isEmpty() ? kDefaultConversationTitle : title,
         .created_at = now,
         .updated_at = now,
         .last_model_id = std::nullopt,
         .title_source = holonight_domain::TitleSource::Fallback,
     };
-    conversations_.insert(id, summary);
-    messages_.insert(id, {});
+    conversations_.insert(conversation_id, summary);
+    messages_.insert(conversation_id, {});
     emit conversationCreated(summary);
   }
 
@@ -59,7 +59,7 @@ class FakeConversationRepository : public ConversationRepository {
   void listConversations() override {
     ++list_conversations_call_count_;
     QList<ConversationSummary> result = conversations_.values();
-    std::sort(result.begin(), result.end(), [](const ConversationSummary& lhs, const ConversationSummary& rhs) {
+    std::ranges::sort(result, [](const ConversationSummary& lhs, const ConversationSummary& rhs) {
       return lhs.updated_at > rhs.updated_at;
     });
     emit conversationListLoaded(result);
@@ -92,7 +92,7 @@ class FakeConversationRepository : public ConversationRepository {
         summary.title_source != holonight_domain::TitleSource::Fallback) {
       return;
     }
-    summary.title = newTitle;
+    summary.title = std::move(newTitle);
     summary.title_source = titleSource;
     summary.updated_at = QDateTime::currentDateTimeUtc();
     conversations_.insert(conversationId, summary);

@@ -207,7 +207,8 @@ def tidy(config, scope):
             continue
         tidy_config = ROOT / 'tests/.clang-tidy' if is_test and (ROOT / 'tests/.clang-tidy').exists() else ROOT / '.clang-tidy'
         run([os.environ.get('CLANG_TIDY', 'clang-tidy'), path, '-p', target,
-             f'--config-file={tidy_config}'])
+             f'--config-file={tidy_config}',
+             f'--header-filter=^{re.escape(str(ROOT))}/(apps|src|include|tests)/.*\\.(h|hpp)$'])
     uncovered = sources - {Path(e['file']) for e in entries}
     if uncovered:
         raise RuntimeError('No compile command for: ' + ', '.join(str(p.relative_to(ROOT)) for p in sorted(uncovered)))

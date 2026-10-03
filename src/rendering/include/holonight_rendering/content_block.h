@@ -45,8 +45,8 @@ class ContentBlock {
  public:
   ContentBlock() = default;  // required by QML_VALUE_TYPE; produces an empty Markdown block
 
-  [[nodiscard]] static ContentBlock markdown(QString text, QString id = {}, bool complete = true);
-  [[nodiscard]] static ContentBlock code(QString code, QString normalizedLanguage, QString id = {},
+  [[nodiscard]] static ContentBlock markdown(QString text, QString block_id = {}, bool complete = true);
+  [[nodiscard]] static ContentBlock code(QString code, QString normalizedLanguage, QString block_id = {},
                                          bool complete = true);
 
   [[nodiscard]] ContentBlockType type() const noexcept { return type_; }

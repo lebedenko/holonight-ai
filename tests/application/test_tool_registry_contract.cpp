@@ -41,9 +41,18 @@ TEST(ToolPresenters, GenericToolPresenterProvidesDeterministicRendererKeyAndDeta
       .function_name = QStringLiteral("ListFiles"),
       .arguments = QJsonObject{{QStringLiteral("path"), QStringLiteral("~")}},
       .status = holonight_domain::ToolInvocationStatus::Completed,
-      .result = QJsonObject{{QStringLiteral("entries"),
-                             QJsonArray{QJsonObject{{QStringLiteral("name"), QStringLiteral("notes.txt")},
-                                                    {QStringLiteral("type"), QStringLiteral("file")}}}}},
+      .result =
+          QJsonObject{
+              {
+                  QStringLiteral("entries"),
+                  QJsonArray{
+                      QJsonObject{
+                          {QStringLiteral("name"), QStringLiteral("notes.txt")},
+                          {QStringLiteral("type"), QStringLiteral("file")},
+                      },
+                  },
+              },
+          },
   };
 
   const ToolPresentation presentation = presenter.present(invocation);
@@ -64,12 +73,23 @@ TEST(ToolPresenters, ListFilesPresenterProducesCountsAndFileEntries) {
       .status = holonight_domain::ToolInvocationStatus::Completed,
       .result =
           QJsonObject{
-              {QStringLiteral("entries"), QJsonArray{QJsonObject{{QStringLiteral("name"), QStringLiteral("notes.txt")},
-                                                                 {QStringLiteral("type"), QStringLiteral("file")}},
-                                                     QJsonObject{{QStringLiteral("name"), QStringLiteral("Projects")},
-                                                                 {QStringLiteral("type"), QStringLiteral("directory")}},
-                                                     QJsonObject{{QStringLiteral("name"), QStringLiteral("??")},
-                                                                 {QStringLiteral("type"), QStringLiteral("unknown")}}}},
+              {
+                  QStringLiteral("entries"),
+                  QJsonArray{
+                      QJsonObject{
+                          {QStringLiteral("name"), QStringLiteral("notes.txt")},
+                          {QStringLiteral("type"), QStringLiteral("file")},
+                      },
+                      QJsonObject{
+                          {QStringLiteral("name"), QStringLiteral("Projects")},
+                          {QStringLiteral("type"), QStringLiteral("directory")},
+                      },
+                      QJsonObject{
+                          {QStringLiteral("name"), QStringLiteral("??")},
+                          {QStringLiteral("type"), QStringLiteral("unknown")},
+                      },
+                  },
+              },
           },
   };
 
@@ -90,15 +110,23 @@ TEST(ToolPresenters, ListFilesPresenterCountsEmptyAndMixedEntriesConsistently) {
       .status = holonight_domain::ToolInvocationStatus::Completed,
       .result =
           QJsonObject{
-              {QStringLiteral("entries"),
-               QJsonArray{
-                   QJsonObject{{QStringLiteral("name"), QStringLiteral("dir-a")},
-                               {QStringLiteral("type"), QStringLiteral("directory")}},
-                   QJsonObject{{QStringLiteral("name"), QStringLiteral("file-a.txt")},
-                               {QStringLiteral("type"), QStringLiteral("file")}},
-                   QJsonObject{{QStringLiteral("name"), QStringLiteral("other")},
-                               {QStringLiteral("type"), QStringLiteral("link")}},
-               }},
+              {
+                  QStringLiteral("entries"),
+                  QJsonArray{
+                      QJsonObject{
+                          {QStringLiteral("name"), QStringLiteral("dir-a")},
+                          {QStringLiteral("type"), QStringLiteral("directory")},
+                      },
+                      QJsonObject{
+                          {QStringLiteral("name"), QStringLiteral("file-a.txt")},
+                          {QStringLiteral("type"), QStringLiteral("file")},
+                      },
+                      QJsonObject{
+                          {QStringLiteral("name"), QStringLiteral("other")},
+                          {QStringLiteral("type"), QStringLiteral("link")},
+                      },
+                  },
+              },
           },
   };
 
@@ -117,8 +145,12 @@ TEST(ToolPresenters, ListFilesPresenterMarksMalformedResultAsFailureWithFallback
       .function_name = QStringLiteral("list_files"),
       .arguments = QJsonObject{{QStringLiteral("path"), QStringLiteral("~/Bad")}},
       .status = holonight_domain::ToolInvocationStatus::Failed,
-      .error = holonight_domain::ToolError{.code = QStringLiteral("UNKNOWN_ERROR"),
-                                           .message = QStringLiteral("Bad tool error")}};
+      .error =
+          holonight_domain::ToolError{
+              .code = QStringLiteral("UNKNOWN_ERROR"),
+              .message = QStringLiteral("Bad tool error"),
+          },
+  };
 
   const ToolPresentation presentation = presenter.present(invocation);
   EXPECT_EQ(presentation.title, QStringLiteral("Couldn’t list ~/Bad"));
@@ -149,9 +181,16 @@ TEST(ToolPresenters, ListFilesPresenterFormatsErrorSummaries) {
       .function_name = QStringLiteral("list_files"),
       .arguments = QJsonObject{{QStringLiteral("path"), QStringLiteral("~/Nope")}},
       .status = holonight_domain::ToolInvocationStatus::Failed,
-      .result = QJsonObject{{QStringLiteral("error"),
-                             QJsonObject{{QStringLiteral("code"), QStringLiteral("NOT_FOUND")},
-                                         {QStringLiteral("message"), QStringLiteral("No such file or directory.")}}}},
+      .result =
+          QJsonObject{
+              {
+                  QStringLiteral("error"),
+                  QJsonObject{
+                      {QStringLiteral("code"), QStringLiteral("NOT_FOUND")},
+                      {QStringLiteral("message"), QStringLiteral("No such file or directory.")},
+                  },
+              },
+          },
   };
 
   const ToolPresentation presentation = presenter.present(invocation);
@@ -162,13 +201,16 @@ TEST(ToolPresenters, ListFilesPresenterFormatsErrorSummaries) {
 
 TEST(ToolRegistry, RegistrationSupportsCanonicalIdFunctionNameRendererAndAliasResolution) {
   ToolRegistration registration{
-      .definition = ToolDefinition{.id = QStringLiteral("filesystem.list"),
-                                   .function_name = QStringLiteral("list_files"),
-                                   .display_name = QStringLiteral("List files"),
-                                   .renderer_key = QStringLiteral("filesystem.list"),
-                                   .description = QStringLiteral("List files in the home directory."),
-                                   .input_schema = QJsonObject{},
-                                   .risk = ToolDefinition::ToolRisk::Safe},
+      .definition =
+          ToolDefinition{
+              .id = QStringLiteral("filesystem.list"),
+              .function_name = QStringLiteral("list_files"),
+              .display_name = QStringLiteral("List files"),
+              .renderer_key = QStringLiteral("filesystem.list"),
+              .description = QStringLiteral("List files in the home directory."),
+              .input_schema = QJsonObject{},
+              .risk = ToolDefinition::ToolRisk::Safe,
+          },
       .executor = std::make_shared<JsonEchoExecutor>(QJsonObject{{QStringLiteral("ok"), true}}),
       .presenter = std::make_shared<GenericToolPresenter>(),
       .legacy_aliases = {QStringLiteral("ListFiles")},

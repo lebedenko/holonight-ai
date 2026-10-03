@@ -35,15 +35,21 @@ TEST(ListFilesToolContentQml, ShowsPathCountsAndDeterministicEntryRows) {
   QQmlEngine engine;
   configureEngine(engine);
   const QVariantList entries = {
-      QVariantMap{{QStringLiteral("name"), QStringLiteral("alpha")},
-                  {QStringLiteral("kind"), QStringLiteral("directory")}},
-      QVariantMap{{QStringLiteral("name"), QStringLiteral("beta.txt")},
-                  {QStringLiteral("kind"), QStringLiteral("file")}},
+      QVariantMap{
+          {QStringLiteral("name"), QStringLiteral("alpha")},
+          {QStringLiteral("kind"), QStringLiteral("directory")},
+      },
+      QVariantMap{
+          {QStringLiteral("name"), QStringLiteral("beta.txt")},
+          {QStringLiteral("kind"), QStringLiteral("file")},
+      },
   };
-  auto content = createContent(engine, {{QStringLiteral("path"), QStringLiteral("/tmp/example")},
-                                        {QStringLiteral("fileCount"), 1},
-                                        {QStringLiteral("directoryCount"), 1},
-                                        {QStringLiteral("entries"), entries}});
+  auto content = createContent(engine, {
+                                           {QStringLiteral("path"), QStringLiteral("/tmp/example")},
+                                           {QStringLiteral("fileCount"), 1},
+                                           {QStringLiteral("directoryCount"), 1},
+                                           {QStringLiteral("entries"), entries},
+                                       });
   ASSERT_NE(content, nullptr);
 
   auto* path = content->findChild<QObject*>(QStringLiteral("listFilesPath"));
@@ -62,8 +68,10 @@ TEST(ListFilesToolContentQml, BoundsPreviewAndViewAllRevealsExistingEntries) {
   configureEngine(engine);
   QVariantList entries;
   for (int index = 0; index < 25; ++index) {
-    entries.append(QVariantMap{{QStringLiteral("name"), QStringLiteral("entry-%1").arg(index)},
-                               {QStringLiteral("kind"), QStringLiteral("file")}});
+    entries.append(QVariantMap{
+        {QStringLiteral("name"), QStringLiteral("entry-%1").arg(index)},
+        {QStringLiteral("kind"), QStringLiteral("file")},
+    });
   }
   auto content = createContent(
       engine,
@@ -82,17 +90,21 @@ TEST(ListFilesToolContentQml, BoundsPreviewAndViewAllRevealsExistingEntries) {
 TEST(ListFilesToolContentQml, DistinguishesEmptyAndStructuredErrorStates) {
   QQmlEngine engine;
   configureEngine(engine);
-  auto empty = createContent(engine, {{QStringLiteral("fileCount"), 0},
-                                      {QStringLiteral("directoryCount"), 0},
-                                      {QStringLiteral("entries"), QVariantList{}}});
+  auto empty = createContent(engine, {
+                                         {QStringLiteral("fileCount"), 0},
+                                         {QStringLiteral("directoryCount"), 0},
+                                         {QStringLiteral("entries"), QVariantList{}},
+                                     });
   ASSERT_NE(empty, nullptr);
   EXPECT_TRUE(empty->findChild<QObject*>(QStringLiteral("listFilesEmptyState"))->property("visible").toBool());
   EXPECT_FALSE(empty->findChild<QObject*>(QStringLiteral("listFilesErrorState"))->property("visible").toBool());
 
   auto failure = createContent(engine,
-                               {{QStringLiteral("entries"), QVariantList{}},
-                                {QStringLiteral("errorCode"), QStringLiteral("ACCESS_DENIED")},
-                                {QStringLiteral("errorMessage"), QStringLiteral("Permission denied")}},
+                               {
+                                   {QStringLiteral("entries"), QVariantList{}},
+                                   {QStringLiteral("errorCode"), QStringLiteral("ACCESS_DENIED")},
+                                   {QStringLiteral("errorMessage"), QStringLiteral("Permission denied")},
+                               },
                                true);
   ASSERT_NE(failure, nullptr);
   EXPECT_FALSE(failure->findChild<QObject*>(QStringLiteral("listFilesEmptyState"))->property("visible").toBool());

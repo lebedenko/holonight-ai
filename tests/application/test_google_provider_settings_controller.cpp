@@ -27,20 +27,24 @@ struct Backends {
 };
 
 ProviderDraftSession makeDraft(GoogleProviderConfig settings = {}) {
-  return ProviderDraftSession(std::nullopt, {.id = QStringLiteral("google-work"),
-                                             .type = holonight_config::ProviderType::Google,
-                                             .display_name = QStringLiteral("Work"),
-                                             .settings = std::move(settings)});
+  return ProviderDraftSession(std::nullopt, {
+                                                .id = QStringLiteral("google-work"),
+                                                .type = holonight_config::ProviderType::Google,
+                                                .display_name = QStringLiteral("Work"),
+                                                .settings = std::move(settings),
+                                            });
 }
 
 TEST(GoogleProviderSettingsController, DraftSessionRetargetsAndStagesGoogleFields) {
   Backends backends;
   GoogleProviderSettingsController controller(backends.probe_provider, &backends.credential_store);
-  auto draft = makeDraft({.base_url = QStringLiteral("https://work"),
-                          .default_model = QStringLiteral("gemini-2.0-flash"),
-                          .temperature = 0.6,
-                          .max_output_tokens = 16384,
-                          .tool_calling_enabled = true});
+  auto draft = makeDraft({
+      .base_url = QStringLiteral("https://work"),
+      .default_model = QStringLiteral("gemini-2.0-flash"),
+      .temperature = 0.6,
+      .max_output_tokens = 16384,
+      .tool_calling_enabled = true,
+  });
 
   controller.setDraftSession(&draft);
 
@@ -114,10 +118,12 @@ TEST(GoogleProviderSettingsController, TestConnectionUpdatesGoogleConnectionStat
 TEST(GoogleProviderSettingsController, CancelDiscardsDraftEdits) {
   Backends backends;
   GoogleProviderSettingsController controller(backends.probe_provider, &backends.credential_store);
-  auto draft = makeDraft({.base_url = QStringLiteral("https://saved"),
-                          .temperature = 0.5,
-                          .max_output_tokens = 2048,
-                          .tool_calling_enabled = false});
+  auto draft = makeDraft({
+      .base_url = QStringLiteral("https://saved"),
+      .temperature = 0.5,
+      .max_output_tokens = 2048,
+      .tool_calling_enabled = false,
+  });
   controller.setDraftSession(&draft);
   controller.setBaseUrl(QStringLiteral("https://edited"));
   controller.setTemperature(1.8);
@@ -136,10 +142,12 @@ TEST(GoogleProviderSettingsController, CancelDiscardsDraftEdits) {
 TEST(GoogleProviderSettingsController, ResetToDefaultsUpdatesDraftOnly) {
   Backends backends;
   GoogleProviderSettingsController controller(backends.probe_provider, &backends.credential_store);
-  auto draft = makeDraft({.base_url = QStringLiteral("https://custom"),
-                          .temperature = 1.8,
-                          .max_output_tokens = 16384,
-                          .tool_calling_enabled = true});
+  auto draft = makeDraft({
+      .base_url = QStringLiteral("https://custom"),
+      .temperature = 1.8,
+      .max_output_tokens = 16384,
+      .tool_calling_enabled = true,
+  });
   controller.setDraftSession(&draft);
   controller.setAuthToken(QStringLiteral("goog-token"));
 

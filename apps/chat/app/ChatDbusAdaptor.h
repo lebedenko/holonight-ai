@@ -12,6 +12,8 @@ class ChatDbusAdaptor : public QDBusAbstractAdaptor {
  public:
   explicit ChatDbusAdaptor(ChatApplication& application);
 
+  // Exported D-Bus method and signal names are protocol contracts.
+  // NOLINTBEGIN(readability-identifier-naming)
  public Q_SLOTS:
   void ShowWorkspace();
   void ShowPanel(const QString& output_name);
@@ -23,6 +25,7 @@ class ChatDbusAdaptor : public QDBusAbstractAdaptor {
   void WorkspaceVisibilityChanged(bool visible);
   void PanelVisibilityChanged(bool visible, const QString& output_name);
 
+  // NOLINTEND(readability-identifier-naming)
  private:
   ChatApplication& application_;
 };

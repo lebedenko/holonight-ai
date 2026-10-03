@@ -49,7 +49,10 @@ void failStream(const std::shared_ptr<StreamContext>& context, const std::functi
     context->handle->cancel();
   }
   on_event(StreamEvent{holonight_domain::Error{
-      .message = std::move(message), .usage = context->usage, .model_identifier = context->model_identifier}});
+      .message = std::move(message),
+      .usage = context->usage,
+      .model_identifier = context->model_identifier,
+  }});
 }
 
 // REQ-F-004: extracts the usage object nested under response.completed's "response" field.
@@ -267,7 +270,10 @@ QHash<QString, QString> OpenAIProvider::authHeaders() const {
 void OpenAIProvider::fetchModelList(const std::function<void()>& on_success,
                                     const std::function<void(const QString&)>& on_error) {
   const HttpRequest request{
-      .method = HttpMethod::Get, .url = base_url_ + QStringLiteral("/models"), .headers = authHeaders()};
+      .method = HttpMethod::Get,
+      .url = base_url_ + QStringLiteral("/models"),
+      .headers = authHeaders(),
+  };
 
   // NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks): false positive — mirrors
   // OllamaProvider::fetchModelList()'s identical nested-std::function-copy pattern.
@@ -327,11 +333,13 @@ HttpRequestHandlePtr OpenAIProvider::sendChat(const ModelId& model, const std::v
   // Deliberately absent: previous_response_id (REQ-F-004/C-005), max_output_tokens
   // (REQ-F-006/C-008), reasoning.effort (REQ-C-004).
 
-  const HttpRequest request{.method = HttpMethod::Post,
-                            .url = base_url_ + QStringLiteral("/responses"),
-                            .body = QJsonDocument(body).toJson(QJsonDocument::Compact),
-                            .content_type = QStringLiteral("application/json"),
-                            .headers = authHeaders()};
+  const HttpRequest request{
+      .method = HttpMethod::Post,
+      .url = base_url_ + QStringLiteral("/responses"),
+      .body = QJsonDocument(body).toJson(QJsonDocument::Compact),
+      .content_type = QStringLiteral("application/json"),
+      .headers = authHeaders(),
+  };
 
   auto context = std::make_shared<StreamContext>();
   context->model_identifier = model.model_name;
@@ -354,7 +362,7 @@ HttpRequestHandlePtr OpenAIProvider::sendChat(const ModelId& model, const std::v
     }
   };
 
-  auto onFinished = [context, on_event]() {
+  auto onFinished = [context, on_event] {
     if (context->terminal) {
       return;
     }

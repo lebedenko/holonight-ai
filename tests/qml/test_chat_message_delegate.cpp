@@ -1,3 +1,4 @@
+// Fixture state is visible to derived test cases and deterministic assertions.
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
@@ -19,14 +20,16 @@
 namespace {
 
 QVariantMap runningToolCall() {
-  return {{QStringLiteral("toolUseId"), QStringLiteral("tool-42")},
-          {QStringLiteral("kind"), QStringLiteral("invocation")},
-          {QStringLiteral("status"), QStringLiteral("running")},
-          {QStringLiteral("canCancel"), true},
-          {QStringLiteral("functionName"), QStringLiteral("list_files")},
-          {QStringLiteral("rendererKey"), QStringLiteral("generic")},
-          {QStringLiteral("toolTitle"), QStringLiteral("List files")},
-          {QStringLiteral("summary"), QStringLiteral("Working")}};
+  return {
+      {QStringLiteral("toolUseId"), QStringLiteral("tool-42")},
+      {QStringLiteral("kind"), QStringLiteral("invocation")},
+      {QStringLiteral("status"), QStringLiteral("running")},
+      {QStringLiteral("canCancel"), true},
+      {QStringLiteral("functionName"), QStringLiteral("list_files")},
+      {QStringLiteral("rendererKey"), QStringLiteral("generic")},
+      {QStringLiteral("toolTitle"), QStringLiteral("List files")},
+      {QStringLiteral("summary"), QStringLiteral("Working")},
+  };
 }
 
 class ChatMessageDelegateQml : public testing::Test {
@@ -51,30 +54,33 @@ class ChatMessageDelegateQml : public testing::Test {
       return {};
     }
 
-    return std::unique_ptr<QObject>(component.createWithInitialProperties(
-        {{QStringLiteral("messageId"), QStringLiteral("message-1")},
-         {QStringLiteral("role"), role},
-         {QStringLiteral("text"), QStringLiteral("Hello")},
-         {QStringLiteral("status"), QStringLiteral("streaming")},
-         {QStringLiteral("createdAt"), QDateTime::fromString(QStringLiteral("2026-08-06T12:00:00Z"), Qt::ISODate)},
-         {QStringLiteral("modelName"), QStringLiteral("model-a")},
-         {QStringLiteral("providerId"), QStringLiteral("provider-id")},
-         {QStringLiteral("providerType"), QStringLiteral("openai")},
-         {QStringLiteral("providerName"), QStringLiteral("Provider A")},
-         {QStringLiteral("contentBlocks"), QVariant::fromValue(&content_model)},
-         {QStringLiteral("inputTokenCount"), 11},
-         {QStringLiteral("outputTokenCount"), 22},
-         {QStringLiteral("reasoningTokenCount"), 3},
-         {QStringLiteral("cacheCreationTokenCount"), 4},
-         {QStringLiteral("cacheReadTokenCount"), 5},
-         {QStringLiteral("totalTokenCount"), 45},
-         {QStringLiteral("durationMs"), 678},
-         {QStringLiteral("toolCall"), toolCall},
-         {QStringLiteral("messageWidthRatio"), 0.6},
-         {QStringLiteral("width"), 800}}));
+    return std::unique_ptr<QObject>(component.createWithInitialProperties({
+        {QStringLiteral("messageId"), QStringLiteral("message-1")},
+        {QStringLiteral("role"), role},
+        {QStringLiteral("text"), QStringLiteral("Hello")},
+        {QStringLiteral("status"), QStringLiteral("streaming")},
+        {QStringLiteral("createdAt"), QDateTime::fromString(QStringLiteral("2026-08-06T12:00:00Z"), Qt::ISODate)},
+        {QStringLiteral("modelName"), QStringLiteral("model-a")},
+        {QStringLiteral("providerId"), QStringLiteral("provider-id")},
+        {QStringLiteral("providerType"), QStringLiteral("openai")},
+        {QStringLiteral("providerName"), QStringLiteral("Provider A")},
+        {QStringLiteral("contentBlocks"), QVariant::fromValue(&content_model)},
+        {QStringLiteral("inputTokenCount"), 11},
+        {QStringLiteral("outputTokenCount"), 22},
+        {QStringLiteral("reasoningTokenCount"), 3},
+        {QStringLiteral("cacheCreationTokenCount"), 4},
+        {QStringLiteral("cacheReadTokenCount"), 5},
+        {QStringLiteral("totalTokenCount"), 45},
+        {QStringLiteral("durationMs"), 678},
+        {QStringLiteral("toolCall"), toolCall},
+        {QStringLiteral("messageWidthRatio"), 0.6},
+        {QStringLiteral("width"), 800},
+    }));
   }
 
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   QQmlEngine engine;
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   holonight_application::MessageContentModel content_model;
 };
 

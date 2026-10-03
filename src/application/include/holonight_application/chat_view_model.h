@@ -72,7 +72,7 @@ class ChatViewModel : public QObject {
     Connected,
     SetupRequired,
     Unavailable,
-    Error
+    Error,
   };
   Q_ENUM(ProviderStatus)
 
@@ -91,11 +91,11 @@ class ChatViewModel : public QObject {
                          std::shared_ptr<holonight_providers::AnthropicProvider> anthropic_provider,
                          std::shared_ptr<holonight_providers::GoogleProvider> google_provider,
                          std::unique_ptr<holonight_persistence::ConversationRepository> repository,
-                         ProviderDefaultModels default_models = {}, QObject* parent = nullptr,
+                         ProviderDefaultModels default_models = ProviderDefaultModels(), QObject* parent = nullptr,
                          std::unique_ptr<holonight_credentials::CredentialStore> credential_store = nullptr,
-                         holonight_config::UtilityConfig utility_config = {},
-                         const UtilityProviderEndpoints& utility_endpoints = {},
-                         holonight_config::ProviderState provider_state = {},
+                         holonight_config::UtilityConfig utility_config = holonight_config::UtilityConfig(),
+                         const UtilityProviderEndpoints& utility_endpoints = UtilityProviderEndpoints(),
+                         holonight_config::ProviderState provider_state = holonight_config::ProviderState(),
                          std::unique_ptr<ProviderAdapterRouter> adapter_router = nullptr,
                          // REQ-F-001/REQ-F-009: the same registry passed to `adapter_router`'s own
                          // constructor (so its toAnthropicToolsArray() and ChatController's
@@ -214,6 +214,11 @@ class ChatViewModel : public QObject {
   void conversationUnpinned(QUuid conversationId);
 
  private:
+  [[nodiscard]] std::unique_ptr<ChatController> createChatController() const;
+  void initializeRuntimeCoordinator(holonight_config::UtilityConfig utility_config,
+                                    const UtilityProviderEndpoints& utility_endpoints);
+  void registerInstanceRuntimeProviders();
+  void registerLegacyRuntimeProviders(const QString& configPath);
   void onStreamEvent(const holonight_domain::StreamEvent& event);
   // REQ-F-007/REQ-F-011: a tool-calling turn can have ChatController append several new
   // Conversation messages (invocation, result, next placeholder) between two StreamEvent

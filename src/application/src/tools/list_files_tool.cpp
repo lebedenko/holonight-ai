@@ -18,7 +18,8 @@ namespace {
 
 QJsonObject makeError(const QString& code, const QString& message) {
   return QJsonObject{
-      {QStringLiteral("error"), QJsonObject{{QStringLiteral("code"), code}, {QStringLiteral("message"), message}}}};
+      {QStringLiteral("error"), QJsonObject{{QStringLiteral("code"), code}, {QStringLiteral("message"), message}}},
+  };
 }
 
 QJsonObject notFoundError() {
@@ -42,13 +43,20 @@ class ListFilesExecutor : public IToolExecutor {
                                              ToolOutcomeCallback on_finished) override {
     if (!request.parameters.isObject()) {
       ToolOutcome outcome;
-      outcome.error = holonight_domain::ToolError{.code = QStringLiteral("INVALID_PARAMETERS"),
-                                                  .message = QStringLiteral("\"path\" must be a string."),
-                                                  .details = request.parameters};
-      outcome.result =
-          QJsonObject{{QStringLiteral("error"),
-                       QJsonObject{{QStringLiteral("code"), QStringLiteral("INVALID_PARAMETERS")},
-                                   {QStringLiteral("message"), QStringLiteral("\"path\" must be a string.")}}}};
+      outcome.error = holonight_domain::ToolError{
+          .code = QStringLiteral("INVALID_PARAMETERS"),
+          .message = QStringLiteral("\"path\" must be a string."),
+          .details = request.parameters,
+      };
+      outcome.result = QJsonObject{
+          {
+              QStringLiteral("error"),
+              QJsonObject{
+                  {QStringLiteral("code"), QStringLiteral("INVALID_PARAMETERS")},
+                  {QStringLiteral("message"), QStringLiteral("\"path\" must be a string.")},
+              },
+          },
+      };
       if (on_finished) {
         on_finished(outcome);
       }
@@ -58,7 +66,7 @@ class ListFilesExecutor : public IToolExecutor {
     const QJsonObject parameters = request.parameters.toObject();
     const std::shared_ptr<ToolOutcomeCallback> on_finished_ptr =
         std::make_shared<ToolOutcomeCallback>(std::move(on_finished));
-    const auto worker = [on_finished_ptr = on_finished_ptr, parameters = parameters]() {
+    const auto worker = [on_finished_ptr = on_finished_ptr, parameters = parameters] {
       ListFilesTool tool;
       ToolOutcome outcome;
       try {
@@ -74,9 +82,11 @@ class ListFilesExecutor : public IToolExecutor {
           };
         }
       } catch (...) {
-        outcome.error = holonight_domain::ToolError{.code = QStringLiteral("INTERNAL_ERROR"),
-                                                    .message = QStringLiteral("ListFiles execution failed."),
-                                                    .details = {}};
+        outcome.error = holonight_domain::ToolError{
+            .code = QStringLiteral("INTERNAL_ERROR"),
+            .message = QStringLiteral("ListFiles execution failed."),
+            .details = {},
+        };
       }
       if (on_finished_ptr && *on_finished_ptr) {
         (*on_finished_ptr)(outcome);
@@ -111,20 +121,31 @@ ToolRegistration listFilesToolRegistration() {
               .input_schema =
                   QJsonObject{
                       {QStringLiteral("type"), QStringLiteral("object")},
-                      {QStringLiteral("properties"),
-                       QJsonObject{
-                           {QStringLiteral("path"),
-                            QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
-                                        {QStringLiteral("description"),
-                                         QStringLiteral(
-                                             "Directory path to list, relative to or within the user's home directory "
-                                             "(e.g. '~/Documents', '.', 'projects/foo').")}}}}},
+                      {
+                          QStringLiteral("properties"),
+                          QJsonObject{
+                              {
+                                  QStringLiteral("path"),
+                                  QJsonObject{
+                                      {QStringLiteral("type"), QStringLiteral("string")},
+                                      {
+                                          QStringLiteral("description"),
+                                          QStringLiteral(
+                                              "Directory path to list, relative to or within the user's home directory "
+                                              "(e.g. '~/Documents', '.', 'projects/foo')."),
+                                      },
+                                  },
+                              },
+                          },
+                      },
                       {QStringLiteral("required"), QJsonArray{QStringLiteral("path")}},
                   },
-              .risk = ToolDefinition::ToolRisk::Safe},
+              .risk = ToolDefinition::ToolRisk::Safe,
+          },
       .executor = std::make_shared<ListFilesExecutor>(),
       .presenter = std::make_shared<ListFilesPresenter>(),
-      .legacy_aliases = {QStringLiteral("ListFiles")}};
+      .legacy_aliases = {QStringLiteral("ListFiles")},
+  };
 }
 
 ListFilesTool::ListFilesTool()
@@ -144,13 +165,22 @@ QString ListFilesTool::description() const {
 QJsonObject ListFilesTool::schema() const {
   return QJsonObject{
       {QStringLiteral("type"), QStringLiteral("object")},
-      {QStringLiteral("properties"),
-       QJsonObject{
-           {QStringLiteral("path"),
-            QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
-                        {QStringLiteral("description"),
-                         QStringLiteral("Directory path to list, relative to or within the user's home directory "
-                                        "(e.g. '~/Documents', '.', 'projects/foo').")}}}}},
+      {
+          QStringLiteral("properties"),
+          QJsonObject{
+              {
+                  QStringLiteral("path"),
+                  QJsonObject{
+                      {QStringLiteral("type"), QStringLiteral("string")},
+                      {
+                          QStringLiteral("description"),
+                          QStringLiteral("Directory path to list, relative to or within the user's home directory "
+                                         "(e.g. '~/Documents', '.', 'projects/foo')."),
+                      },
+                  },
+              },
+          },
+      },
       {QStringLiteral("required"), QJsonArray{QStringLiteral("path")}},
   };
 }

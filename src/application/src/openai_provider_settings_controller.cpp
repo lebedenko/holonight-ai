@@ -39,7 +39,7 @@ OpenAIProviderSettingsController::OpenAIProviderSettingsController(
                                              [probe_provider](const auto& on_success, const auto& on_error) {
                                                probe_provider->refresh(on_success, on_error);
                                              },
-                                         .probe_models = [probe_provider]() -> const std::vector<ModelId>& {
+                                         .probe_models = [probe_provider] -> const std::vector<ModelId>& {
                                            return probe_provider->availableModels();
                                          },
                                      },
@@ -112,11 +112,12 @@ void OpenAIProviderSettingsController::updateDraft() {
   if (draftSession() == nullptr || loading_draft_) {
     return;
   }
-  (void)draftSession()->setSettings(
-      holonight_config::OpenAIProviderConfig{.base_url = baseUrl(),
-                                             .default_model = defaultModel(),
-                                             .temperature = temperature_,
-                                             .tool_calling_enabled = tool_calling_enabled_});
+  (void)draftSession()->setSettings(holonight_config::OpenAIProviderConfig{
+      .base_url = baseUrl(),
+      .default_model = defaultModel(),
+      .temperature = temperature_,
+      .tool_calling_enabled = tool_calling_enabled_,
+  });
 }
 
 void OpenAIProviderSettingsController::load() {

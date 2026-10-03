@@ -66,7 +66,10 @@ void failStream(const std::shared_ptr<StreamContext>& context, const std::functi
     context->handle->cancel();
   }
   on_event(StreamEvent{holonight_domain::Error{
-      .message = std::move(message), .usage = context->usage, .model_identifier = context->model_identifier}});
+      .message = std::move(message),
+      .usage = context->usage,
+      .model_identifier = context->model_identifier,
+  }});
 }
 
 // Fail-open denylist (REQ-F-010/011): any model id NOT matching one of these substrings is
@@ -175,11 +178,12 @@ void handleContentBlockStart(const QJsonObject& object, const std::shared_ptr<St
   const QJsonObject block = object.value(QStringLiteral("content_block")).toObject();
   const QString blockType = block.value(QStringLiteral("type")).toString();
   if (blockType == QStringLiteral("tool_use") || blockType == QStringLiteral("server_tool_use")) {
-    context->tool_use_blocks[index] =
-        StreamContext::ToolUseAccumulator{.id = block.value(QStringLiteral("id")).toString(),
-                                          .name = block.value(QStringLiteral("name")).toString(),
-                                          .partial_json = QString(),
-                                          .provider_hosted = blockType == QStringLiteral("server_tool_use")};
+    context->tool_use_blocks[index] = StreamContext::ToolUseAccumulator{
+        .id = block.value(QStringLiteral("id")).toString(),
+        .name = block.value(QStringLiteral("name")).toString(),
+        .partial_json = QString(),
+        .provider_hosted = blockType == QStringLiteral("server_tool_use"),
+    };
   }
 }
 
@@ -373,7 +377,10 @@ QHash<QString, QString> AnthropicProvider::requestHeaders() const {
 void AnthropicProvider::fetchModelList(const std::function<void()>& on_success,
                                        const std::function<void(const QString&)>& on_error) {
   const HttpRequest request{
-      .method = HttpMethod::Get, .url = base_url_ + QStringLiteral("/v1/models"), .headers = requestHeaders()};
+      .method = HttpMethod::Get,
+      .url = base_url_ + QStringLiteral("/v1/models"),
+      .headers = requestHeaders(),
+  };
 
   // NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks): false positive — mirrors
   // OpenAIProvider::fetchModelList()'s identical nested-std::function-copy pattern.
@@ -437,11 +444,13 @@ HttpRequestHandlePtr AnthropicProvider::sendChat(const ModelId& model, const std
   // Deliberately absent: tool_choice, thinking, budget_tokens, top_k, top_p, metadata,
   // stop_sequences, betas (REQ-C-004).
 
-  const HttpRequest request{.method = HttpMethod::Post,
-                            .url = base_url_ + QStringLiteral("/v1/messages"),
-                            .body = QJsonDocument(body).toJson(QJsonDocument::Compact),
-                            .content_type = QStringLiteral("application/json"),
-                            .headers = requestHeaders()};
+  const HttpRequest request{
+      .method = HttpMethod::Post,
+      .url = base_url_ + QStringLiteral("/v1/messages"),
+      .body = QJsonDocument(body).toJson(QJsonDocument::Compact),
+      .content_type = QStringLiteral("application/json"),
+      .headers = requestHeaders(),
+  };
 
   auto context = std::make_shared<StreamContext>();
   context->provider_instance_id = instance_id_;
@@ -464,7 +473,7 @@ HttpRequestHandlePtr AnthropicProvider::sendChat(const ModelId& model, const std
     }
   };
 
-  auto onFinished = [context, on_event]() {
+  auto onFinished = [context, on_event] {
     if (context->terminal) {
       return;
     }

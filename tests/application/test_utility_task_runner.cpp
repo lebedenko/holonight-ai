@@ -107,27 +107,42 @@ TEST(UtilityTaskRunner, SavedInstanceDefaultCreatesAnIsolatedProviderFromThatIns
   httpClient->enqueueBufferedSuccess(QByteArray(R"({"models":[{"name":"second-model"}]})"));
   UtilityProviderEndpoints endpoints;
   endpoints.ollama_http_client = httpClient;
-  ProviderState state{.instances = {
-                          ProviderInstanceConfig{
-                              .id = QStringLiteral("local-fast"),
-                              .type = ProviderType::Ollama,
-                              .display_name = QStringLiteral("Local Fast"),
-                              .enabled = true,
-                              .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://fast.example.test")}},
-                          ProviderInstanceConfig{
-                              .id = QStringLiteral("local-deep"),
-                              .type = ProviderType::Ollama,
-                              .display_name = QStringLiteral("Local Deep"),
-                              .enabled = true,
-                              .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://deep.example.test")}},
-                      }};
-  UtilityConfig config{.default_utility_model = ModelId{.provider_id = QStringLiteral("local-deep"),
-                                                        .model_name = QStringLiteral("second-model")}};
+  ProviderState state{
+      .instances =
+          {
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("local-fast"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Local Fast"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://fast.example.test")},
+              },
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("local-deep"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Local Deep"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://deep.example.test")},
+              },
+          },
+  };
+  UtilityConfig config{
+      .default_utility_model =
+          ModelId{
+              .provider_id = QStringLiteral("local-deep"),
+              .model_name = QStringLiteral("second-model"),
+          },
+  };
   QHash<QString, std::vector<ModelId>> models{
-      {QStringLiteral("local-fast"),
-       {ModelId{.provider_id = QStringLiteral("local-fast"), .model_name = QStringLiteral("first-model")}}},
-      {QStringLiteral("local-deep"),
-       {ModelId{.provider_id = QStringLiteral("local-deep"), .model_name = QStringLiteral("second-model")}}}};
+      {
+          QStringLiteral("local-fast"),
+          {ModelId{.provider_id = QStringLiteral("local-fast"), .model_name = QStringLiteral("first-model")}},
+      },
+      {
+          QStringLiteral("local-deep"),
+          {ModelId{.provider_id = QStringLiteral("local-deep"), .model_name = QStringLiteral("second-model")}},
+      },
+  };
 
   UtilityTaskRunner runner(&store, config, endpoints, nullptr, state, models);
   runner.requestTitleGeneration(
@@ -145,27 +160,41 @@ TEST(UtilityTaskRunner, DisabledDefaultFallsBackToUsableChatInstance) {
   UtilityProviderEndpoints endpoints;
   endpoints.ollama_http_client = httpClient;
   ProviderState state{
-      .instances = {
-          ProviderInstanceConfig{
-              .id = QStringLiteral("disabled"),
-              .type = ProviderType::Ollama,
-              .display_name = QStringLiteral("Disabled"),
-              .enabled = false,
-              .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://disabled.example.test")}},
-          ProviderInstanceConfig{
-              .id = QStringLiteral("ready"),
-              .type = ProviderType::Ollama,
-              .display_name = QStringLiteral("Ready"),
-              .enabled = true,
-              .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://ready.example.test")}},
-      }};
-  UtilityConfig config{.default_utility_model = ModelId{.provider_id = QStringLiteral("disabled"),
-                                                        .model_name = QStringLiteral("disabled-model")}};
+      .instances =
+          {
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("disabled"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Disabled"),
+                  .enabled = false,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://disabled.example.test")},
+              },
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("ready"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Ready"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://ready.example.test")},
+              },
+          },
+  };
+  UtilityConfig config{
+      .default_utility_model =
+          ModelId{
+              .provider_id = QStringLiteral("disabled"),
+              .model_name = QStringLiteral("disabled-model"),
+          },
+  };
   QHash<QString, std::vector<ModelId>> models{
-      {QStringLiteral("disabled"),
-       {ModelId{.provider_id = QStringLiteral("disabled"), .model_name = QStringLiteral("disabled-model")}}},
-      {QStringLiteral("ready"),
-       {ModelId{.provider_id = QStringLiteral("ready"), .model_name = QStringLiteral("ready-model")}}}};
+      {
+          QStringLiteral("disabled"),
+          {ModelId{.provider_id = QStringLiteral("disabled"), .model_name = QStringLiteral("disabled-model")}},
+      },
+      {
+          QStringLiteral("ready"),
+          {ModelId{.provider_id = QStringLiteral("ready"), .model_name = QStringLiteral("ready-model")}},
+      },
+  };
 
   UtilityTaskRunner runner(&store, config, endpoints, nullptr, state, models);
   runner.requestTitleGeneration(
@@ -184,26 +213,41 @@ TEST(UtilityTaskRunner, UnavailableDefaultFallsBackToUsableSavedInstance) {
   endpoints.ollama_http_client = ollamaClient;
   endpoints.openai_http_client = std::make_shared<FakeHttpClient>();
   ProviderState state{
-      .instances = {
-          ProviderInstanceConfig{.id = QStringLiteral("cloud"),
-                                 .type = ProviderType::OpenAi,
-                                 .display_name = QStringLiteral("Cloud"),
-                                 .enabled = true,
-                                 .settings = OpenAIProviderConfig{.base_url = QStringLiteral("https://cloud.example")}},
-          ProviderInstanceConfig{
-              .id = QStringLiteral("ready"),
-              .type = ProviderType::Ollama,
-              .display_name = QStringLiteral("Ready"),
-              .enabled = true,
-              .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://ready.example.test")}},
-      }};
-  UtilityConfig config{.default_utility_model = ModelId{.provider_id = QStringLiteral("cloud"),
-                                                        .model_name = QStringLiteral("cloud-model")}};
+      .instances =
+          {
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("cloud"),
+                  .type = ProviderType::OpenAi,
+                  .display_name = QStringLiteral("Cloud"),
+                  .enabled = true,
+                  .settings = OpenAIProviderConfig{.base_url = QStringLiteral("https://cloud.example")},
+              },
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("ready"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Ready"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://ready.example.test")},
+              },
+          },
+  };
+  UtilityConfig config{
+      .default_utility_model =
+          ModelId{
+              .provider_id = QStringLiteral("cloud"),
+              .model_name = QStringLiteral("cloud-model"),
+          },
+  };
   QHash<QString, std::vector<ModelId>> models{
-      {QStringLiteral("cloud"),
-       {ModelId{.provider_id = QStringLiteral("cloud"), .model_name = QStringLiteral("cloud-model")}}},
-      {QStringLiteral("ready"),
-       {ModelId{.provider_id = QStringLiteral("ready"), .model_name = QStringLiteral("ready-model")}}}};
+      {
+          QStringLiteral("cloud"),
+          {ModelId{.provider_id = QStringLiteral("cloud"), .model_name = QStringLiteral("cloud-model")}},
+      },
+      {
+          QStringLiteral("ready"),
+          {ModelId{.provider_id = QStringLiteral("ready"), .model_name = QStringLiteral("ready-model")}},
+      },
+  };
 
   UtilityTaskRunner runner(&store, config, endpoints, nullptr, state, models);
   runner.requestTitleGeneration(
@@ -220,14 +264,21 @@ TEST(UtilityTaskRunner, ModelLessInstancesClearResolutionWithoutDispatching) {
   httpClient->enqueueBufferedSuccess(QByteArray(R"({"models":[]})"));
   UtilityProviderEndpoints endpoints;
   endpoints.ollama_http_client = httpClient;
-  ProviderState state{.instances = {ProviderInstanceConfig{
-                          .id = QStringLiteral("empty"),
-                          .type = ProviderType::Ollama,
-                          .display_name = QStringLiteral("Empty"),
-                          .enabled = true,
-                          .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://empty.example.test")}}}};
-  UtilityConfig config{.default_utility_model =
-                           ModelId{.provider_id = QStringLiteral("deleted"), .model_name = QStringLiteral("gone")}};
+  ProviderState state{
+      .instances =
+          {
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("empty"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Empty"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://empty.example.test")},
+              },
+          },
+  };
+  UtilityConfig config{
+      .default_utility_model = ModelId{.provider_id = QStringLiteral("deleted"), .model_name = QStringLiteral("gone")},
+  };
 
   UtilityTaskRunner runner(&store, config, endpoints, nullptr, state, {});
   runner.requestTitleGeneration(
@@ -491,25 +542,35 @@ TEST(UtilityTaskRunner, ApplyProviderStateAddsNewlyCreatedInstanceToRouter) {
   UtilityProviderEndpoints endpoints;
   endpoints.ollama_http_client = httpClient;
   ProviderState initialState{
-      .instances = {ProviderInstanceConfig{
-          .id = QStringLiteral("seed"),
-          .type = ProviderType::Ollama,
-          .display_name = QStringLiteral("Seed"),
-          .enabled = true,
-          .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://seed.example.test")}}}};
+      .instances =
+          {
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("seed"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Seed"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://seed.example.test")},
+              },
+          },
+  };
 
   UtilityTaskRunner runner(&store, UtilityConfig{}, endpoints, nullptr, initialState, {});
 
   const QString uuidId = QStringLiteral("550e8400-e29b-41d4-a716-446655440000");
   httpClient->enqueueBufferedSuccess(QByteArray(R"({"models":[{"name":"new-model"}]})"));
   ProviderState updatedState{
-      .instances = {initialState.instances.front(),
-                    ProviderInstanceConfig{
-                        .id = uuidId,
-                        .type = ProviderType::Ollama,
-                        .display_name = QStringLiteral("New"),
-                        .enabled = true,
-                        .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://new.example.test")}}}};
+      .instances =
+          {
+              initialState.instances.front(),
+              ProviderInstanceConfig{
+                  .id = uuidId,
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("New"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://new.example.test")},
+              },
+          },
+  };
 
   runner.applyProviderState(updatedState);
   runner.requestTitleGeneration(ConversationId::generate(), QStringLiteral("hi"), QStringLiteral("hello"),
@@ -530,20 +591,27 @@ TEST(UtilityTaskRunner, ApplyProviderStateRemovesDroppedInstanceFromRouter) {
   UtilityProviderEndpoints endpoints;
   endpoints.ollama_http_client = httpClient;
   ProviderState initialState{
-      .instances = {
-          ProviderInstanceConfig{.id = QStringLiteral("a"),
-                                 .type = ProviderType::Ollama,
-                                 .display_name = QStringLiteral("A"),
-                                 .enabled = true,
-                                 .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://a.example.test")}},
-          ProviderInstanceConfig{
-              .id = QStringLiteral("b"),
-              .type = ProviderType::Ollama,
-              .display_name = QStringLiteral("B"),
-              .enabled = true,
-              .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://b.example.test")}}}};
-  UtilityConfig config{.default_utility_model =
-                           ModelId{.provider_id = QStringLiteral("a"), .model_name = QStringLiteral("a-model")}};
+      .instances =
+          {
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("a"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("A"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://a.example.test")},
+              },
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("b"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("B"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://b.example.test")},
+              },
+          },
+  };
+  UtilityConfig config{
+      .default_utility_model = ModelId{.provider_id = QStringLiteral("a"), .model_name = QStringLiteral("a-model")},
+  };
 
   UtilityTaskRunner runner(&store, config, endpoints, nullptr, initialState, {});
 
@@ -572,22 +640,37 @@ TEST(UtilityTaskRunner, ApplyProviderStateInjectsUtilityGenerationParamsOnAddedI
   // A non-empty initial ProviderState is required so the constructor creates adapter_router_ —
   // applyProviderState() is a no-op resync when adapter_router_ is null (legacy fallback path).
   ProviderState seedState{
-      .instances = {ProviderInstanceConfig{
-          .id = QStringLiteral("seed"),
-          .type = ProviderType::Ollama,
-          .display_name = QStringLiteral("Seed"),
-          .enabled = true,
-          .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://seed.example.test")}}}};
+      .instances =
+          {
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("seed"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Seed"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://seed.example.test")},
+              },
+          },
+  };
 
   UtilityTaskRunner runner(&store, UtilityConfig{}, endpoints, nullptr, seedState, {});
 
-  ProviderState state{.instances = {seedState.instances.front(),
-                                    ProviderInstanceConfig{.id = QStringLiteral("anthropic-instance"),
-                                                           .type = ProviderType::Anthropic,
-                                                           .display_name = QStringLiteral("Anthropic"),
-                                                           .enabled = true,
-                                                           .settings = holonight_config::AnthropicProviderConfig{
-                                                               .temperature = 1.0, .max_output_tokens = 4096}}}};
+  ProviderState state{
+      .instances =
+          {
+              seedState.instances.front(),
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("anthropic-instance"),
+                  .type = ProviderType::Anthropic,
+                  .display_name = QStringLiteral("Anthropic"),
+                  .enabled = true,
+                  .settings =
+                      holonight_config::AnthropicProviderConfig{
+                          .temperature = 1.0,
+                          .max_output_tokens = 4096,
+                      },
+              },
+          },
+  };
   runner.applyProviderState(state);
   runner.requestTitleGeneration(
       ConversationId::generate(), QStringLiteral("hi"), QStringLiteral("hello"),
@@ -609,22 +692,36 @@ TEST(UtilityTaskRunner, ChatTitleModelOverrideTierWinsOverDefaultUtilityModelTie
   UtilityProviderEndpoints endpoints;
   endpoints.ollama_http_client = httpClient;
   ProviderState state{
-      .instances = {ProviderInstanceConfig{
-                        .id = QStringLiteral("override"),
-                        .type = ProviderType::Ollama,
-                        .display_name = QStringLiteral("Override"),
-                        .enabled = true,
-                        .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://override.example.test")}},
-                    ProviderInstanceConfig{
-                        .id = QStringLiteral("default"),
-                        .type = ProviderType::Ollama,
-                        .display_name = QStringLiteral("Default"),
-                        .enabled = true,
-                        .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://default.example.test")}}}};
-  UtilityConfig config{.default_utility_model = ModelId{.provider_id = QStringLiteral("default"),
-                                                        .model_name = QStringLiteral("default-model")},
-                       .chat_title_model_override = ModelId{.provider_id = QStringLiteral("override"),
-                                                            .model_name = QStringLiteral("override-model")}};
+      .instances =
+          {
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("override"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Override"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://override.example.test")},
+              },
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("default"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Default"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://default.example.test")},
+              },
+          },
+  };
+  UtilityConfig config{
+      .default_utility_model =
+          ModelId{
+              .provider_id = QStringLiteral("default"),
+              .model_name = QStringLiteral("default-model"),
+          },
+      .chat_title_model_override =
+          ModelId{
+              .provider_id = QStringLiteral("override"),
+              .model_name = QStringLiteral("override-model"),
+          },
+  };
 
   UtilityTaskRunner runner(&store, config, endpoints, nullptr, state, {});
   runner.requestTitleGeneration(
@@ -646,22 +743,36 @@ TEST(UtilityTaskRunner, UnusableChatTitleModelOverrideFallsThroughToDefaultUtili
   UtilityProviderEndpoints endpoints;
   endpoints.ollama_http_client = httpClient;
   ProviderState state{
-      .instances = {ProviderInstanceConfig{
-                        .id = QStringLiteral("empty"),
-                        .type = ProviderType::Ollama,
-                        .display_name = QStringLiteral("Empty"),
-                        .enabled = true,
-                        .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://empty.example.test")}},
-                    ProviderInstanceConfig{
-                        .id = QStringLiteral("default"),
-                        .type = ProviderType::Ollama,
-                        .display_name = QStringLiteral("Default"),
-                        .enabled = true,
-                        .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://default.example.test")}}}};
-  UtilityConfig config{.default_utility_model = ModelId{.provider_id = QStringLiteral("default"),
-                                                        .model_name = QStringLiteral("default-model")},
-                       .chat_title_model_override = ModelId{.provider_id = QStringLiteral("empty"),
-                                                            .model_name = QStringLiteral("nonexistent-model")}};
+      .instances =
+          {
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("empty"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Empty"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://empty.example.test")},
+              },
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("default"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Default"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://default.example.test")},
+              },
+          },
+  };
+  UtilityConfig config{
+      .default_utility_model =
+          ModelId{
+              .provider_id = QStringLiteral("default"),
+              .model_name = QStringLiteral("default-model"),
+          },
+      .chat_title_model_override =
+          ModelId{
+              .provider_id = QStringLiteral("empty"),
+              .model_name = QStringLiteral("nonexistent-model"),
+          },
+  };
 
   UtilityTaskRunner runner(&store, config, endpoints, nullptr, state, {});
   runner.requestTitleGeneration(
@@ -725,20 +836,28 @@ TEST(UtilityTaskRunner, DeletedDefaultProviderFallsBackToChatModelWithoutCrashin
   UtilityProviderEndpoints endpoints;
   endpoints.ollama_http_client = httpClient;
   ProviderState state{
-      .instances = {ProviderInstanceConfig{
-                        .id = QStringLiteral("gone"),
-                        .type = ProviderType::Ollama,
-                        .display_name = QStringLiteral("Gone"),
-                        .enabled = true,
-                        .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://gone.example.test")}},
-                    ProviderInstanceConfig{
-                        .id = QStringLiteral("ready"),
-                        .type = ProviderType::Ollama,
-                        .display_name = QStringLiteral("Ready"),
-                        .enabled = true,
-                        .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://ready.example.test")}}}};
-  UtilityConfig config{.default_utility_model =
-                           ModelId{.provider_id = QStringLiteral("gone"), .model_name = QStringLiteral("gone-model")}};
+      .instances =
+          {
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("gone"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Gone"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://gone.example.test")},
+              },
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("ready"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Ready"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://ready.example.test")},
+              },
+          },
+  };
+  UtilityConfig config{
+      .default_utility_model =
+          ModelId{.provider_id = QStringLiteral("gone"), .model_name = QStringLiteral("gone-model")},
+  };
 
   UtilityTaskRunner runner(&store, config, endpoints, nullptr, state, {});
   runner.applyProviderState(ProviderState{.instances = {state.instances.back()}});  // "gone" removed
@@ -771,18 +890,24 @@ TEST(UtilityTaskRunner, PersistedSettingsAreHonoredOnNextDispatch) {
   UtilityProviderEndpoints endpoints;
   endpoints.ollama_http_client = httpClient;
   ProviderState state{
-      .instances = {ProviderInstanceConfig{
-                        .id = QStringLiteral("override"),
-                        .type = ProviderType::Ollama,
-                        .display_name = QStringLiteral("Override"),
-                        .enabled = true,
-                        .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://override.example.test")}},
-                    ProviderInstanceConfig{
-                        .id = QStringLiteral("chat"),
-                        .type = ProviderType::Ollama,
-                        .display_name = QStringLiteral("Chat"),
-                        .enabled = true,
-                        .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://chat.example.test")}}}};
+      .instances =
+          {
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("override"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Override"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://override.example.test")},
+              },
+              ProviderInstanceConfig{
+                  .id = QStringLiteral("chat"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Chat"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://chat.example.test")},
+              },
+          },
+  };
 
   UtilityTaskRunner runner(&store, repository.loadUtilityConfig(), endpoints, nullptr, state, {});
   runner.requestTitleGeneration(

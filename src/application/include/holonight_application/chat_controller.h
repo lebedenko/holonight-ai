@@ -107,6 +107,11 @@ class ChatController {
                                                 holonight_domain::Message placeholder_message,
                                                 std::function<void(const holonight_domain::StreamEvent&)> on_event);
 
+  [[nodiscard]] static bool toolRoundFinished(const InFlightStream& stream);
+  void handleCompleted(const QString& conversation_key, InFlightStream& stream,
+                       const holonight_domain::Completed& value);
+  void onToolRunning(const QString& conversation_key, const holonight_domain::ToolRequestEvent& tool_call,
+                     const holonight_domain::StreamEvent& event, const holonight_domain::ToolInvocation& invocation);
   void handleStreamEvent(const QString& conversation_key, const holonight_domain::StreamEvent& event);
   // Enforces the REQ-F-006 cap and executes the tool through ToolOrchestrator, recording
   // invocation/result/next-placeholder messages. Split out of handleStreamEvent()'s std::visit to keep

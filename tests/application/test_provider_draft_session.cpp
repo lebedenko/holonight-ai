@@ -8,11 +8,13 @@ namespace {
 using namespace holonight_config;
 
 ProviderInstanceConfig openAiConfig() {
-  return {.id = QStringLiteral("instance-1"),
-          .type = ProviderType::OpenAi,
-          .display_name = QStringLiteral("Work"),
-          .enabled = true,
-          .settings = OpenAIProviderConfig{}};
+  return {
+      .id = QStringLiteral("instance-1"),
+      .type = ProviderType::OpenAi,
+      .display_name = QStringLiteral("Work"),
+      .enabled = true,
+      .settings = OpenAIProviderConfig{},
+  };
 }
 
 TEST(ProviderDraftSession, ExistingEditsAreDirtyAndDiscardRestoresSnapshot) {
@@ -65,7 +67,10 @@ TEST(ProviderDraftSession, NewInstanceStartsCleanRelativeToItsInitialDraft) {
 TEST(ProviderDraftSession, ResetUsesTypedDefaultsWithoutChangingIdentityOrSaving) {
   auto config = openAiConfig();
   config.settings = OpenAIProviderConfig{
-      .base_url = QStringLiteral("https://proxy.test"), .default_model = QStringLiteral("model"), .temperature = 0.3};
+      .base_url = QStringLiteral("https://proxy.test"),
+      .default_model = QStringLiteral("model"),
+      .temperature = 0.3,
+  };
   ProviderDraftSession session(config, config);
 
   session.resetToDefaults();
@@ -106,10 +111,12 @@ TEST(ProviderDraftSession, ValidationTrimsNameAndChecksUniquenessTypedFieldsAndC
 }
 
 TEST(ProviderDraftSession, AnthropicUsesItsNarrowerTemperatureRange) {
-  ProviderInstanceConfig config{.id = QStringLiteral("anthropic-1"),
-                                .type = ProviderType::Anthropic,
-                                .display_name = QStringLiteral("Anthropic"),
-                                .settings = AnthropicProviderConfig{.temperature = 1.5}};
+  ProviderInstanceConfig config{
+      .id = QStringLiteral("anthropic-1"),
+      .type = ProviderType::Anthropic,
+      .display_name = QStringLiteral("Anthropic"),
+      .settings = AnthropicProviderConfig{.temperature = 1.5},
+  };
   ProviderDraftSession session(std::nullopt, config);
 
   EXPECT_FALSE(session.validate());

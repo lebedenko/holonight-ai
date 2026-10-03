@@ -30,9 +30,15 @@ QJsonArray OllamaToolCodec::encodeDefinitions(const holonight_domain::ToolCatalo
   for (const auto& definition : catalog.client_tools) {
     tools.append(QJsonObject{
         {QStringLiteral("type"), QStringLiteral("function")},
-        {QStringLiteral("function"), QJsonObject{{QStringLiteral("name"), definition.function_name},
-                                                 {QStringLiteral("description"), definition.description},
-                                                 {QStringLiteral("parameters"), definition.input_schema}}}});
+        {
+            QStringLiteral("function"),
+            QJsonObject{
+                {QStringLiteral("name"), definition.function_name},
+                {QStringLiteral("description"), definition.description},
+                {QStringLiteral("parameters"), definition.input_schema},
+            },
+        },
+    });
   }
   return tools;  // empty catalog -> empty array, REQ-F-017's own acceptance criterion verbatim.
 }
@@ -64,15 +70,18 @@ QJsonArray OllamaToolCodec::encodeHistory(const std::vector<Message>& history) {
         messages.append(QJsonObject{
             {QStringLiteral("role"), QStringLiteral("tool")},
             {QStringLiteral("content"), QString::fromUtf8(QJsonDocument(entry.result).toJson(QJsonDocument::Compact))},
-            {QStringLiteral("tool_name"), entry.function_name.isEmpty() ? entry.tool_name : entry.function_name}});
+            {QStringLiteral("tool_name"), entry.function_name.isEmpty() ? entry.tool_name : entry.function_name},
+        });
       }
       continue;
     }
 
     if (message.role() != MessageRole::Assistant) {
       flush();
-      messages.append(QJsonObject{{QStringLiteral("role"), roleToOllamaString(message.role())},
-                                  {QStringLiteral("content"), message.text()}});
+      messages.append(QJsonObject{
+          {QStringLiteral("role"), roleToOllamaString(message.role())},
+          {QStringLiteral("content"), message.text()},
+      });
       continue;
     }
 
@@ -86,9 +95,14 @@ QJsonArray OllamaToolCodec::encodeHistory(const std::vector<Message>& history) {
     }
     for (const ToolCallEntry& entry : message.toolCalls()) {
       groupToolCalls.append(QJsonObject{
-          {QStringLiteral("function"),
-           QJsonObject{{QStringLiteral("name"), entry.function_name.isEmpty() ? entry.tool_name : entry.function_name},
-                       {QStringLiteral("arguments"), entry.input}}}});
+          {
+              QStringLiteral("function"),
+              QJsonObject{
+                  {QStringLiteral("name"), entry.function_name.isEmpty() ? entry.tool_name : entry.function_name},
+                  {QStringLiteral("arguments"), entry.input},
+              },
+          },
+      });
     }
   }
   flush();

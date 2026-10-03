@@ -55,11 +55,13 @@ class FakeHttpClient : public HttpClient {
                                      HttpDataCallback on_data, HttpFinishedCallback on_finished,
                                      HttpErrorCallback on_error) override {
     Q_UNUSED(idle_timeout);
-    streaming_calls_.push_back(StreamingCall{.request = request,
-                                             .on_data = std::move(on_data),
-                                             .on_finished = std::move(on_finished),
-                                             .on_error = std::move(on_error),
-                                             .cancelled = false});
+    streaming_calls_.push_back(StreamingCall{
+        .request = request,
+        .on_data = std::move(on_data),
+        .on_finished = std::move(on_finished),
+        .on_error = std::move(on_error),
+        .cancelled = false,
+    });
     return std::make_shared<HandleImpl>(this, streaming_calls_.size() - 1);
   }
 

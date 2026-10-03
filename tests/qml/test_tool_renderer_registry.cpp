@@ -24,9 +24,9 @@ std::unique_ptr<QObject> createRegistry(QQmlEngine& engine) {
 
 QObject* componentFor(QObject* registry, const QString& key) {
   QVariant result;
-  const bool ok =
+  const bool loaded =
       QMetaObject::invokeMethod(registry, "componentFor", Q_RETURN_ARG(QVariant, result), Q_ARG(QVariant, key));
-  EXPECT_TRUE(ok);
+  EXPECT_TRUE(loaded);
   EXPECT_TRUE(result.isValid());
   EXPECT_TRUE(result.canConvert<QObject*>());
   return qvariant_cast<QObject*>(result);

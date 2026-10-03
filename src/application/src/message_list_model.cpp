@@ -71,8 +71,24 @@ QString toolCallStatusToString(holonight_domain::ToolInvocationStatus status) {
 }
 
 QString toolTitleFromEntry(const holonight_domain::ToolCallEntry& entry) {
-  return entry.tool_name.isEmpty() ? (entry.tool_id.isEmpty() ? QStringLiteral("Tool activity") : entry.tool_id)
-                                   : QStringLiteral("Tool: %1").arg(entry.tool_name);
+  if (!entry.tool_name.isEmpty()) {
+    return QStringLiteral("Tool: %1").arg(entry.tool_name);
+  }
+  return entry.tool_id.isEmpty() ? QStringLiteral("Tool activity") : entry.tool_id;
+}
+
+QString toolRendererKey(const holonight_domain::ToolCallEntry& entry) {
+  if (!entry.tool_id.isEmpty()) {
+    return entry.tool_id;
+  }
+  return entry.tool_name == QStringLiteral("ListFiles") ? QStringLiteral("filesystem.list") : QStringLiteral("generic");
+}
+
+QString toolCanonicalId(const holonight_domain::ToolCallEntry& entry) {
+  if (!entry.tool_id.isEmpty()) {
+    return entry.tool_id;
+  }
+  return entry.tool_name == QStringLiteral("ListFiles") ? QStringLiteral("filesystem.list") : entry.tool_name;
 }
 
 QString toolSummaryFromEntry(const QString& title, holonight_domain::ToolInvocationStatus status, bool has_result,
@@ -157,7 +173,10 @@ std::optional<ToolPresentation> presentationFor(const holonight_domain::ToolCall
   }
   if (entry.is_error) {
     invocation.error = holonight_domain::ToolError{
-        .code = QStringLiteral("TOOL_ERROR"), .message = QStringLiteral("Tool execution failed."), .details = {}};
+        .code = QStringLiteral("TOOL_ERROR"),
+        .message = QStringLiteral("Tool execution failed."),
+        .details = {},
+    };
   }
 
   const ToolRegistration* registration = registry->registrationByFunctionName(invocation.function_name);
@@ -225,14 +244,8 @@ QVariantMap toolCallVariant(const holonight_domain::ToolCallEntry& entry, const 
   if (durationMs >= 0) {
     map.insert(QStringLiteral("durationMs"), durationMs);
   }
-  map.insert(QStringLiteral("rendererKey"),
-             entry.tool_id.isEmpty() && entry.tool_name == QStringLiteral("ListFiles")
-                 ? QStringLiteral("filesystem.list")
-                 : (entry.tool_id.isEmpty() ? QStringLiteral("generic") : entry.tool_id));
-  map.insert(QStringLiteral("canonicalId"), entry.tool_id.isEmpty() ? (entry.tool_name == QStringLiteral("ListFiles")
-                                                                           ? QStringLiteral("filesystem.list")
-                                                                           : entry.tool_name)
-                                                                    : entry.tool_id);
+  map.insert(QStringLiteral("rendererKey"), toolRendererKey(entry));
+  map.insert(QStringLiteral("canonicalId"), toolCanonicalId(entry));
   map.insert(QStringLiteral("canCancel"), entry.can_cancel);
   map.insert(QStringLiteral("rawArgumentsAvailable"), hasInput);
   map.insert(QStringLiteral("rawResultAvailable"), hasResult);
@@ -334,6 +347,49 @@ std::optional<std::size_t> MessageListModel::findUnresolvedInvocationRow(const Q
   return std::nullopt;
 }
 
+bool MessageListModel::mergeToolResult(const holonight_domain::ToolCallEntry& tool_call, bool emit_data_changes) {
+  const auto matching = findUnresolvedInvocationRow(tool_call.tool_use_id);
+  if (!matching.has_value()) {
+    return false;
+  }
+  Row& invocation_row = rows_[*matching];
+  if (invocation_row.tool_call_has_result || !invocation_row.tool_call.has_value() ||
+      !invocation_row.projected_tool_call.has_value()) {
+    return false;
+  }
+  {
+    holonight_domain::ToolCallEntry merged = *invocation_row.projected_tool_call;
+    merged.result = tool_call.result;
+    merged.is_error = tool_call.is_error;
+    merged.status = tool_call.status;
+    if (tool_call.status == holonight_domain::ToolInvocationStatus::Requested) {
+      merged.status = tool_call.is_error ? holonight_domain::ToolInvocationStatus::Failed
+                                         : holonight_domain::ToolInvocationStatus::Completed;
+    }
+    if (!tool_call.tool_id.isEmpty()) {
+      merged.tool_id = tool_call.tool_id;
+    }
+    if (!tool_call.function_name.isEmpty()) {
+      merged.function_name = tool_call.function_name;
+    }
+    if (tool_call.started_at.has_value()) {
+      merged.started_at = tool_call.started_at;
+    }
+    if (tool_call.finished_at.has_value()) {
+      merged.finished_at = tool_call.finished_at;
+    }
+    invocation_row.projected_tool_call = merged;
+    invocation_row.tool_call = toolCallVariant(merged, tool_registry_.get());
+    invocation_row.tool_call_has_result = true;
+    if (emit_data_changes) {
+      const QModelIndex changed = index(static_cast<int>(*matching));
+      const QList<int> roles = toolActivityRoles();
+      emit dataChanged(changed, changed, roles);
+    }
+    return true;
+  }
+}
+
 void MessageListModel::insertProjectedMessage(const Message& message, bool emit_data_changes) {
   const auto tool_call = singleToolCall(message);
   if (!tool_call.has_value()) {
@@ -377,40 +433,8 @@ void MessageListModel::insertProjectedMessage(const Message& message, bool emit_
     return;
   }
 
-  const auto matching = findUnresolvedInvocationRow(tool_call->tool_use_id);
-  if (matching.has_value()) {
-    Row& invocation_row = rows_[*matching];
-    if (!invocation_row.tool_call_has_result && invocation_row.tool_call.has_value() &&
-        invocation_row.projected_tool_call.has_value()) {
-      holonight_domain::ToolCallEntry merged = *invocation_row.projected_tool_call;
-      merged.result = tool_call->result;
-      merged.is_error = tool_call->is_error;
-      merged.status = tool_call->status == holonight_domain::ToolInvocationStatus::Requested
-                          ? (tool_call->is_error ? holonight_domain::ToolInvocationStatus::Failed
-                                                 : holonight_domain::ToolInvocationStatus::Completed)
-                          : tool_call->status;
-      if (!tool_call->tool_id.isEmpty()) {
-        merged.tool_id = tool_call->tool_id;
-      }
-      if (!tool_call->function_name.isEmpty()) {
-        merged.function_name = tool_call->function_name;
-      }
-      if (tool_call->started_at.has_value()) {
-        merged.started_at = tool_call->started_at;
-      }
-      if (tool_call->finished_at.has_value()) {
-        merged.finished_at = tool_call->finished_at;
-      }
-      invocation_row.projected_tool_call = merged;
-      invocation_row.tool_call = toolCallVariant(merged, tool_registry_.get());
-      invocation_row.tool_call_has_result = true;
-      if (emit_data_changes) {
-        const QModelIndex changed = index(static_cast<int>(*matching));
-        const QList<int> roles = toolActivityRoles();
-        emit dataChanged(changed, changed, roles);
-      }
-      return;
-    }
+  if (mergeToolResult(*tool_call, emit_data_changes)) {
+    return;
   }
 
   Row row = toRow(message);
@@ -440,6 +464,49 @@ int MessageListModel::rowCount(const QModelIndex& parent) const {
     return 0;
   }
   return static_cast<int>(rows_.size());
+}
+
+QVariant MessageListModel::toolRoleData(int role, const Row& row) {
+  if (!row.tool_call.has_value()) {
+    return {};
+  }
+  switch (role) {
+    case ToolCallRole:
+      return {*row.tool_call};
+    case ToolInvocationIdRole:
+      return row.tool_call->value(QStringLiteral("toolUseId")).toString();
+    case ToolCanonicalIdRole:
+      return row.tool_call->value(QStringLiteral("canonicalId")).toString();
+    case ToolStatusRole:
+      return row.tool_call->value(QStringLiteral("status")).toString();
+    case ToolDurationMsRole:
+      return row.tool_call->value(QStringLiteral("durationMs"));
+    case ToolDetailDataRole:
+      return row.tool_call->value(QStringLiteral("detailData")).toMap();
+    case ToolCanCancelRole:
+      return row.tool_call->value(QStringLiteral("canCancel")).toBool();
+    case ToolHasRawArgumentsRole:
+      return row.tool_call->value(QStringLiteral("rawArgumentsAvailable"), false).toBool();
+    case ToolHasRawResultRole:
+      return row.tool_call->value(QStringLiteral("rawResultAvailable"), false).toBool();
+    case ToolIsErrorRole:
+      return row.tool_call->value(QStringLiteral("isError")).toBool();
+    case ToolTitleRole:
+      return row.tool_call.has_value()
+                 ? row.tool_call->value(QStringLiteral("toolName"), row.tool_call->value(QStringLiteral("toolId")))
+                       .toString()
+                 : QVariant();
+    case ToolSummaryRole:
+      return row.tool_call->value(QStringLiteral("summary")).toString();
+    case ToolRendererKeyRole:
+      return row.tool_call->value(QStringLiteral("rendererKey")).toString();
+    case ToolRawArgumentsJsonRole:
+      return row.tool_call->value(QStringLiteral("rawArgumentsJson")).toString();
+    case ToolRawResultJsonRole:
+      return row.tool_call->value(QStringLiteral("rawResultJson")).toString();
+    default:
+      return {};
+  }
 }
 
 QVariant MessageListModel::data(const QModelIndex& index, int role) const {
@@ -478,46 +545,8 @@ QVariant MessageListModel::data(const QModelIndex& index, int role) const {
     case TotalTokenCountRole:
     case DurationMsRole:
       return usageRoleData(role, row.usage);
-    case ToolCallRole:
-      return row.tool_call.has_value() ? QVariant(*row.tool_call) : QVariant();
-    case ToolInvocationIdRole:
-      return row.tool_call.has_value() ? row.tool_call->value(QStringLiteral("toolUseId")).toString() : QVariant();
-    case ToolCanonicalIdRole:
-      return row.tool_call.has_value() ? row.tool_call->value(QStringLiteral("canonicalId")).toString() : QVariant();
-    case ToolStatusRole:
-      return row.tool_call.has_value() ? row.tool_call->value(QStringLiteral("status")).toString() : QVariant();
-    case ToolDurationMsRole:
-      return row.tool_call.has_value() && row.tool_call->contains(QStringLiteral("durationMs"))
-                 ? row.tool_call->value(QStringLiteral("durationMs"))
-                 : QVariant();
-    case ToolDetailDataRole:
-      return row.tool_call.has_value() ? row.tool_call->value(QStringLiteral("detailData")).toMap() : QVariant();
-    case ToolCanCancelRole:
-      return row.tool_call.has_value() ? row.tool_call->value(QStringLiteral("canCancel")).toBool() : QVariant();
-    case ToolHasRawArgumentsRole:
-      return row.tool_call.has_value() ? row.tool_call->value(QStringLiteral("rawArgumentsAvailable"), false).toBool()
-                                       : QVariant();
-    case ToolHasRawResultRole:
-      return row.tool_call.has_value() ? row.tool_call->value(QStringLiteral("rawResultAvailable"), false).toBool()
-                                       : QVariant();
-    case ToolIsErrorRole:
-      return row.tool_call.has_value() ? row.tool_call->value(QStringLiteral("isError")).toBool() : QVariant();
-    case ToolTitleRole:
-      return row.tool_call.has_value()
-                 ? row.tool_call->value(QStringLiteral("toolName"), row.tool_call->value(QStringLiteral("toolId")))
-                       .toString()
-                 : QVariant();
-    case ToolSummaryRole:
-      return row.tool_call.has_value() ? row.tool_call->value(QStringLiteral("summary")).toString() : QVariant();
-    case ToolRendererKeyRole:
-      return row.tool_call.has_value() ? row.tool_call->value(QStringLiteral("rendererKey")).toString() : QVariant();
-    case ToolRawArgumentsJsonRole:
-      return row.tool_call.has_value() ? row.tool_call->value(QStringLiteral("rawArgumentsJson")).toString()
-                                       : QVariant();
-    case ToolRawResultJsonRole:
-      return row.tool_call.has_value() ? row.tool_call->value(QStringLiteral("rawResultJson")).toString() : QVariant();
     default:
-      return {};
+      return toolRoleData(role, row);
   }
 }
 

@@ -1,3 +1,4 @@
+// Fixture state is visible to derived test cases and deterministic assertions.
 #include <QAccessible>
 #include <QCoreApplication>
 #include <QDir>
@@ -32,15 +33,18 @@ class ChatComposerActionsQml : public testing::Test {
       return {};
     }
 
-    return std::unique_ptr<QObject>(component.createWithInitialProperties({{QStringLiteral("compact"), false},
-                                                                           {QStringLiteral("showRetryAction"), true},
-                                                                           {QStringLiteral("canRegenerate"), true},
-                                                                           {QStringLiteral("canSubmit"), true},
-                                                                           {QStringLiteral("width"), 760}}));
+    return std::unique_ptr<QObject>(component.createWithInitialProperties({
+        {QStringLiteral("compact"), false},
+        {QStringLiteral("showRetryAction"), true},
+        {QStringLiteral("canRegenerate"), true},
+        {QStringLiteral("canSubmit"), true},
+        {QStringLiteral("width"), 760},
+    }));
   }
 
   static QUrl iconSource(QObject* button) { return QQmlProperty::read(button, QStringLiteral("icon.source")).toUrl(); }
 
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   QQmlEngine engine;
 };
 

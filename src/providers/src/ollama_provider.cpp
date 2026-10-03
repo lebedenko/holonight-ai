@@ -43,7 +43,42 @@ void failStream(const std::shared_ptr<StreamContext>& context, const std::functi
     context->handle->cancel();
   }
   on_event(StreamEvent{holonight_domain::Error{
-      .message = std::move(message), .usage = context->usage, .model_identifier = context->model_identifier}});
+      .message = std::move(message),
+      .usage = context->usage,
+      .model_identifier = context->model_identifier,
+  }});
+}
+
+void completeStream(const QJsonObject& object, const std::shared_ptr<StreamContext>& context,
+                    const std::function<void(const StreamEvent&)>& on_event) {
+  context->terminal = true;
+  context->completed = true;
+
+  if (object.contains(QStringLiteral("prompt_eval_count"))) {
+    context->usage.input_tokens = object.value(QStringLiteral("prompt_eval_count")).toInt();
+  }
+  if (object.contains(QStringLiteral("eval_count"))) {
+    context->usage.output_tokens = object.value(QStringLiteral("eval_count")).toInt();
+  }
+  if (context->usage.input_tokens && context->usage.output_tokens) {
+    context->usage.total_tokens = *context->usage.input_tokens + *context->usage.output_tokens;
+  }
+  if (object.contains(QStringLiteral("total_duration"))) {
+    context->usage.ollama_total_duration_ns = object.value(QStringLiteral("total_duration")).toVariant().toLongLong();
+  }
+  if (object.contains(QStringLiteral("load_duration"))) {
+    context->usage.ollama_load_duration_ns = object.value(QStringLiteral("load_duration")).toVariant().toLongLong();
+  }
+  if (object.contains(QStringLiteral("prompt_eval_duration"))) {
+    context->usage.ollama_prompt_eval_duration_ns =
+        object.value(QStringLiteral("prompt_eval_duration")).toVariant().toLongLong();
+  }
+  if (object.contains(QStringLiteral("eval_duration"))) {
+    context->usage.ollama_eval_duration_ns = object.value(QStringLiteral("eval_duration")).toVariant().toLongLong();
+  }
+
+  on_event(
+      StreamEvent{holonight_domain::Completed{.usage = context->usage, .model_identifier = context->model_identifier}});
 }
 
 void processLine(const QByteArray& line, const std::shared_ptr<StreamContext>& context,
@@ -87,34 +122,7 @@ void processLine(const QByteArray& line, const std::shared_ptr<StreamContext>& c
   }
 
   if (object.value(QStringLiteral("done")).toBool(false)) {
-    context->terminal = true;
-    context->completed = true;
-
-    if (object.contains(QStringLiteral("prompt_eval_count"))) {
-      context->usage.input_tokens = object.value(QStringLiteral("prompt_eval_count")).toInt();
-    }
-    if (object.contains(QStringLiteral("eval_count"))) {
-      context->usage.output_tokens = object.value(QStringLiteral("eval_count")).toInt();
-    }
-    if (context->usage.input_tokens && context->usage.output_tokens) {
-      context->usage.total_tokens = *context->usage.input_tokens + *context->usage.output_tokens;
-    }
-    if (object.contains(QStringLiteral("total_duration"))) {
-      context->usage.ollama_total_duration_ns = object.value(QStringLiteral("total_duration")).toVariant().toLongLong();
-    }
-    if (object.contains(QStringLiteral("load_duration"))) {
-      context->usage.ollama_load_duration_ns = object.value(QStringLiteral("load_duration")).toVariant().toLongLong();
-    }
-    if (object.contains(QStringLiteral("prompt_eval_duration"))) {
-      context->usage.ollama_prompt_eval_duration_ns =
-          object.value(QStringLiteral("prompt_eval_duration")).toVariant().toLongLong();
-    }
-    if (object.contains(QStringLiteral("eval_duration"))) {
-      context->usage.ollama_eval_duration_ns = object.value(QStringLiteral("eval_duration")).toVariant().toLongLong();
-    }
-
-    on_event(StreamEvent{
-        holonight_domain::Completed{.usage = context->usage, .model_identifier = context->model_identifier}});
+    completeStream(object, context, on_event);
   }
 }
 
@@ -160,7 +168,10 @@ QHash<QString, QString> OllamaProvider::authHeaders() const {
 void OllamaProvider::fetchModelList(const std::function<void()>& on_success,
                                     const std::function<void(const QString&)>& on_error) {
   const HttpRequest request{
-      .method = HttpMethod::Get, .url = base_url_ + QStringLiteral("/api/tags"), .headers = authHeaders()};
+      .method = HttpMethod::Get,
+      .url = base_url_ + QStringLiteral("/api/tags"),
+      .headers = authHeaders(),
+  };
 
   // NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks): false positive — the analyzer loses
   // track of ownership through the nested std::function copies here (on_error, itself wrapping a
@@ -224,11 +235,13 @@ HttpRequestHandlePtr OllamaProvider::sendChat(const ModelId& model, const std::v
   }
   // Deliberately absent: "think" (REQ-C-004 -- this cycle never sets it).
 
-  const HttpRequest request{.method = HttpMethod::Post,
-                            .url = base_url_ + QStringLiteral("/api/chat"),
-                            .body = QJsonDocument(body).toJson(QJsonDocument::Compact),
-                            .content_type = QStringLiteral("application/json"),
-                            .headers = authHeaders()};
+  const HttpRequest request{
+      .method = HttpMethod::Post,
+      .url = base_url_ + QStringLiteral("/api/chat"),
+      .body = QJsonDocument(body).toJson(QJsonDocument::Compact),
+      .content_type = QStringLiteral("application/json"),
+      .headers = authHeaders(),
+  };
 
   auto context = std::make_shared<StreamContext>();
   context->model_identifier = model.model_name;
@@ -253,7 +266,7 @@ HttpRequestHandlePtr OllamaProvider::sendChat(const ModelId& model, const std::v
     }
   };
 
-  auto onFinished = [context, on_event]() {
+  auto onFinished = [context, on_event] {
     if (context->terminal) {
       return;
     }

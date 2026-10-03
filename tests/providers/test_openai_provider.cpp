@@ -544,11 +544,15 @@ TEST(OpenAIProvider, SendChatIncludesToolsAndEncryptedReasoningOnlyWhenCatalogPr
   auto fake = makeFakeWithEmptyModels();
   OpenAIProvider provider(fake);
   const holonight_domain::ToolCatalogSnapshot catalog{
-      .client_tools = {{
-          .function_name = QStringLiteral("list_files"),
-          .description = QStringLiteral("List files"),
-          .input_schema = QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}},
-      }}};
+      .client_tools =
+          {
+              {
+                  .function_name = QStringLiteral("list_files"),
+                  .description = QStringLiteral("List files"),
+                  .input_schema = QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}},
+              },
+          },
+  };
 
   provider.sendChat(
       ModelId{.provider_id = QStringLiteral("openai"), .model_name = QStringLiteral("gpt-4o")}, {},

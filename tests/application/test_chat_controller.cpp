@@ -90,13 +90,16 @@ class DeferredExecutor final : public IToolExecutor {
 
 ToolRegistration deferredToolRegistration(const std::shared_ptr<DeferredExecutor>& executor) {
   return ToolRegistration{
-      .definition = ToolDefinition{.id = QStringLiteral("recording.tool"),
-                                   .function_name = QStringLiteral("RecordingTool"),
-                                   .display_name = QStringLiteral("Recording tool"),
-                                   .renderer_key = QStringLiteral("generic"),
-                                   .description = QStringLiteral("Test-only deferred tool."),
-                                   .input_schema = QJsonObject{},
-                                   .risk = ToolDefinition::ToolRisk::Safe},
+      .definition =
+          ToolDefinition{
+              .id = QStringLiteral("recording.tool"),
+              .function_name = QStringLiteral("RecordingTool"),
+              .display_name = QStringLiteral("Recording tool"),
+              .renderer_key = QStringLiteral("generic"),
+              .description = QStringLiteral("Test-only deferred tool."),
+              .input_schema = QJsonObject{},
+              .risk = ToolDefinition::ToolRisk::Safe,
+          },
       .executor = executor,
       .presenter = std::make_shared<GenericToolPresenter>(),
   };
@@ -115,18 +118,32 @@ QByteArray toolCallRoundSse(const QString& toolUseId) {
 QByteArray googleToolCallRoundSse(const QStringList& callIds) {
   QJsonArray parts;
   for (const QString& callId : callIds) {
-    QJsonObject functionCall{{QStringLiteral("name"), QStringLiteral("RecordingTool")},
-                             {QStringLiteral("args"), QJsonObject{}}};
+    QJsonObject functionCall{
+        {QStringLiteral("name"), QStringLiteral("RecordingTool")},
+        {QStringLiteral("args"), QJsonObject{}},
+    };
     if (!callId.isNull()) {
       functionCall[QStringLiteral("id")] = callId;
     }
     parts.append(QJsonObject{{QStringLiteral("functionCall"), functionCall}});
   }
   const QJsonObject payload{
-      {QStringLiteral("candidates"),
-       QJsonArray{QJsonObject{{QStringLiteral("content"), QJsonObject{{QStringLiteral("role"), QStringLiteral("model")},
-                                                                      {QStringLiteral("parts"), parts}}},
-                              {QStringLiteral("finishReason"), QStringLiteral("STOP")}}}}};
+      {
+          QStringLiteral("candidates"),
+          QJsonArray{
+              QJsonObject{
+                  {
+                      QStringLiteral("content"),
+                      QJsonObject{
+                          {QStringLiteral("role"), QStringLiteral("model")},
+                          {QStringLiteral("parts"), parts},
+                      },
+                  },
+                  {QStringLiteral("finishReason"), QStringLiteral("STOP")},
+              },
+          },
+      },
+  };
   return QByteArrayLiteral("data: ") + QJsonDocument(payload).toJson(QJsonDocument::Compact) +
          QByteArrayLiteral("\n\n");
 }
@@ -183,8 +200,10 @@ ModelId testOpenAiModel() {
 }
 
 ModelId testAnthropicModel() {
-  return ModelId{.provider_id = QStringLiteral("anthropic"),
-                 .model_name = QStringLiteral("claude-3-5-sonnet-20241022")};
+  return ModelId{
+      .provider_id = QStringLiteral("anthropic"),
+      .model_name = QStringLiteral("claude-3-5-sonnet-20241022"),
+  };
 }
 
 ModelId testGoogleModel() {

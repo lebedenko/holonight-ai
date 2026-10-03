@@ -56,7 +56,10 @@ bool ProviderInstanceDeleter::remove(const QString& instance_id, bool confirmed)
     return false;
   }
   const ProviderTombstone tombstone{
-      .instance_id = instance->id, .type = instance->type, .last_display_name = instance->display_name};
+      .instance_id = instance->id,
+      .type = instance->type,
+      .last_display_name = instance->display_name,
+  };
   candidate.instances.erase(instance);
   if (std::ranges::find(candidate.tombstones, instance_id, &ProviderTombstone::instance_id) ==
       candidate.tombstones.end()) {

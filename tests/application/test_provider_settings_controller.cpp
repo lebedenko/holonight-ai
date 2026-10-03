@@ -27,20 +27,24 @@ struct Backends {
 };
 
 ProviderDraftSession makeDraft(OllamaProviderConfig settings = {}) {
-  return ProviderDraftSession(std::nullopt, {.id = QStringLiteral("ollama-work"),
-                                             .type = holonight_config::ProviderType::Ollama,
-                                             .display_name = QStringLiteral("Work"),
-                                             .settings = std::move(settings)});
+  return ProviderDraftSession(std::nullopt, {
+                                                .id = QStringLiteral("ollama-work"),
+                                                .type = holonight_config::ProviderType::Ollama,
+                                                .display_name = QStringLiteral("Work"),
+                                                .settings = std::move(settings),
+                                            });
 }
 
 TEST(ProviderSettingsController, DraftSessionRetargetsAndStagesOllamaFields) {
   Backends backends;
   ProviderSettingsController controller(backends.probe_provider, &backends.credential_store);
-  auto draft = makeDraft({.base_url = QStringLiteral("http://work"),
-                          .default_model = QStringLiteral("llama3.2"),
-                          .context_window = 8192,
-                          .temperature = 0.4,
-                          .tool_calling_enabled = true});
+  auto draft = makeDraft({
+      .base_url = QStringLiteral("http://work"),
+      .default_model = QStringLiteral("llama3.2"),
+      .context_window = 8192,
+      .temperature = 0.4,
+      .tool_calling_enabled = true,
+  });
 
   controller.setDraftSession(&draft);
 
@@ -128,10 +132,12 @@ TEST(ProviderSettingsController, CancelDiscardsDraftEdits) {
 TEST(ProviderSettingsController, ResetToDefaultsUpdatesDraftOnly) {
   Backends backends;
   ProviderSettingsController controller(backends.probe_provider, &backends.credential_store);
-  auto draft = makeDraft({.base_url = QStringLiteral("http://custom"),
-                          .context_window = 8192,
-                          .temperature = 1.2,
-                          .tool_calling_enabled = true});
+  auto draft = makeDraft({
+      .base_url = QStringLiteral("http://custom"),
+      .context_window = 8192,
+      .temperature = 1.2,
+      .tool_calling_enabled = true,
+  });
   controller.setDraftSession(&draft);
   controller.setAuthToken(QStringLiteral("token"));
 

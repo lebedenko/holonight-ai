@@ -74,7 +74,8 @@ holonight_domain::ToolCallEntry makeResultCallEntry(const holonight_domain::Tool
       .started_at = invocation.started_at,
       .finished_at = invocation.finished_at,
       .execution_location = invocation.location,
-      .provider_call_id_synthesized = tool_request.provider_call_id_synthesized};
+      .provider_call_id_synthesized = tool_request.provider_call_id_synthesized,
+  };
 }
 
 }  // namespace
@@ -207,7 +208,7 @@ std::expected<void, SendRejected> ChatController::startStream(Conversation& conv
 
   InFlightStream stream;
   stream.conversation = &conversation;
-  stream.working_message = workingMessage;
+  stream.working_message = std::move(workingMessage);
   stream.on_event = std::move(on_event);
   stream.dispatch_time = clock_->now();
   stream.model = model;
@@ -231,6 +232,33 @@ holonight_domain::Usage ChatController::stampDuration(const InFlightStream& stre
   return stamped;
 }
 
+bool ChatController::toolRoundFinished(const InFlightStream& stream) {
+  return stream.provider_round_completed &&
+         std::ranges::all_of(stream.pending_tool_calls,
+                             [](const PendingToolCall& call) { return call.result_message.has_value(); });
+}
+
+void ChatController::handleCompleted(const QString& conversation_key, InFlightStream& stream,
+                                     const holonight_domain::Completed& value) {
+  if (stream.tool_call_seen_this_stream) {
+    stream.provider_round_completed = true;
+    if (std::ranges::all_of(stream.pending_tool_calls,
+                            [](const PendingToolCall& call) { return call.result_message.has_value(); })) {
+      finishToolRound(conversation_key, stream);
+    }
+    return;
+  }
+  static_cast<void>(stream.working_message.transitionTo(MessageStatus::Complete));
+  stream.conversation->replaceLastMessage(stream.working_message);
+  if (stream.on_event) {
+    stream.on_event(StreamEvent{holonight_domain::Completed{
+        .usage = stampDuration(stream, value.usage),
+        .model_identifier = value.model_identifier,
+    }});
+  }
+  in_flight_.remove(conversation_key);
+}
+
 void ChatController::handleStreamEvent(const QString& conversation_key, const StreamEvent& event) {
   auto entryIt = in_flight_.find(conversation_key);
   if (entryIt == in_flight_.end()) {
@@ -249,21 +277,7 @@ void ChatController::handleStreamEvent(const QString& conversation_key, const St
             stream.on_event(event);
           }
         } else if constexpr (std::is_same_v<T, holonight_domain::Completed>) {
-          if (stream.tool_call_seen_this_stream) {
-            stream.provider_round_completed = true;
-            if (std::ranges::all_of(stream.pending_tool_calls,
-                                    [](const PendingToolCall& call) { return call.result_message.has_value(); })) {
-              finishToolRound(conversation_key, stream);
-            }
-            return;
-          }
-          static_cast<void>(stream.working_message.transitionTo(MessageStatus::Complete));
-          stream.conversation->replaceLastMessage(stream.working_message);
-          if (stream.on_event) {
-            stream.on_event(StreamEvent{holonight_domain::Completed{.usage = stampDuration(stream, value.usage),
-                                                                    .model_identifier = value.model_identifier}});
-          }
-          in_flight_.remove(conversation_key);
+          handleCompleted(conversation_key, stream, value);
         } else if constexpr (std::is_same_v<T, holonight_domain::ToolRequestEvent>) {
           handleToolCall(conversation_key, stream, event, value);
         } else if constexpr (std::is_same_v<T, holonight_domain::Error>) {
@@ -274,22 +288,45 @@ void ChatController::handleStreamEvent(const QString& conversation_key, const St
           stream.working_message.setText(messageText);
           stream.conversation->replaceLastMessage(stream.working_message);
           if (stream.on_event) {
-            stream.on_event(StreamEvent{holonight_domain::Error{.message = value.message,
-                                                                .usage = stampDuration(stream, value.usage),
-                                                                .model_identifier = value.model_identifier}});
+            stream.on_event(StreamEvent{holonight_domain::Error{
+                .message = value.message,
+                .usage = stampDuration(stream, value.usage),
+                .model_identifier = value.model_identifier,
+            }});
           }
           in_flight_.remove(conversation_key);
         } else if constexpr (std::is_same_v<T, holonight_domain::Cancelled>) {
           static_cast<void>(stream.working_message.transitionTo(MessageStatus::Cancelled));
           stream.conversation->replaceLastMessage(stream.working_message);
           if (stream.on_event) {
-            stream.on_event(StreamEvent{holonight_domain::Cancelled{.usage = stampDuration(stream, value.usage),
-                                                                    .model_identifier = value.model_identifier}});
+            stream.on_event(StreamEvent{holonight_domain::Cancelled{
+                .usage = stampDuration(stream, value.usage),
+                .model_identifier = value.model_identifier,
+            }});
           }
           in_flight_.remove(conversation_key);
         }
       },
       event);
+}
+
+void ChatController::onToolRunning(const QString& conversation_key, const holonight_domain::ToolRequestEvent& tool_call,
+                                   const StreamEvent& event, const ToolInvocation& invocation) {
+  auto entryIt = in_flight_.find(conversation_key);
+  if (entryIt == in_flight_.end()) {
+    return;
+  }
+
+  InFlightStream& stream = entryIt.value();
+  const auto callIt = std::ranges::find(stream.pending_tool_calls, invocation.id, &PendingToolCall::invocation_id);
+  if (callIt == stream.pending_tool_calls.end()) {
+    return;
+  }
+  callIt->invocation_message.setToolCalls({makeInvocationCallEntry(invocation, tool_call)});
+  stream.conversation->replaceMessage(callIt->invocation_message);
+  if (stream.on_event) {
+    stream.on_event(event);
+  }
 }
 
 void ChatController::handleToolCall(const QString& conversation_key, InFlightStream& stream, const StreamEvent& event,
@@ -299,23 +336,27 @@ void ChatController::handleToolCall(const QString& conversation_key, InFlightStr
     stream.conversation->replaceLastMessage(stream.working_message);
 
     Message observation(MessageId::generate(), MessageRole::Assistant, QString(), MessageStatus::Complete);
-    observation.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                            .tool_use_id = tool_call.provider_call_id,
-                                            .tool_name = tool_call.function_name,
-                                            .function_name = tool_call.function_name,
-                                            .input = tool_call.arguments,
-                                            .status = ToolInvocationStatus::Completed,
-                                            .requested_at = QDateTime::currentDateTimeUtc(),
-                                            .finished_at = QDateTime::currentDateTimeUtc(),
-                                            .execution_location = tool_call.execution_location,
-                                            .thought_signature = tool_call.thought_signature,
-                                            .provider_call_id_synthesized = tool_call.provider_call_id_synthesized}});
+    observation.setToolCalls({
+        ToolCallEntry{
+            .kind = ToolCallKind::Invocation,
+            .tool_use_id = tool_call.provider_call_id,
+            .tool_name = tool_call.function_name,
+            .function_name = tool_call.function_name,
+            .input = tool_call.arguments,
+            .status = ToolInvocationStatus::Completed,
+            .requested_at = QDateTime::currentDateTimeUtc(),
+            .finished_at = QDateTime::currentDateTimeUtc(),
+            .execution_location = tool_call.execution_location,
+            .thought_signature = tool_call.thought_signature,
+            .provider_call_id_synthesized = tool_call.provider_call_id_synthesized,
+        },
+    });
     auto entries = observation.toolCalls();
     entries.front().provider_item_id = tool_call.provider_item_id;
     entries.front().provider_context = tool_call.provider_context;
     observation.setToolCalls(std::move(entries));
     stream.conversation->appendMessage(observation);
-    stream.working_message = observation;
+    stream.working_message = std::move(observation);
     if (stream.on_event) {
       stream.on_event(event);
     }
@@ -361,18 +402,22 @@ void ChatController::handleToolCall(const QString& conversation_key, InFlightStr
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString(), MessageStatus::Complete);
   const QString invocationId = invocation.id().toString();
   const StreamEvent& toolCallEvent = event;
-  invocation.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                         .tool_use_id = tool_call.provider_call_id,
-                                         .tool_name = tool_call.function_name,
-                                         .function_name = tool_call.function_name,
-                                         .input = tool_call.arguments,
-                                         .status = ToolInvocationStatus::Requested,
-                                         .requested_at = QDateTime::currentDateTimeUtc(),
-                                         .execution_location = tool_call.execution_location,
-                                         .thought_signature = tool_call.thought_signature,
-                                         .provider_call_id_synthesized = tool_call.provider_call_id_synthesized,
-                                         .provider_item_id = tool_call.provider_item_id,
-                                         .provider_context = tool_call.provider_context}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = tool_call.provider_call_id,
+          .tool_name = tool_call.function_name,
+          .function_name = tool_call.function_name,
+          .input = tool_call.arguments,
+          .status = ToolInvocationStatus::Requested,
+          .requested_at = QDateTime::currentDateTimeUtc(),
+          .execution_location = tool_call.execution_location,
+          .thought_signature = tool_call.thought_signature,
+          .provider_call_id_synthesized = tool_call.provider_call_id_synthesized,
+          .provider_item_id = tool_call.provider_item_id,
+          .provider_context = tool_call.provider_context,
+      },
+  });
   stream.conversation->appendMessage(invocation);
   stream.pending_tool_calls.push_back(PendingToolCall{
       .invocation_id = invocationId,
@@ -388,21 +433,7 @@ void ChatController::handleToolCall(const QString& conversation_key, InFlightStr
   };
 
   const auto on_running = [this, conversation_key, tool_call, toolCallEvent](const ToolInvocation& invocation) {
-    auto entryIt = in_flight_.find(conversation_key);
-    if (entryIt == in_flight_.end()) {
-      return;
-    }
-
-    InFlightStream& stream = entryIt.value();
-    const auto callIt = std::ranges::find(stream.pending_tool_calls, invocation.id, &PendingToolCall::invocation_id);
-    if (callIt == stream.pending_tool_calls.end()) {
-      return;
-    }
-    callIt->invocation_message.setToolCalls({makeInvocationCallEntry(invocation, tool_call)});
-    stream.conversation->replaceMessage(callIt->invocation_message);
-    if (stream.on_event) {
-      stream.on_event(toolCallEvent);
-    }
+    onToolRunning(conversation_key, tool_call, toolCallEvent, invocation);
   };
 
   const auto on_terminal = [this, conversation_key, tool_call, toolCallEvent](const ToolInvocation& invocation) {
@@ -424,10 +455,7 @@ void ChatController::handleToolCall(const QString& conversation_key, InFlightStr
     callIt->result_message = std::move(result);
     callIt->execution_handle.reset();
     stream.tool_round_sync_event = toolCallEvent;
-    const bool roundFinished = stream.provider_round_completed &&
-                               std::ranges::all_of(stream.pending_tool_calls, [](const PendingToolCall& call) {
-                                 return call.result_message.has_value();
-                               });
+    const bool roundFinished = toolRoundFinished(stream);
     if (roundFinished) {
       finishToolRound(conversation_key, stream);
     } else if (stream.on_event) {
@@ -453,10 +481,13 @@ void ChatController::handleToolCall(const QString& conversation_key, InFlightStr
     }
   };
 
-  ToolExecutionHandlePtr executionHandle = ToolOrchestrator::execute(
-      *tool_registry_, request,
-      ToolOrchestrator::Callbacks{
-          .on_running = on_running, .on_capabilities_changed = on_capabilities_changed, .on_terminal = on_terminal});
+  ToolExecutionHandlePtr executionHandle =
+      ToolOrchestrator::execute(*tool_registry_, request,
+                                ToolOrchestrator::Callbacks{
+                                    .on_running = on_running,
+                                    .on_capabilities_changed = on_capabilities_changed,
+                                    .on_terminal = on_terminal,
+                                });
   const auto callIt = std::ranges::find(stream.pending_tool_calls, invocationId, &PendingToolCall::invocation_id);
   if (callIt != stream.pending_tool_calls.end() && !callIt->result_message.has_value()) {
     callIt->execution_handle = std::move(executionHandle);
@@ -479,7 +510,7 @@ void ChatController::finishToolRound(const QString& conversation_key, InFlightSt
   Message nextPlaceholder(MessageId::generate(), MessageRole::Assistant, QString(), MessageStatus::Streaming,
                           QDateTime{}, stream.model);
   stream.conversation->appendMessage(nextPlaceholder);
-  stream.working_message = nextPlaceholder;
+  stream.working_message = std::move(nextPlaceholder);
   stream.accumulated_text.clear();
   const auto onEvent = stream.on_event;
   const auto syncEvent = stream.tool_round_sync_event;
@@ -538,8 +569,10 @@ void ChatController::stop(const ConversationId& conversation_id) {
     stream.conversation->replaceMessage(stream.working_message);
   }
   if (stream.on_event) {
-    stream.on_event(StreamEvent{holonight_domain::Cancelled{.usage = stampDuration(stream, std::nullopt),
-                                                            .model_identifier = stream.model.model_name}});
+    stream.on_event(StreamEvent{holonight_domain::Cancelled{
+        .usage = stampDuration(stream, std::nullopt),
+        .model_identifier = stream.model.model_name,
+    }});
   }
 }
 

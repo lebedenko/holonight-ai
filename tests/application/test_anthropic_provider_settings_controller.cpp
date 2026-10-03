@@ -27,20 +27,24 @@ struct Backends {
 };
 
 ProviderDraftSession makeDraft(AnthropicProviderConfig settings = {}) {
-  return ProviderDraftSession(std::nullopt, {.id = QStringLiteral("anthropic-work"),
-                                             .type = holonight_config::ProviderType::Anthropic,
-                                             .display_name = QStringLiteral("Work"),
-                                             .settings = std::move(settings)});
+  return ProviderDraftSession(std::nullopt, {
+                                                .id = QStringLiteral("anthropic-work"),
+                                                .type = holonight_config::ProviderType::Anthropic,
+                                                .display_name = QStringLiteral("Work"),
+                                                .settings = std::move(settings),
+                                            });
 }
 
 TEST(AnthropicProviderSettingsController, DraftSessionRetargetsAndStagesAnthropicFields) {
   Backends backends;
   AnthropicProviderSettingsController controller(backends.probe_provider, &backends.credential_store);
-  auto draft = makeDraft({.base_url = QStringLiteral("https://work"),
-                          .default_model = QStringLiteral("claude-3-5-sonnet-20241022"),
-                          .temperature = 0.4,
-                          .max_output_tokens = 2048,
-                          .tool_calling_enabled = true});
+  auto draft = makeDraft({
+      .base_url = QStringLiteral("https://work"),
+      .default_model = QStringLiteral("claude-3-5-sonnet-20241022"),
+      .temperature = 0.4,
+      .max_output_tokens = 2048,
+      .tool_calling_enabled = true,
+  });
 
   controller.setDraftSession(&draft);
 
@@ -113,10 +117,12 @@ TEST(AnthropicProviderSettingsController, TestConnectionUpdatesAnthropicConnecti
 TEST(AnthropicProviderSettingsController, CancelDiscardsDraftEdits) {
   Backends backends;
   AnthropicProviderSettingsController controller(backends.probe_provider, &backends.credential_store);
-  auto draft = makeDraft({.base_url = QStringLiteral("https://saved"),
-                          .temperature = 0.5,
-                          .max_output_tokens = 2048,
-                          .tool_calling_enabled = false});
+  auto draft = makeDraft({
+      .base_url = QStringLiteral("https://saved"),
+      .temperature = 0.5,
+      .max_output_tokens = 2048,
+      .tool_calling_enabled = false,
+  });
   controller.setDraftSession(&draft);
   controller.setBaseUrl(QStringLiteral("https://edited"));
   controller.setTemperature(0.9);
@@ -135,10 +141,12 @@ TEST(AnthropicProviderSettingsController, CancelDiscardsDraftEdits) {
 TEST(AnthropicProviderSettingsController, ResetToDefaultsUpdatesDraftOnly) {
   Backends backends;
   AnthropicProviderSettingsController controller(backends.probe_provider, &backends.credential_store);
-  auto draft = makeDraft({.base_url = QStringLiteral("https://custom"),
-                          .temperature = 0.9,
-                          .max_output_tokens = 16384,
-                          .tool_calling_enabled = true});
+  auto draft = makeDraft({
+      .base_url = QStringLiteral("https://custom"),
+      .temperature = 0.9,
+      .max_output_tokens = 16384,
+      .tool_calling_enabled = true,
+  });
   controller.setDraftSession(&draft);
   controller.setAuthToken(QStringLiteral("sk-ant-token"));
 

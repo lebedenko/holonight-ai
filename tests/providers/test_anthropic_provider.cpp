@@ -37,8 +37,10 @@ std::shared_ptr<FakeHttpClient> makeFakeWithEmptyModels() {
 }
 
 ModelId testModel() {
-  return ModelId{.provider_id = QStringLiteral("anthropic"),
-                 .model_name = QStringLiteral("claude-3-5-sonnet-20241022")};
+  return ModelId{
+      .provider_id = QStringLiteral("anthropic"),
+      .model_name = QStringLiteral("claude-3-5-sonnet-20241022"),
+  };
 }
 
 // Serializes a JSON object as one SSE "data:" block, letting tests build tool-call payloads via
@@ -66,8 +68,10 @@ QJsonObject inputJsonDelta(int index, const QString& partialJson) {
   QJsonObject object;
   object[QStringLiteral("type")] = QStringLiteral("content_block_delta");
   object[QStringLiteral("index")] = index;
-  object[QStringLiteral("delta")] = QJsonObject{{QStringLiteral("type"), QStringLiteral("input_json_delta")},
-                                                {QStringLiteral("partial_json"), partialJson}};
+  object[QStringLiteral("delta")] = QJsonObject{
+      {QStringLiteral("type"), QStringLiteral("input_json_delta")},
+      {QStringLiteral("partial_json"), partialJson},
+  };
   return object;
 }
 
@@ -474,12 +478,16 @@ TEST(AnthropicProvider, SendChatIncludesToolsArrayInRequestBodyWhenProvided) {
   AnthropicProvider provider(fake);
 
   const holonight_domain::ToolCatalogSnapshot tools{
-      .client_tools = {holonight_domain::ToolDefinition{
-          .id = QStringLiteral("filesystem.list"),
-          .function_name = QStringLiteral("ListFiles"),
-          .description = QStringLiteral("Lists directory entries."),
-          .input_schema = QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}},
-      }}};
+      .client_tools =
+          {
+              holonight_domain::ToolDefinition{
+                  .id = QStringLiteral("filesystem.list"),
+                  .function_name = QStringLiteral("ListFiles"),
+                  .description = QStringLiteral("Lists directory entries."),
+                  .input_schema = QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}},
+              },
+          },
+  };
 
   provider.sendChat(testModel(), {}, [](const StreamEvent&) {}, std::chrono::seconds{30}, tools);
 
@@ -536,8 +544,10 @@ TEST(AnthropicProvider, ServerToolUseIsNormalizedAsProviderHostedWithExactCorrel
   provider.sendChat(testModel(), {}, [&events](const StreamEvent& event) { events.push_back(event); });
 
   fake->emitData(0, sseBlock(contentBlockStart(0, QStringLiteral("server_tool_use"),
-                                               QJsonObject{{QStringLiteral("id"), QStringLiteral("srvtoolu_exact_01")},
-                                                           {QStringLiteral("name"), QStringLiteral("web_search")}})) +
+                                               QJsonObject{
+                                                   {QStringLiteral("id"), QStringLiteral("srvtoolu_exact_01")},
+                                                   {QStringLiteral("name"), QStringLiteral("web_search")},
+                                               })) +
                         sseBlock(inputJsonDelta(0, QStringLiteral(R"({"query":"Qt"})"))) +
                         sseBlock(contentBlockStop(0)) + sseBlock(messageStopEvent()));
 
@@ -572,14 +582,22 @@ TEST(AnthropicProvider, SendChatReconstructsToolUseAndToolResultAsSeparateMessag
   QJsonObject input;
   input[QStringLiteral("path")] = QStringLiteral("~/Documents");
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString());
-  invocation.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                         .tool_use_id = QStringLiteral("toolu_01"),
-                                         .tool_name = QStringLiteral("ListFiles"),
-                                         .input = input}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("toolu_01"),
+          .tool_name = QStringLiteral("ListFiles"),
+          .input = input,
+      },
+  });
 
   QJsonObject result;
-  result[QStringLiteral("entries")] = QJsonArray{QJsonObject{{QStringLiteral("name"), QStringLiteral("notes.txt")},
-                                                             {QStringLiteral("type"), QStringLiteral("file")}}};
+  result[QStringLiteral("entries")] = QJsonArray{
+      QJsonObject{
+          {QStringLiteral("name"), QStringLiteral("notes.txt")},
+          {QStringLiteral("type"), QStringLiteral("file")},
+      },
+  };
   Message toolResult(MessageId::generate(), MessageRole::User, QString());
   toolResult.setToolCalls(
       {ToolCallEntry{.kind = ToolCallKind::Result, .tool_use_id = QStringLiteral("toolu_01"), .result = result}});
@@ -624,10 +642,14 @@ TEST(AnthropicProvider, SendChatGroupsConsecutiveSameRoleMessagesIntoOneApiMessa
   AnthropicProvider provider(fake);
 
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString());
-  invocation.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                         .tool_use_id = QStringLiteral("toolu_09"),
-                                         .tool_name = QStringLiteral("ListFiles"),
-                                         .input = QJsonObject{{QStringLiteral("path"), QStringLiteral("~")}}}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("toolu_09"),
+          .tool_name = QStringLiteral("ListFiles"),
+          .input = QJsonObject{{QStringLiteral("path"), QStringLiteral("~")}},
+      },
+  });
 
   const std::vector<Message> history{
       Message(MessageId::generate(), MessageRole::Assistant, QString("Let me check that.")),
@@ -661,10 +683,14 @@ TEST(AnthropicProvider, SendChatOmitsEmptyTextMessageAdjacentToToolUse) {
   AnthropicProvider provider(fake);
 
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString());
-  invocation.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                         .tool_use_id = QStringLiteral("toolu_10"),
-                                         .tool_name = QStringLiteral("ListFiles"),
-                                         .input = QJsonObject{{QStringLiteral("path"), QStringLiteral("~")}}}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("toolu_10"),
+          .tool_name = QStringLiteral("ListFiles"),
+          .input = QJsonObject{{QStringLiteral("path"), QStringLiteral("~")}},
+      },
+  });
 
   const std::vector<Message> history{
       Message(MessageId::generate(), MessageRole::User, QString("List my Pictures")),

@@ -77,7 +77,8 @@ class MessageListModel : public QAbstractListModel {
   };
   Q_ENUM(Roles)
 
-  explicit MessageListModel(holonight_config::ProviderState provider_state = {}, QObject* parent = nullptr);
+  explicit MessageListModel(holonight_config::ProviderState provider_state = holonight_config::ProviderState(),
+                            QObject* parent = nullptr);
   MessageListModel(holonight_config::ProviderState provider_state, std::shared_ptr<const ToolRegistry> tool_registry,
                    QObject* parent = nullptr);
 
@@ -107,6 +108,7 @@ class MessageListModel : public QAbstractListModel {
   [[nodiscard]] static std::optional<holonight_domain::ToolCallEntry> singleToolCall(
       const holonight_domain::Message& message);
   [[nodiscard]] std::optional<std::size_t> findUnresolvedInvocationRow(const QString& tool_use_id) const;
+  [[nodiscard]] bool mergeToolResult(const holonight_domain::ToolCallEntry& tool_call, bool emit_data_changes);
   void insertProjectedMessage(const holonight_domain::Message& message, bool emit_data_changes);
 
   struct Row {
@@ -136,6 +138,7 @@ class MessageListModel : public QAbstractListModel {
     std::optional<holonight_domain::ToolCallEntry> projected_tool_call;
   };
 
+  [[nodiscard]] static QVariant toolRoleData(int role, const Row& row);
   [[nodiscard]] Row toRow(const holonight_domain::Message& message);
 
   holonight_config::ProviderState provider_state_;

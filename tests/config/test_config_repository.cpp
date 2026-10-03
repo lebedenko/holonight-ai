@@ -42,10 +42,12 @@ TEST(ConfigRepository, SavingProviderStatePreservesCachedModels) {
       repository.saveCachedModels(QStringLiteral("google"), {QStringLiteral("gemini-flash-latest")}).has_value());
 
   ProviderState state;
-  state.instances.push_back({.id = QStringLiteral("google"),
-                             .type = ProviderType::Google,
-                             .display_name = QStringLiteral("Google"),
-                             .settings = GoogleProviderConfig{.default_model = QStringLiteral("gemini-flash-latest")}});
+  state.instances.push_back({
+      .id = QStringLiteral("google"),
+      .type = ProviderType::Google,
+      .display_name = QStringLiteral("Google"),
+      .settings = GoogleProviderConfig{.default_model = QStringLiteral("gemini-flash-latest")},
+  });
   ASSERT_TRUE(repository.saveProviderState(state).has_value());
 
   EXPECT_EQ(repository.loadCachedModels(QStringLiteral("google")),
@@ -134,10 +136,12 @@ TEST(ConfigRepository, SaveUtilityConfigPreservesProviderState) {
   QTemporaryDir dir;
   ConfigRepository repository(scratchFilePath(dir));
   ProviderState state;
-  state.instances.push_back({.id = QStringLiteral("ollama"),
-                             .type = ProviderType::Ollama,
-                             .display_name = QStringLiteral("Ollama"),
-                             .settings = OllamaProviderConfig{.default_model = QStringLiteral("llama3.2")}});
+  state.instances.push_back({
+      .id = QStringLiteral("ollama"),
+      .type = ProviderType::Ollama,
+      .display_name = QStringLiteral("Ollama"),
+      .settings = OllamaProviderConfig{.default_model = QStringLiteral("llama3.2")},
+  });
   ASSERT_TRUE(repository.saveProviderState(state).has_value());
 
   UtilityConfig utility;
@@ -353,33 +357,48 @@ TEST(ConfigRepository, ProviderStateRoundTripsAllSettingsTypesAndTombstonesInOrd
   ConfigRepository repository(scratchFilePath(dir));
   ProviderState expected;
   expected.instances = {
-      {.id = QStringLiteral("11111111-1111-4111-8111-111111111111"),
-       .type = ProviderType::Ollama,
-       .display_name = QStringLiteral("Local"),
-       .enabled = true,
-       .settings = OllamaProviderConfig{.base_url = QStringLiteral("http://host:11434"),
-                                        .default_model = QStringLiteral("qwen"),
-                                        .context_window = 8192,
-                                        .temperature = 0.2}},
-      {.id = QStringLiteral("22222222-2222-4222-8222-222222222222"),
-       .type = ProviderType::OpenAi,
-       .display_name = QStringLiteral("Work"),
-       .enabled = false,
-       .settings = OpenAIProviderConfig{.default_model = QStringLiteral("gpt-5"), .temperature = 0.5}},
-      {.id = QStringLiteral("33333333-3333-4333-8333-333333333333"),
-       .type = ProviderType::Anthropic,
-       .display_name = QStringLiteral("Claude"),
-       .enabled = true,
-       .settings = AnthropicProviderConfig{.max_output_tokens = 2048}},
-      {.id = QStringLiteral("44444444-4444-4444-8444-444444444444"),
-       .type = ProviderType::Google,
-       .display_name = QStringLiteral("Gemini"),
-       .enabled = true,
-       .settings = GoogleProviderConfig{.max_output_tokens = 4096}},
+      {
+          .id = QStringLiteral("11111111-1111-4111-8111-111111111111"),
+          .type = ProviderType::Ollama,
+          .display_name = QStringLiteral("Local"),
+          .enabled = true,
+          .settings =
+              OllamaProviderConfig{
+                  .base_url = QStringLiteral("http://host:11434"),
+                  .default_model = QStringLiteral("qwen"),
+                  .context_window = 8192,
+                  .temperature = 0.2,
+              },
+      },
+      {
+          .id = QStringLiteral("22222222-2222-4222-8222-222222222222"),
+          .type = ProviderType::OpenAi,
+          .display_name = QStringLiteral("Work"),
+          .enabled = false,
+          .settings = OpenAIProviderConfig{.default_model = QStringLiteral("gpt-5"), .temperature = 0.5},
+      },
+      {
+          .id = QStringLiteral("33333333-3333-4333-8333-333333333333"),
+          .type = ProviderType::Anthropic,
+          .display_name = QStringLiteral("Claude"),
+          .enabled = true,
+          .settings = AnthropicProviderConfig{.max_output_tokens = 2048},
+      },
+      {
+          .id = QStringLiteral("44444444-4444-4444-8444-444444444444"),
+          .type = ProviderType::Google,
+          .display_name = QStringLiteral("Gemini"),
+          .enabled = true,
+          .settings = GoogleProviderConfig{.max_output_tokens = 4096},
+      },
   };
-  expected.tombstones = {{.instance_id = QStringLiteral("openai"),
-                          .type = ProviderType::OpenAi,
-                          .last_display_name = QStringLiteral("Old OpenAI")}};
+  expected.tombstones = {
+      {
+          .instance_id = QStringLiteral("openai"),
+          .type = ProviderType::OpenAi,
+          .last_display_name = QStringLiteral("Old OpenAI"),
+      },
+  };
 
   ASSERT_TRUE(repository.saveProviderState(expected).has_value());
 
@@ -389,11 +408,18 @@ TEST(ConfigRepository, ProviderStateRoundTripsAllSettingsTypesAndTombstonesInOrd
 TEST(ConfigRepository, AnthropicToolCallingEnabledRoundTripsTrue) {
   QTemporaryDir dir;
   ConfigRepository repository(scratchFilePath(dir));
-  const ProviderState state{.instances = {{.id = QStringLiteral("anthropic"),
-                                           .type = ProviderType::Anthropic,
-                                           .display_name = QStringLiteral("Claude"),
-                                           .enabled = true,
-                                           .settings = AnthropicProviderConfig{.tool_calling_enabled = true}}}};
+  const ProviderState state{
+      .instances =
+          {
+              {
+                  .id = QStringLiteral("anthropic"),
+                  .type = ProviderType::Anthropic,
+                  .display_name = QStringLiteral("Claude"),
+                  .enabled = true,
+                  .settings = AnthropicProviderConfig{.tool_calling_enabled = true},
+              },
+          },
+  };
 
   ASSERT_TRUE(repository.saveProviderState(state).has_value());
 
@@ -432,11 +458,18 @@ TEST(ConfigRepository, AnthropicToolCallingEnabledDefaultsToFalseWhenKeyMissingF
 TEST(ConfigRepository, GoogleToolCallingEnabledRoundTripsTrue) {
   QTemporaryDir dir;
   ConfigRepository repository(scratchFilePath(dir));
-  const ProviderState state{.instances = {{.id = QStringLiteral("google"),
-                                           .type = ProviderType::Google,
-                                           .display_name = QStringLiteral("Gemini"),
-                                           .enabled = true,
-                                           .settings = GoogleProviderConfig{.tool_calling_enabled = true}}}};
+  const ProviderState state{
+      .instances =
+          {
+              {
+                  .id = QStringLiteral("google"),
+                  .type = ProviderType::Google,
+                  .display_name = QStringLiteral("Gemini"),
+                  .enabled = true,
+                  .settings = GoogleProviderConfig{.tool_calling_enabled = true},
+              },
+          },
+  };
 
   ASSERT_TRUE(repository.saveProviderState(state).has_value());
 
@@ -448,11 +481,18 @@ TEST(ConfigRepository, GoogleToolCallingEnabledRoundTripsTrue) {
 TEST(ConfigRepository, GoogleToolCallingEnabledRoundTripsFalse) {
   QTemporaryDir dir;
   ConfigRepository repository(scratchFilePath(dir));
-  const ProviderState state{.instances = {{.id = QStringLiteral("google"),
-                                           .type = ProviderType::Google,
-                                           .display_name = QStringLiteral("Gemini"),
-                                           .enabled = true,
-                                           .settings = GoogleProviderConfig{.tool_calling_enabled = false}}}};
+  const ProviderState state{
+      .instances =
+          {
+              {
+                  .id = QStringLiteral("google"),
+                  .type = ProviderType::Google,
+                  .display_name = QStringLiteral("Gemini"),
+                  .enabled = true,
+                  .settings = GoogleProviderConfig{.tool_calling_enabled = false},
+              },
+          },
+  };
 
   ASSERT_TRUE(repository.saveProviderState(state).has_value());
 
@@ -491,11 +531,18 @@ TEST(ConfigRepository, GoogleToolCallingEnabledDefaultsToFalseWhenKeyMissingFrom
 TEST(ConfigRepository, OllamaToolCallingEnabledRoundTripsTrue) {
   QTemporaryDir dir;
   ConfigRepository repository(scratchFilePath(dir));
-  const ProviderState state{.instances = {{.id = QStringLiteral("ollama"),
-                                           .type = ProviderType::Ollama,
-                                           .display_name = QStringLiteral("Ollama"),
-                                           .enabled = true,
-                                           .settings = OllamaProviderConfig{.tool_calling_enabled = true}}}};
+  const ProviderState state{
+      .instances =
+          {
+              {
+                  .id = QStringLiteral("ollama"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Ollama"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.tool_calling_enabled = true},
+              },
+          },
+  };
 
   ASSERT_TRUE(repository.saveProviderState(state).has_value());
 
@@ -507,11 +554,18 @@ TEST(ConfigRepository, OllamaToolCallingEnabledRoundTripsTrue) {
 TEST(ConfigRepository, OllamaToolCallingEnabledRoundTripsFalse) {
   QTemporaryDir dir;
   ConfigRepository repository(scratchFilePath(dir));
-  const ProviderState state{.instances = {{.id = QStringLiteral("ollama"),
-                                           .type = ProviderType::Ollama,
-                                           .display_name = QStringLiteral("Ollama"),
-                                           .enabled = true,
-                                           .settings = OllamaProviderConfig{.tool_calling_enabled = false}}}};
+  const ProviderState state{
+      .instances =
+          {
+              {
+                  .id = QStringLiteral("ollama"),
+                  .type = ProviderType::Ollama,
+                  .display_name = QStringLiteral("Ollama"),
+                  .enabled = true,
+                  .settings = OllamaProviderConfig{.tool_calling_enabled = false},
+              },
+          },
+  };
 
   ASSERT_TRUE(repository.saveProviderState(state).has_value());
 
@@ -551,9 +605,16 @@ TEST(ConfigRepository, TombstonesSerializeOnlyHistoricalIdentity) {
   QTemporaryDir dir;
   const QString path = scratchFilePath(dir);
   ConfigRepository repository(path);
-  const ProviderState state{.tombstones = {{.instance_id = QStringLiteral("550e8400-e29b-41d4-a716-446655440000"),
-                                            .type = ProviderType::OpenAi,
-                                            .last_display_name = QStringLiteral("Former work account")}}};
+  const ProviderState state{
+      .tombstones =
+          {
+              {
+                  .instance_id = QStringLiteral("550e8400-e29b-41d4-a716-446655440000"),
+                  .type = ProviderType::OpenAi,
+                  .last_display_name = QStringLiteral("Former work account"),
+              },
+          },
+  };
 
   ASSERT_TRUE(repository.saveProviderState(state).has_value());
 
@@ -658,11 +719,13 @@ TEST(ConfigRepository, SaveProviderStateRejectsMismatchedTypeWithoutTouchingExis
   file.close();
   ConfigRepository repository(path);
   ProviderState invalid;
-  invalid.instances.push_back({.id = QStringLiteral("ollama"),
-                               .type = ProviderType::Ollama,
-                               .display_name = QStringLiteral("Ollama"),
-                               .enabled = true,
-                               .settings = GoogleProviderConfig{}});
+  invalid.instances.push_back({
+      .id = QStringLiteral("ollama"),
+      .type = ProviderType::Ollama,
+      .display_name = QStringLiteral("Ollama"),
+      .enabled = true,
+      .settings = GoogleProviderConfig{},
+  });
 
   EXPECT_FALSE(repository.saveProviderState(invalid).has_value());
   ASSERT_TRUE(file.open(QIODevice::ReadOnly));

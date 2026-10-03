@@ -1,3 +1,4 @@
+// Fixture state is visible to derived test cases and deterministic assertions.
 #include <QAccessible>
 #include <QCoreApplication>
 #include <QDir>
@@ -35,17 +36,18 @@ class ResponseStatsFooterQml : public testing::Test {
       return {};
     }
 
-    std::unique_ptr<QObject> object(
-        component.createWithInitialProperties({{QStringLiteral("isAssistant"), true},
-                                               {QStringLiteral("messageStatus"), QStringLiteral("complete")},
-                                               {QStringLiteral("inputTokenCount"), 2400},
-                                               {QStringLiteral("outputTokenCount"), 999},
-                                               {QStringLiteral("reasoningTokenCount"), 10000},
-                                               {QStringLiteral("cacheCreationTokenCount"), 41},
-                                               {QStringLiteral("cacheReadTokenCount"), 42},
-                                               {QStringLiteral("totalTokenCount"), 13481},
-                                               {QStringLiteral("durationMs"), 1250},
-                                               {QStringLiteral("width"), 640}}));
+    std::unique_ptr<QObject> object(component.createWithInitialProperties({
+        {QStringLiteral("isAssistant"), true},
+        {QStringLiteral("messageStatus"), QStringLiteral("complete")},
+        {QStringLiteral("inputTokenCount"), 2400},
+        {QStringLiteral("outputTokenCount"), 999},
+        {QStringLiteral("reasoningTokenCount"), 10000},
+        {QStringLiteral("cacheCreationTokenCount"), 41},
+        {QStringLiteral("cacheReadTokenCount"), 42},
+        {QStringLiteral("totalTokenCount"), 13481},
+        {QStringLiteral("durationMs"), 1250},
+        {QStringLiteral("width"), 640},
+    }));
     if (auto* item = qobject_cast<QQuickItem*>(object.get())) {
       window.resize(640, 480);
       item->setParentItem(window.contentItem());
@@ -55,7 +57,9 @@ class ResponseStatsFooterQml : public testing::Test {
     return object;
   }
 
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   QQmlEngine engine;
+  // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   QQuickWindow window;
 };
 

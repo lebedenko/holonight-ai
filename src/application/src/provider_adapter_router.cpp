@@ -221,24 +221,9 @@ holonight_providers::HttpRequestHandlePtr ProviderAdapterRouter::sendChat(
 
   // Only explicitly enabled adapters receive the provider-neutral local catalog.
   holonight_domain::ToolCatalogSnapshot toolCatalog;
-  if (tool_registry_ != nullptr) {
-    if (const auto* openAiConfig =
-            std::get_if<holonight_config::OpenAIProviderConfig>(&record_iterator->config.settings);
-        openAiConfig != nullptr && openAiConfig->tool_calling_enabled) {
-      toolCatalog = tool_registry_->catalogSnapshot();
-    } else if (const auto* anthropicConfig =
-                   std::get_if<holonight_config::AnthropicProviderConfig>(&record_iterator->config.settings);
-               anthropicConfig != nullptr && anthropicConfig->tool_calling_enabled) {
-      toolCatalog = tool_registry_->catalogSnapshot();
-    } else if (const auto* googleConfig =
-                   std::get_if<holonight_config::GoogleProviderConfig>(&record_iterator->config.settings);
-               googleConfig != nullptr && googleConfig->tool_calling_enabled) {
-      toolCatalog = tool_registry_->catalogSnapshot();
-    } else if (const auto* ollamaConfig =
-                   std::get_if<holonight_config::OllamaProviderConfig>(&record_iterator->config.settings);
-               ollamaConfig != nullptr && ollamaConfig->tool_calling_enabled) {
-      toolCatalog = tool_registry_->catalogSnapshot();
-    }
+  if (tool_registry_ != nullptr && std::visit([](const auto& settings) { return settings.tool_calling_enabled; },
+                                              record_iterator->config.settings)) {
+    toolCatalog = tool_registry_->catalogSnapshot();
   }
 
   auto request = std::visit(

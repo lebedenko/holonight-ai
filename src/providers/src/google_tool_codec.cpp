@@ -26,7 +26,8 @@ QString roleToGoogleString(MessageRole role) {
 QJsonObject functionCallPart(const ToolCallEntry& entry) {
   QJsonObject functionCall{
       {QStringLiteral("name"), entry.function_name.isEmpty() ? entry.tool_name : entry.function_name},
-      {QStringLiteral("args"), entry.input}};
+      {QStringLiteral("args"), entry.input},
+  };
   if (!entry.provider_call_id_synthesized && !entry.tool_use_id.isEmpty()) {
     functionCall[QStringLiteral("id")] = entry.tool_use_id;
   }
@@ -92,9 +93,11 @@ QJsonArray GoogleToolCodec::encodeDefinitions(const holonight_domain::ToolCatalo
   }
   QJsonArray declarations;
   for (const auto& definition : catalog.client_tools) {
-    declarations.append(QJsonObject{{QStringLiteral("name"), definition.function_name},
-                                    {QStringLiteral("description"), definition.description},
-                                    {QStringLiteral("parameters"), definition.input_schema}});
+    declarations.append(QJsonObject{
+        {QStringLiteral("name"), definition.function_name},
+        {QStringLiteral("description"), definition.description},
+        {QStringLiteral("parameters"), definition.input_schema},
+    });
   }
   return QJsonArray{QJsonObject{{QStringLiteral("functionDeclarations"), declarations}}};
 }
@@ -165,7 +168,8 @@ std::optional<holonight_domain::ToolRequestEvent> GoogleToolCodec::decodeRequest
 QJsonObject GoogleToolCodec::encodeFunctionResponse(const ToolCallEntry& entry) {
   QJsonObject functionResponse{
       {QStringLiteral("name"), entry.function_name.isEmpty() ? entry.tool_name : entry.function_name},
-      {QStringLiteral("response"), entry.result}};
+      {QStringLiteral("response"), entry.result},
+  };
   if (!entry.provider_call_id_synthesized && !entry.tool_use_id.isEmpty()) {
     functionResponse[QStringLiteral("id")] = entry.tool_use_id;
   }

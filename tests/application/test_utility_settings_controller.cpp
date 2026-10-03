@@ -19,18 +19,20 @@ namespace {
 TEST(UtilitySettingsController, ExposesQmlPropertyAndInvokableSurface) {
   const QMetaObject& meta = UtilitySettingsController::staticMetaObject;
 
-  const std::array requiredProperties{"providerInstances",
-                                      "defaultProviderId",
-                                      "defaultModelName",
-                                      "defaultModelNames",
-                                      "chatTitleGenerationEnabled",
-                                      "titleOverrideProviderId",
-                                      "titleOverrideModelName",
-                                      "titleOverrideModelNames",
-                                      "dirty",
-                                      "canSave",
-                                      "saveNotice",
-                                      "saveNoticeStatus"};
+  const std::array requiredProperties{
+      "providerInstances",
+      "defaultProviderId",
+      "defaultModelName",
+      "defaultModelNames",
+      "chatTitleGenerationEnabled",
+      "titleOverrideProviderId",
+      "titleOverrideModelName",
+      "titleOverrideModelNames",
+      "dirty",
+      "canSave",
+      "saveNotice",
+      "saveNoticeStatus",
+  };
   for (const char* name : requiredProperties) {
     EXPECT_NE(meta.indexOfProperty(name), -1) << name;
   }

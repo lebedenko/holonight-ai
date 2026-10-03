@@ -2,19 +2,19 @@
 
 namespace holonight_rendering {
 
-ContentBlock ContentBlock::markdown(QString text, QString id, bool complete) {
+ContentBlock ContentBlock::markdown(QString text, QString block_id, bool complete) {
   ContentBlock block;
   block.type_ = ContentBlockType::Markdown;
-  block.id_ = std::move(id);
+  block.id_ = std::move(block_id);
   block.complete_ = complete;
   block.payload_ = MarkdownPayload{.text = std::move(text)};
   return block;
 }
 
-ContentBlock ContentBlock::code(QString code, QString normalizedLanguage, QString id, bool complete) {
+ContentBlock ContentBlock::code(QString code, QString normalizedLanguage, QString block_id, bool complete) {
   ContentBlock block;
   block.type_ = ContentBlockType::Code;
-  block.id_ = std::move(id);
+  block.id_ = std::move(block_id);
   block.complete_ = complete;
   block.payload_ = CodePayload{.code = std::move(code), .language = std::move(normalizedLanguage)};
   return block;

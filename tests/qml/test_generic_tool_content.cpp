@@ -29,8 +29,11 @@ TEST(GenericToolContentQml, UnknownToolArgumentsRemainReadable) {
   QQmlEngine engine;
   configureEngine(engine);
   auto content = createContent(
-      engine, {{QStringLiteral("kind"), QStringLiteral("invocation")},
-               {QStringLiteral("input"), QVariantMap{{QStringLiteral("legacy"), true}, {QStringLiteral("count"), 2}}}});
+      engine,
+      {
+          {QStringLiteral("kind"), QStringLiteral("invocation")},
+          {QStringLiteral("input"), QVariantMap{{QStringLiteral("legacy"), true}, {QStringLiteral("count"), 2}}},
+      });
   ASSERT_NE(content, nullptr);
 
   auto* payload = content->findChild<QObject*>(QStringLiteral("genericToolPayload"));

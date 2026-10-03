@@ -136,42 +136,46 @@ UtilityTaskRunner::UtilityTaskRunner(holonight_credentials::CredentialStore* cre
           .set_credential = [provider = ollama_provider_](const QString& value) { provider->setAuthToken(value); },
           .refresh = [provider = ollama_provider_](const auto& success,
                                                    const auto& error) { provider->refresh(success, error); },
-          .models = [provider = ollama_provider_]() -> const std::vector<holonight_domain::ModelId>& {
+          .models = [provider = ollama_provider_] -> const std::vector<holonight_domain::ModelId>& {
             return provider->availableModels();
           },
           // Deliberate no-op: model-list caching to config.json stays ChatViewModel's exclusive
           // responsibility (its own coordinator/provider instances already own that write).
-          .persist_models = [] {}});
+          .persist_models = [] {},
+      });
   provider_runtime_coordinator_->registerProvider(
       QStringLiteral("openai"), QStringLiteral("OpenAI"), CredentialPolicy::Required,
       ProviderRuntimeOperations{
           .set_credential = [provider = openai_provider_](const QString& value) { provider->setAuthToken(value); },
           .refresh = [provider = openai_provider_](const auto& success,
                                                    const auto& error) { provider->refresh(success, error); },
-          .models = [provider = openai_provider_]() -> const std::vector<holonight_domain::ModelId>& {
+          .models = [provider = openai_provider_] -> const std::vector<holonight_domain::ModelId>& {
             return provider->availableModels();
           },
-          .persist_models = [] {}});
+          .persist_models = [] {},
+      });
   provider_runtime_coordinator_->registerProvider(
       QStringLiteral("anthropic"), QStringLiteral("Anthropic"), CredentialPolicy::Required,
       ProviderRuntimeOperations{
           .set_credential = [provider = anthropic_provider_](const QString& value) { provider->setAuthKey(value); },
           .refresh = [provider = anthropic_provider_](const auto& success,
                                                       const auto& error) { provider->refresh(success, error); },
-          .models = [provider = anthropic_provider_]() -> const std::vector<holonight_domain::ModelId>& {
+          .models = [provider = anthropic_provider_] -> const std::vector<holonight_domain::ModelId>& {
             return provider->availableModels();
           },
-          .persist_models = [] {}});
+          .persist_models = [] {},
+      });
   provider_runtime_coordinator_->registerProvider(
       QStringLiteral("google"), QStringLiteral("Google"), CredentialPolicy::Required,
       ProviderRuntimeOperations{
           .set_credential = [provider = google_provider_](const QString& value) { provider->setAuthKey(value); },
           .refresh = [provider = google_provider_](const auto& success,
                                                    const auto& error) { provider->refresh(success, error); },
-          .models = [provider = google_provider_]() -> const std::vector<holonight_domain::ModelId>& {
+          .models = [provider = google_provider_] -> const std::vector<holonight_domain::ModelId>& {
             return provider->availableModels();
           },
-          .persist_models = [] {}});
+          .persist_models = [] {},
+      });
 
   for (const QString& providerId :
        {QStringLiteral("ollama"), QStringLiteral("openai"), QStringLiteral("anthropic"), QStringLiteral("google")}) {
@@ -219,8 +223,12 @@ std::optional<holonight_domain::ModelId> UtilityTaskRunner::resolveModel(
 std::optional<holonight_domain::ModelId> UtilityTaskRunner::resolveModelLegacy(
     const std::optional<holonight_domain::ModelId>& taskOverride,
     const holonight_domain::ModelId& chatFallbackModel) const {
-  static const std::array<QString, 4> knownProviderIds{QStringLiteral("ollama"), QStringLiteral("openai"),
-                                                       QStringLiteral("anthropic"), QStringLiteral("google")};
+  static const std::array<QString, 4> knownProviderIds{
+      QStringLiteral("ollama"),
+      QStringLiteral("openai"),
+      QStringLiteral("anthropic"),
+      QStringLiteral("google"),
+  };
   const auto isKnownProvider = [](const holonight_domain::ModelId& model) {
     return std::ranges::find(knownProviderIds, model.provider_id) != knownProviderIds.end();
   };
@@ -393,14 +401,15 @@ void UtilityTaskRunner::registerRuntimeProvider(const holonight_config::Provider
                          const auto& success,
                          const auto& error) { static_cast<void>(router->refresh(instance_id, success, error)); },
           .models = [router = adapter_router_.get(),
-                     instance_id = instance.id]() -> const std::vector<holonight_domain::ModelId>& {
+                     instance_id = instance.id] -> const std::vector<holonight_domain::ModelId>& {
             static const std::vector<holonight_domain::ModelId> empty;
             const auto* models = router->availableModels(instance_id);
             return models == nullptr ? empty : *models;
           },
           // Deliberate no-op: model-list caching to config.json stays ChatViewModel's exclusive
           // responsibility (its own coordinator/provider instances already own that write).
-          .persist_models = [] {}});
+          .persist_models = [] {},
+      });
   provider_runtime_coordinator_->setEnabled(instance.id, instance.enabled);
   if (instance.enabled) {
     provider_runtime_coordinator_->prepare(instance.id);

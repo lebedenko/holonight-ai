@@ -23,9 +23,10 @@ std::unique_ptr<QObject> createCard(QQmlEngine& engine, QVariantMap tool_call) {
     ADD_FAILURE() << qPrintable(component.errorString());
     return {};
   }
-  return std::unique_ptr<QObject>(component.createWithInitialProperties(
-      {{QStringLiteral("toolCall"), std::move(tool_call)},
-       {QStringLiteral("createdAt"), QDateTime::fromString(QStringLiteral("2026-08-05T12:00:00Z"), Qt::ISODate)}}));
+  return std::unique_ptr<QObject>(component.createWithInitialProperties({
+      {QStringLiteral("toolCall"), std::move(tool_call)},
+      {QStringLiteral("createdAt"), QDateTime::fromString(QStringLiteral("2026-08-05T12:00:00Z"), Qt::ISODate)},
+  }));
 }
 
 void configureEngine(QQmlEngine& engine) {
@@ -34,19 +35,26 @@ void configureEngine(QQmlEngine& engine) {
 }
 
 QVariantMap completedToolCall() {
-  return {{QStringLiteral("toolUseId"), QStringLiteral("tool-1")},
-          {QStringLiteral("kind"), QStringLiteral("invocation")},
-          {QStringLiteral("status"), QStringLiteral("completed")},
-          {QStringLiteral("functionName"), QStringLiteral("list_files")},
-          {QStringLiteral("rendererKey"), QStringLiteral("filesystem.list")},
-          {QStringLiteral("toolTitle"), QStringLiteral("Listed /tmp")},
-          {QStringLiteral("summary"), QStringLiteral("1 file")},
-          {QStringLiteral("detailData"), QVariantMap{{QStringLiteral("path"), QStringLiteral("/tmp")},
-                                                     {QStringLiteral("fileCount"), 1},
-                                                     {QStringLiteral("directoryCount"), 0},
-                                                     {QStringLiteral("entries"), QVariantList{}}}},
-          {QStringLiteral("rawArgumentsJson"), QStringLiteral(R"({"path":"/tmp"})")},
-          {QStringLiteral("rawResultJson"), QStringLiteral(R"({"entries":[{"name":"complete.txt"}]})")}};
+  return {
+      {QStringLiteral("toolUseId"), QStringLiteral("tool-1")},
+      {QStringLiteral("kind"), QStringLiteral("invocation")},
+      {QStringLiteral("status"), QStringLiteral("completed")},
+      {QStringLiteral("functionName"), QStringLiteral("list_files")},
+      {QStringLiteral("rendererKey"), QStringLiteral("filesystem.list")},
+      {QStringLiteral("toolTitle"), QStringLiteral("Listed /tmp")},
+      {QStringLiteral("summary"), QStringLiteral("1 file")},
+      {
+          QStringLiteral("detailData"),
+          QVariantMap{
+              {QStringLiteral("path"), QStringLiteral("/tmp")},
+              {QStringLiteral("fileCount"), 1},
+              {QStringLiteral("directoryCount"), 0},
+              {QStringLiteral("entries"), QVariantList{}},
+          },
+      },
+      {QStringLiteral("rawArgumentsJson"), QStringLiteral(R"({"path":"/tmp"})")},
+      {QStringLiteral("rawResultJson"), QStringLiteral(R"({"entries":[{"name":"complete.txt"}]})")},
+  };
 }
 
 TEST(ToolActivityCardQml, RawDetailsAreHiddenUntilExplicitlyOpenedAndRemainSelectable) {

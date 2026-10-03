@@ -97,14 +97,18 @@ TEST(ToolInvocation, NonTerminalInvalidTransitionsAreRejected) {
 }
 
 TEST(ToolInvocation, EqualityMatchesAllFields) {
-  ToolInvocation lhs{.id = QStringLiteral("1"),
-                     .provider_call_id = QStringLiteral("toolu_1"),
-                     .tool_id = QStringLiteral("filesystem.list"),
-                     .arguments = QJsonValue(1)};
-  ToolInvocation rhs{.id = QStringLiteral("1"),
-                     .provider_call_id = QStringLiteral("toolu_1"),
-                     .tool_id = QStringLiteral("filesystem.list"),
-                     .arguments = QJsonValue(1)};
+  ToolInvocation lhs{
+      .id = QStringLiteral("1"),
+      .provider_call_id = QStringLiteral("toolu_1"),
+      .tool_id = QStringLiteral("filesystem.list"),
+      .arguments = QJsonValue(1),
+  };
+  ToolInvocation rhs{
+      .id = QStringLiteral("1"),
+      .provider_call_id = QStringLiteral("toolu_1"),
+      .tool_id = QStringLiteral("filesystem.list"),
+      .arguments = QJsonValue(1),
+  };
   EXPECT_EQ(lhs, rhs);
 
   rhs.status = ToolInvocationStatus::Completed;

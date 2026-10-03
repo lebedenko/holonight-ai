@@ -96,9 +96,13 @@ TEST_F(BackgroundAiSettingsPanelQml, ModelFieldHiddenWhenNoProviderSelected) {
 TEST_F(BackgroundAiSettingsPanelQml, ModelFieldVisibleAndPopulatedWhenProviderSelected) {
   auto picker =
       createComponent(qml_engine_, QStringLiteral("ProviderModelPicker.qml"),
-                      {{QStringLiteral("selectedProviderId"), QStringLiteral("instance-a")},
-                       {QStringLiteral("modelNames"),
-                        QVariant::fromValue(QStringList{QStringLiteral("model-a"), QStringLiteral("model-b")})}});
+                      {
+                          {QStringLiteral("selectedProviderId"), QStringLiteral("instance-a")},
+                          {
+                              QStringLiteral("modelNames"),
+                              QVariant::fromValue(QStringList{QStringLiteral("model-a"), QStringLiteral("model-b")}),
+                          },
+                      });
   ASSERT_NE(picker, nullptr);
 
   auto* modelField = picker->findChild<QObject*>(QStringLiteral("modelField"));
@@ -113,9 +117,11 @@ TEST_F(BackgroundAiSettingsPanelQml, ModelFieldVisibleAndPopulatedWhenProviderSe
 // T-033: selecting a provider instance in the picker emits providerSelected with that instance's
 // provider_id — the identifier the controller actually needs, not a display label or list index.
 TEST_F(BackgroundAiSettingsPanelQml, SelectingProviderEmitsProviderSelectedWithInstanceId) {
-  QVariantList instances{providerRow(QStringLiteral(""), QStringLiteral("Use chat model")),
-                         providerRow(QStringLiteral("instance-a"), QStringLiteral("Instance A")),
-                         providerRow(QStringLiteral("instance-b"), QStringLiteral("Instance B"))};
+  QVariantList instances{
+      providerRow(QStringLiteral(""), QStringLiteral("Use chat model")),
+      providerRow(QStringLiteral("instance-a"), QStringLiteral("Instance A")),
+      providerRow(QStringLiteral("instance-b"), QStringLiteral("Instance B")),
+  };
   auto picker = createComponent(qml_engine_, QStringLiteral("ProviderModelPicker.qml"),
                                 {{QStringLiteral("providerInstances"), QVariant::fromValue(instances)}});
   ASSERT_NE(picker, nullptr);
@@ -132,9 +138,13 @@ TEST_F(BackgroundAiSettingsPanelQml, SelectingProviderEmitsProviderSelectedWithI
 TEST_F(BackgroundAiSettingsPanelQml, SelectingModelEmitsModelSelectedWithModelName) {
   auto picker =
       createComponent(qml_engine_, QStringLiteral("ProviderModelPicker.qml"),
-                      {{QStringLiteral("selectedProviderId"), QStringLiteral("instance-a")},
-                       {QStringLiteral("modelNames"),
-                        QVariant::fromValue(QStringList{QStringLiteral("model-a"), QStringLiteral("model-b")})}});
+                      {
+                          {QStringLiteral("selectedProviderId"), QStringLiteral("instance-a")},
+                          {
+                              QStringLiteral("modelNames"),
+                              QVariant::fromValue(QStringList{QStringLiteral("model-a"), QStringLiteral("model-b")}),
+                          },
+                      });
   ASSERT_NE(picker, nullptr);
 
   QSignalSpy spy(picker.get(), SIGNAL(modelSelected(QString)));

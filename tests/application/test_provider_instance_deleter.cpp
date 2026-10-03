@@ -24,23 +24,27 @@ using holonight_domain::ModelId;
 using holonight_providers::FakeHttpClient;
 
 ProviderInstanceConfig instance() {
-  return ProviderInstanceConfig{.id = QStringLiteral("550e8400-e29b-41d4-a716-446655440000"),
-                                .type = ProviderType::OpenAi,
-                                .display_name = QStringLiteral("Work OpenAI"),
-                                .enabled = true,
-                                .settings = OpenAIProviderConfig{}};
+  return ProviderInstanceConfig{
+      .id = QStringLiteral("550e8400-e29b-41d4-a716-446655440000"),
+      .type = ProviderType::OpenAi,
+      .display_name = QStringLiteral("Work OpenAI"),
+      .enabled = true,
+      .settings = OpenAIProviderConfig{},
+  };
 }
 
 ProviderInstanceConfig fallbackInstance() {
-  return ProviderInstanceConfig{.id = QStringLiteral("550e8400-e29b-41d4-a716-446655440001"),
-                                .type = ProviderType::OpenAi,
-                                .display_name = QStringLiteral("Personal OpenAI"),
-                                .enabled = true,
-                                .settings = OpenAIProviderConfig{}};
+  return ProviderInstanceConfig{
+      .id = QStringLiteral("550e8400-e29b-41d4-a716-446655440001"),
+      .type = ProviderType::OpenAi,
+      .display_name = QStringLiteral("Personal OpenAI"),
+      .enabled = true,
+      .settings = OpenAIProviderConfig{},
+  };
 }
 
-void registerRuntime(ProviderRuntimeCoordinator& coordinator, const QString& id) {
-  coordinator.registerProvider(id, QStringLiteral("Work OpenAI"), CredentialPolicy::Required,
+void registerRuntime(ProviderRuntimeCoordinator& coordinator, const QString& instance_id) {
+  coordinator.registerProvider(instance_id, QStringLiteral("Work OpenAI"), CredentialPolicy::Required,
                                ProviderRuntimeOperations{});
 }
 

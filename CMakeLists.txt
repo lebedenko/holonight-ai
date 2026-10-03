@@ -203,6 +203,7 @@ if(CLANG_TIDY)
                 ${TIDY_HIDE_PROGRESS_FLAG}
                 -j ${TIDY_JOBS}
                 -p ${TIDY_DB_DIR}
+                -header-filter "^${CMAKE_CURRENT_SOURCE_DIR}/(apps|src|include|tests)/.*\\.(h|hpp)$"
                 ${${target_sources}}
             COMMENT "Running ${target_name}"
             VERBATIM
@@ -210,7 +211,8 @@ if(CLANG_TIDY)
     else()
       add_custom_target(${target_name}
             COMMAND ${CMAKE_COMMAND} -P ${STRIP_TIDY_FLAGS_SCRIPT}
-            COMMAND ${CLANG_TIDY} --quiet -p ${TIDY_DB_DIR} ${${target_sources}}
+            COMMAND ${CLANG_TIDY} --quiet -p ${TIDY_DB_DIR}
+                -header-filter "^${CMAKE_CURRENT_SOURCE_DIR}/(apps|src|include|tests)/.*\\.(h|hpp)$" ${${target_sources}}
             COMMENT "Running ${target_name}"
             VERBATIM
         )

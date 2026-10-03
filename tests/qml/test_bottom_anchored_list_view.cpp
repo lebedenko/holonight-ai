@@ -10,6 +10,7 @@
 #include <QUrl>
 
 #include <cmath>
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
 #include <vector>
@@ -20,7 +21,9 @@ class VariableHeightModel final : public QAbstractListModel {
   Q_OBJECT
 
  public:
-  enum Role { HeightRole = Qt::UserRole + 1 };
+  enum Role : std::uint16_t {  // NOLINT(cppcoreguidelines-use-enum-class): Qt model role constants.
+    HeightRole = Qt::UserRole + 1
+  };
 
   explicit VariableHeightModel(QObject* parent = nullptr) : QAbstractListModel(parent) {}
 

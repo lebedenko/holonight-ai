@@ -30,9 +30,11 @@ class LegacyExecutor : public IToolExecutor {
                                              ToolOutcomeCallback on_finished) override {
     ToolOutcome outcome;
     if (!tool_) {
-      outcome.error = holonight_domain::ToolError{.code = QStringLiteral("INTERNAL_ERROR"),
-                                                  .message = QStringLiteral("Tool instance unavailable."),
-                                                  .details = {}};
+      outcome.error = holonight_domain::ToolError{
+          .code = QStringLiteral("INTERNAL_ERROR"),
+          .message = QStringLiteral("Tool instance unavailable."),
+          .details = {},
+      };
       if (on_finished) {
         on_finished(outcome);
       }
@@ -44,9 +46,11 @@ class LegacyExecutor : public IToolExecutor {
     try {
       toolResult = tool_->execute(parameters);
     } catch (...) {
-      outcome.error = holonight_domain::ToolError{.code = QStringLiteral("EXCEPTION"),
-                                                  .message = QStringLiteral("Tool execution threw an exception."),
-                                                  .details = {}};
+      outcome.error = holonight_domain::ToolError{
+          .code = QStringLiteral("EXCEPTION"),
+          .message = QStringLiteral("Tool execution threw an exception."),
+          .details = {},
+      };
       if (on_finished) {
         on_finished(outcome);
       }
@@ -74,7 +78,10 @@ class LegacyExecutor : public IToolExecutor {
 
 [[nodiscard]] QJsonObject errorObject(const QString& code, const QString& message) {
   return QJsonObject{
-      {QStringLiteral("code"), code}, {QStringLiteral("message"), message}, {QStringLiteral("details"), QJsonValue{}}};
+      {QStringLiteral("code"), code},
+      {QStringLiteral("message"), message},
+      {QStringLiteral("details"), QJsonValue{}},
+  };
 }
 
 [[nodiscard]] QJsonObject unknownToolError(const QString& name) {
@@ -145,13 +152,15 @@ void ToolRegistry::registerTool(std::shared_ptr<ITool> tool) {
   Q_ASSERT(!by_canonical_id_.contains(tool->name()));
   Q_ASSERT(!by_alias_.contains(tool->name()));
   ToolRegistration registration;
-  registration.definition = ToolDefinition{.id = tool->name(),
-                                           .function_name = tool->name(),
-                                           .display_name = tool->name(),
-                                           .renderer_key = QStringLiteral("generic"),
-                                           .description = tool->description(),
-                                           .input_schema = tool->schema(),
-                                           .risk = ToolDefinition::ToolRisk::Safe};
+  registration.definition = ToolDefinition{
+      .id = tool->name(),
+      .function_name = tool->name(),
+      .display_name = tool->name(),
+      .renderer_key = QStringLiteral("generic"),
+      .description = tool->description(),
+      .input_schema = tool->schema(),
+      .risk = ToolDefinition::ToolRisk::Safe,
+  };
   registration.executor = std::make_shared<LegacyExecutor>(tool);
   registration.presenter = std::make_shared<GenericToolPresenter>();
   registerToolInternal(std::move(registration), std::move(tool));
@@ -228,10 +237,12 @@ QJsonObject ToolRegistry::invoke(const QString& name, const QJsonObject& paramet
   ToolOutcome outcome;
   bool completed = false;
   static_cast<void>(record->registration.executor->start(
-      ToolExecutionRequest{.invocation_id = name,
-                           .provider_call_id = name,
-                           .function_name = record->registration.definition.function_name,
-                           .parameters = parameters},
+      ToolExecutionRequest{
+          .invocation_id = name,
+          .provider_call_id = name,
+          .function_name = record->registration.definition.function_name,
+          .parameters = parameters,
+      },
       [&outcome, &completed](const ToolOutcome& toolOutcome) {
         outcome = toolOutcome;
         completed = true;

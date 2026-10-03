@@ -131,16 +131,29 @@ ChatViewModel* ChatViewModel::create(QQmlEngine* qml_engine, QJSEngine* js_engin
   auto credentialStore = std::make_unique<holonight_credentials::SecretServiceCredentialStore>();
   return new ChatViewModel(std::move(ollamaProvider), std::move(openAiProvider), std::move(anthropicProvider),
                            std::move(googleProvider), std::move(repository),
-                           ProviderDefaultModels{.ollama = ollamaConfig.default_model,
-                                                 .openai = openAiConfig.default_model,
-                                                 .anthropic = anthropicConfig.default_model,
-                                                 .google = googleConfig.default_model},
+                           ProviderDefaultModels{
+                               .ollama = ollamaConfig.default_model,
+                               .openai = openAiConfig.default_model,
+                               .anthropic = anthropicConfig.default_model,
+                               .google = googleConfig.default_model,
+                           },
                            nullptr, std::move(credentialStore), utilityConfig,
-                           UtilityProviderEndpoints{.ollama_base_url = ollamaConfig.base_url,
-                                                    .openai_base_url = openAiConfig.base_url,
-                                                    .anthropic_base_url = anthropicConfig.base_url,
-                                                    .google_base_url = googleConfig.base_url},
+                           UtilityProviderEndpoints{
+                               .ollama_base_url = ollamaConfig.base_url,
+                               .openai_base_url = openAiConfig.base_url,
+                               .anthropic_base_url = anthropicConfig.base_url,
+                               .google_base_url = googleConfig.base_url,
+                           },
                            providerState, std::move(adapterRouter), std::move(toolRegistry));
+}
+
+std::unique_ptr<ChatController> ChatViewModel::createChatController() const {
+  if (adapter_router_) {
+    return std::make_unique<ChatController>(adapter_router_.get(), std::make_shared<holonight_providers::SteadyClock>(),
+                                            tool_registry_);
+  }
+  return std::make_unique<ChatController>(ollama_provider_, openai_provider_, anthropic_provider_, google_provider_,
+                                          std::make_shared<holonight_providers::SteadyClock>(), tool_registry_);
 }
 
 ChatViewModel::ChatViewModel(
@@ -160,12 +173,7 @@ ChatViewModel::ChatViewModel(
       credential_store_(std::move(credential_store)),
       adapter_router_(std::move(adapter_router)),
       tool_registry_(tool_registry ? std::move(tool_registry) : std::make_shared<ToolRegistry>()),
-      chat_controller_(adapter_router_ ? std::make_unique<ChatController>(
-                                             adapter_router_.get(),
-                                             std::make_shared<holonight_providers::SteadyClock>(), tool_registry_)
-                                       : std::make_unique<ChatController>(
-                                             ollama_provider_, openai_provider_, anthropic_provider_, google_provider_,
-                                             std::make_shared<holonight_providers::SteadyClock>(), tool_registry_)),
+      chat_controller_(createChatController()),
       default_models_(std::move(default_models)),
       provider_state_(std::move(provider_state)),
       message_model_(new MessageListModel(provider_state_, tool_registry_, this)),
@@ -176,126 +184,7 @@ ChatViewModel::ChatViewModel(
                                                     adapter_router_->availableModels(instance.id) != nullptr &&
                                                     !adapter_router_->availableModels(instance.id)->empty());
   }
-  if (credential_store_) {
-    provider_runtime_coordinator_ = std::make_unique<ProviderRuntimeCoordinator>(credential_store_.get());
-    const auto configPath = holonight_config::resolveConfigFilePath();
-    auto persistModels = [configPath](const QString& provider_id, const auto& provider) {
-      QStringList names;
-      for (const ModelId& model : provider->availableModels()) {
-        names.append(model.model_name);
-      }
-      holonight_config::ConfigRepository config(configPath);
-      (void)config.saveCachedModels(provider_id, names);
-    };
-    if (adapter_router_) {
-      for (const auto& instance : provider_state_.instances) {
-        provider_runtime_coordinator_->registerProvider(
-            instance.id, instance.display_name, credentialPolicy(instance.type),
-            ProviderRuntimeOperations{
-                .set_credential =
-                    [router = adapter_router_.get(), instance_id = instance.id](const QString& value) {
-                      static_cast<void>(router->setCredential(instance_id, value));
-                    },
-                .refresh = [router = adapter_router_.get(), instance_id = instance.id](
-                               const auto& success,
-                               const auto& error) { static_cast<void>(router->refresh(instance_id, success, error)); },
-                .models = [router = adapter_router_.get(), instance_id = instance.id]() -> const std::vector<ModelId>& {
-                  static const std::vector<ModelId> empty;
-                  const auto* models = router->availableModels(instance_id);
-                  return models == nullptr ? empty : *models;
-                },
-                .persist_models =
-                    [router = adapter_router_.get(), instance_id = instance.id] {
-                      const auto* models = router->availableModels(instance_id);
-                      if (models == nullptr) {
-                        return;
-                      }
-                      QStringList names;
-                      for (const auto& model : *models) {
-                        names.append(model.model_name);
-                      }
-                      holonight_config::ConfigRepository config(holonight_config::resolveConfigFilePath());
-                      static_cast<void>(config.saveCachedModels(instance_id, names));
-                    }});
-        provider_runtime_coordinator_->setEnabled(instance.id, instance.enabled);
-      }
-    } else {
-      provider_runtime_coordinator_->registerProvider(
-          QStringLiteral("ollama"), QStringLiteral("Ollama"), CredentialPolicy::Optional,
-          ProviderRuntimeOperations{
-              .set_credential = [provider = ollama_provider_](const QString& value) { provider->setAuthToken(value); },
-              .refresh = [provider = ollama_provider_](const auto& success,
-                                                       const auto& error) { provider->refresh(success, error); },
-              .models = [provider = ollama_provider_]() -> const std::vector<ModelId>& {
-                return provider->availableModels();
-              },
-              .persist_models = [persistModels,
-                                 provider = ollama_provider_] { persistModels(QStringLiteral("ollama"), provider); }});
-      provider_runtime_coordinator_->registerProvider(
-          QStringLiteral("openai"), QStringLiteral("OpenAI"), CredentialPolicy::Required,
-          ProviderRuntimeOperations{
-              .set_credential = [provider = openai_provider_](const QString& value) { provider->setAuthToken(value); },
-              .refresh = [provider = openai_provider_](const auto& success,
-                                                       const auto& error) { provider->refresh(success, error); },
-              .models = [provider = openai_provider_]() -> const std::vector<ModelId>& {
-                return provider->availableModels();
-              },
-              .persist_models = [persistModels,
-                                 provider = openai_provider_] { persistModels(QStringLiteral("openai"), provider); }});
-      provider_runtime_coordinator_->registerProvider(
-          QStringLiteral("anthropic"), QStringLiteral("Anthropic"), CredentialPolicy::Required,
-          ProviderRuntimeOperations{
-              .set_credential = [provider = anthropic_provider_](const QString& value) { provider->setAuthKey(value); },
-              .refresh = [provider = anthropic_provider_](const auto& success,
-                                                          const auto& error) { provider->refresh(success, error); },
-              .models = [provider = anthropic_provider_]() -> const std::vector<ModelId>& {
-                return provider->availableModels();
-              },
-              .persist_models = [persistModels,
-                                 provider =
-                                     anthropic_provider_] { persistModels(QStringLiteral("anthropic"), provider); }});
-      provider_runtime_coordinator_->registerProvider(
-          QStringLiteral("google"), QStringLiteral("Google"), CredentialPolicy::Required,
-          ProviderRuntimeOperations{
-              .set_credential = [provider = google_provider_](const QString& value) { provider->setAuthKey(value); },
-              .refresh = [provider = google_provider_](const auto& success,
-                                                       const auto& error) { provider->refresh(success, error); },
-              .models = [provider = google_provider_]() -> const std::vector<ModelId>& {
-                return provider->availableModels();
-              },
-              .persist_models = [persistModels,
-                                 provider = google_provider_] { persistModels(QStringLiteral("google"), provider); }});
-    }
-    connect(provider_runtime_coordinator_.get(), &ProviderRuntimeCoordinator::providerChanged, this,
-            &ChatViewModel::onProviderChanged);
-    if (adapter_router_) {
-      for (const auto& instance : provider_state_.instances) {
-        provider_runtime_coordinator_->prepare(instance.id);
-      }
-    } else {
-      for (const QString& providerId : {QStringLiteral("ollama"), QStringLiteral("openai"), QStringLiteral("anthropic"),
-                                        QStringLiteral("google")}) {
-        provider_runtime_coordinator_->prepare(providerId);
-      }
-    }
-
-    QHash<QString, std::vector<ModelId>> utilityModels;
-    if (adapter_router_) {
-      for (const auto& instance : provider_state_.instances) {
-        const auto* models = adapter_router_->availableModels(instance.id);
-        if (models != nullptr) {
-          utilityModels.insert(instance.id, *models);
-        }
-      }
-    }
-    utility_task_runner_ = std::make_unique<UtilityTaskRunner>(credential_store_.get(), std::move(utility_config),
-                                                               utility_endpoints, this, provider_state_, utilityModels);
-    connect(utility_task_runner_.get(), &UtilityTaskRunner::titleGenerated, this, &ChatViewModel::onTitleGenerated);
-    connect(utility_task_runner_.get(), &UtilityTaskRunner::titleGenerationStarted, this,
-            &ChatViewModel::onTitleGenerationStarted);
-    connect(utility_task_runner_.get(), &UtilityTaskRunner::titleGenerationFinished, this,
-            &ChatViewModel::onTitleGenerationFinished);
-  }
+  initializeRuntimeCoordinator(std::move(utility_config), utility_endpoints);
   syncAvailableModels();
   if (!provider_runtime_coordinator_ && !adapter_router_) {
     ollama_provider_->refresh(
@@ -338,6 +227,147 @@ ChatViewModel::ChatViewModel(
           &ChatViewModel::onRepositoryError);
 
   repository_->initialize();
+}
+
+void ChatViewModel::registerInstanceRuntimeProviders() {
+  for (const auto& instance : provider_state_.instances) {
+    provider_runtime_coordinator_->registerProvider(
+        instance.id, instance.display_name, credentialPolicy(instance.type),
+        ProviderRuntimeOperations{
+            .set_credential =
+                [router = adapter_router_.get(), instance_id = instance.id](const QString& value) {
+                  static_cast<void>(router->setCredential(instance_id, value));
+                },
+            .refresh = [router = adapter_router_.get(), instance_id = instance.id](
+                           const auto& success,
+                           const auto& error) { static_cast<void>(router->refresh(instance_id, success, error)); },
+            .models = [router = adapter_router_.get(), instance_id = instance.id] -> const std::vector<ModelId>& {
+              static const std::vector<ModelId> empty;
+              const auto* models = router->availableModels(instance_id);
+              return models == nullptr ? empty : *models;
+            },
+            .persist_models =
+                [router = adapter_router_.get(), instance_id = instance.id] {
+                  const auto* models = router->availableModels(instance_id);
+                  if (models == nullptr) {
+                    return;
+                  }
+                  QStringList names;
+                  for (const auto& model : *models) {
+                    names.append(model.model_name);
+                  }
+                  holonight_config::ConfigRepository config(holonight_config::resolveConfigFilePath());
+                  static_cast<void>(config.saveCachedModels(instance_id, names));
+                },
+        });
+    provider_runtime_coordinator_->setEnabled(instance.id, instance.enabled);
+  }
+}
+void ChatViewModel::registerLegacyRuntimeProviders(const QString& configPath) {
+  auto persistModels = [configPath](const QString& provider_id, const auto& provider) {
+    QStringList names;
+    for (const ModelId& model : provider->availableModels()) {
+      names.append(model.model_name);
+    }
+    holonight_config::ConfigRepository config(configPath);
+    (void)config.saveCachedModels(provider_id, names);
+  };
+
+  provider_runtime_coordinator_->registerProvider(
+      QStringLiteral("ollama"), QStringLiteral("Ollama"), CredentialPolicy::Optional,
+      ProviderRuntimeOperations{
+          .set_credential = [provider = ollama_provider_](const QString& value) { provider->setAuthToken(value); },
+          .refresh = [provider = ollama_provider_](const auto& success,
+                                                   const auto& error) { provider->refresh(success, error); },
+          .models = [provider = ollama_provider_] -> const std::vector<ModelId>& {
+            return provider->availableModels();
+          },
+          .persist_models = [persistModels,
+                             provider = ollama_provider_] { persistModels(QStringLiteral("ollama"), provider); },
+      });
+  provider_runtime_coordinator_->registerProvider(
+      QStringLiteral("openai"), QStringLiteral("OpenAI"), CredentialPolicy::Required,
+      ProviderRuntimeOperations{
+          .set_credential = [provider = openai_provider_](const QString& value) { provider->setAuthToken(value); },
+          .refresh = [provider = openai_provider_](const auto& success,
+                                                   const auto& error) { provider->refresh(success, error); },
+          .models = [provider = openai_provider_] -> const std::vector<ModelId>& {
+            return provider->availableModels();
+          },
+          .persist_models = [persistModels,
+                             provider = openai_provider_] { persistModels(QStringLiteral("openai"), provider); },
+      });
+  provider_runtime_coordinator_->registerProvider(
+      QStringLiteral("anthropic"), QStringLiteral("Anthropic"), CredentialPolicy::Required,
+      ProviderRuntimeOperations{
+          .set_credential = [provider = anthropic_provider_](const QString& value) { provider->setAuthKey(value); },
+          .refresh = [provider = anthropic_provider_](const auto& success,
+                                                      const auto& error) { provider->refresh(success, error); },
+          .models = [provider = anthropic_provider_] -> const std::vector<ModelId>& {
+            return provider->availableModels();
+          },
+          .persist_models = [persistModels,
+                             provider = anthropic_provider_] { persistModels(QStringLiteral("anthropic"), provider); },
+      });
+  provider_runtime_coordinator_->registerProvider(
+      QStringLiteral("google"), QStringLiteral("Google"), CredentialPolicy::Required,
+      ProviderRuntimeOperations{
+          .set_credential = [provider = google_provider_](const QString& value) { provider->setAuthKey(value); },
+          .refresh = [provider = google_provider_](const auto& success,
+                                                   const auto& error) { provider->refresh(success, error); },
+          .models = [provider = google_provider_] -> const std::vector<ModelId>& {
+            return provider->availableModels();
+          },
+          .persist_models = [persistModels,
+                             provider = google_provider_] { persistModels(QStringLiteral("google"), provider); },
+      });
+}
+void ChatViewModel::initializeRuntimeCoordinator(holonight_config::UtilityConfig utility_config,
+                                                 const UtilityProviderEndpoints& utility_endpoints) {
+  if (!credential_store_) {
+    return;
+  }
+
+  provider_runtime_coordinator_ = std::make_unique<ProviderRuntimeCoordinator>(credential_store_.get());
+  const auto configPath = holonight_config::resolveConfigFilePath();
+  if (adapter_router_) {
+    registerInstanceRuntimeProviders();
+  } else {
+    registerLegacyRuntimeProviders(configPath);
+  }
+  connect(provider_runtime_coordinator_.get(), &ProviderRuntimeCoordinator::providerChanged, this,
+          &ChatViewModel::onProviderChanged);
+  if (adapter_router_) {
+    for (const auto& instance : provider_state_.instances) {
+      provider_runtime_coordinator_->prepare(instance.id);
+    }
+  } else {
+    for (const QString& providerId : {
+             QStringLiteral("ollama"),
+             QStringLiteral("openai"),
+             QStringLiteral("anthropic"),
+             QStringLiteral("google"),
+         }) {
+      provider_runtime_coordinator_->prepare(providerId);
+    }
+  }
+
+  QHash<QString, std::vector<ModelId>> utilityModels;
+  if (adapter_router_) {
+    for (const auto& instance : provider_state_.instances) {
+      const auto* models = adapter_router_->availableModels(instance.id);
+      if (models != nullptr) {
+        utilityModels.insert(instance.id, *models);
+      }
+    }
+  }
+  utility_task_runner_ = std::make_unique<UtilityTaskRunner>(credential_store_.get(), std::move(utility_config),
+                                                             utility_endpoints, this, provider_state_, utilityModels);
+  connect(utility_task_runner_.get(), &UtilityTaskRunner::titleGenerated, this, &ChatViewModel::onTitleGenerated);
+  connect(utility_task_runner_.get(), &UtilityTaskRunner::titleGenerationStarted, this,
+          &ChatViewModel::onTitleGenerationStarted);
+  connect(utility_task_runner_.get(), &UtilityTaskRunner::titleGenerationFinished, this,
+          &ChatViewModel::onTitleGenerationFinished);
 }
 
 ChatViewModel::~ChatViewModel() { stop(); }
@@ -644,19 +674,31 @@ void ChatViewModel::syncAvailableModels(const std::optional<ModelId>& preferredM
   if (adapter_router_) {
     for (const auto& instance : provider_state_.instances) {
       if (instance.enabled && !modelNames(instance.id).isEmpty()) {
-        providers.append(QVariantMap{{QStringLiteral("provider_id"), instance.id},
-                                     {QStringLiteral("display_name"), instance.display_name}});
+        providers.append(QVariantMap{
+            {QStringLiteral("provider_id"), instance.id},
+            {QStringLiteral("display_name"), instance.display_name},
+        });
       }
     }
   } else {
-    const QStringList providerIds{QStringLiteral("ollama"), QStringLiteral("openai"), QStringLiteral("anthropic"),
-                                  QStringLiteral("google")};
-    const QStringList displayNames{QStringLiteral("Ollama"), QStringLiteral("OpenAI"), QStringLiteral("Anthropic"),
-                                   QStringLiteral("Google")};
+    const QStringList providerIds{
+        QStringLiteral("ollama"),
+        QStringLiteral("openai"),
+        QStringLiteral("anthropic"),
+        QStringLiteral("google"),
+    };
+    const QStringList displayNames{
+        QStringLiteral("Ollama"),
+        QStringLiteral("OpenAI"),
+        QStringLiteral("Anthropic"),
+        QStringLiteral("Google"),
+    };
     for (qsizetype index = 0; index < providerIds.size(); ++index) {
       if (!modelNames(providerIds[index]).isEmpty()) {
-        providers.append(QVariantMap{{QStringLiteral("provider_id"), providerIds[index]},
-                                     {QStringLiteral("display_name"), displayNames[index]}});
+        providers.append(QVariantMap{
+            {QStringLiteral("provider_id"), providerIds[index]},
+            {QStringLiteral("display_name"), displayNames[index]},
+        });
       }
     }
   }
@@ -929,7 +971,7 @@ void ChatViewModel::registerRuntimeProvider(const holonight_config::ProviderInst
           .refresh = [router = adapter_router_.get(), instance_id = instance.id](
                          const auto& success,
                          const auto& error) { static_cast<void>(router->refresh(instance_id, success, error)); },
-          .models = [router = adapter_router_.get(), instance_id = instance.id]() -> const std::vector<ModelId>& {
+          .models = [router = adapter_router_.get(), instance_id = instance.id] -> const std::vector<ModelId>& {
             static const std::vector<ModelId> empty;
             const auto* models = router->availableModels(instance_id);
             return models == nullptr ? empty : *models;
@@ -946,7 +988,8 @@ void ChatViewModel::registerRuntimeProvider(const holonight_config::ProviderInst
                 }
                 holonight_config::ConfigRepository config(holonight_config::resolveConfigFilePath());
                 static_cast<void>(config.saveCachedModels(instance_id, names));
-              }});
+              },
+      });
   provider_runtime_coordinator_->setEnabled(instance.id, instance.enabled);
   if (instance.enabled) {
     provider_runtime_coordinator_->prepare(instance.id);

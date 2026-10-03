@@ -43,11 +43,11 @@ ModelId testModel() {
 
 // Builds a Part-level JSON object -- the object with sibling keys "functionCall" and, optionally,
 // "thoughtSignature" -- matching Gemini's atomic (non-fragmented) functionCall delivery shape.
-QJsonObject functionCallPart(const QString& name, const QJsonObject& args, const QString& id = QString(),
+QJsonObject functionCallPart(const QString& name, const QJsonObject& args, const QString& instance_id = QString(),
                              const QString& thoughtSignature = QString()) {
   QJsonObject functionCall{{QStringLiteral("name"), name}, {QStringLiteral("args"), args}};
-  if (!id.isEmpty()) {
-    functionCall[QStringLiteral("id")] = id;
+  if (!instance_id.isEmpty()) {
+    functionCall[QStringLiteral("id")] = instance_id;
   }
   QJsonObject part{{QStringLiteral("functionCall"), functionCall}};
   if (!thoughtSignature.isEmpty()) {
@@ -60,8 +60,15 @@ QJsonObject functionCallPart(const QString& name, const QJsonObject& args, const
 // content_block_start/delta/stop lifecycle, so a single block is how a functionCall actually
 // arrives on the wire.
 QByteArray candidateChunk(const QJsonArray& parts, const QString& finishReason = QString()) {
-  QJsonObject candidate{{QStringLiteral("content"), QJsonObject{{QStringLiteral("role"), QStringLiteral("model")},
-                                                                {QStringLiteral("parts"), parts}}}};
+  QJsonObject candidate{
+      {
+          QStringLiteral("content"),
+          QJsonObject{
+              {QStringLiteral("role"), QStringLiteral("model")},
+              {QStringLiteral("parts"), parts},
+          },
+      },
+  };
   if (!finishReason.isEmpty()) {
     candidate[QStringLiteral("finishReason")] = finishReason;
   }
@@ -550,12 +557,16 @@ TEST(GoogleProvider, SendChatIncludesToolsArrayInRequestBodyWhenProvided) {
   GoogleProvider provider(fake);
 
   const holonight_domain::ToolCatalogSnapshot tools{
-      .client_tools = {holonight_domain::ToolDefinition{
-          .id = QStringLiteral("filesystem.list"),
-          .function_name = QStringLiteral("ListFiles"),
-          .description = QStringLiteral("Lists directory entries."),
-          .input_schema = QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}},
-      }}};
+      .client_tools =
+          {
+              holonight_domain::ToolDefinition{
+                  .id = QStringLiteral("filesystem.list"),
+                  .function_name = QStringLiteral("ListFiles"),
+                  .description = QStringLiteral("Lists directory entries."),
+                  .input_schema = QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}},
+              },
+          },
+  };
 
   provider.sendChat(testModel(), {}, [](const StreamEvent&) {}, std::chrono::seconds{30}, tools);
 
@@ -591,9 +602,10 @@ TEST(GoogleProvider, SendChatEmitsToolCallOnAtomicFunctionCallPart) {
   std::vector<StreamEvent> events;
   provider.sendChat(testModel(), {}, [&events](const StreamEvent& event) { events.push_back(event); });
 
-  fake->emitData(
-      0, candidateChunk(QJsonArray{functionCallPart(
-             QStringLiteral("ListFiles"), QJsonObject{{QStringLiteral("path"), QStringLiteral("~/Documents")}})}));
+  fake->emitData(0, candidateChunk(QJsonArray{
+                        functionCallPart(QStringLiteral("ListFiles"),
+                                         QJsonObject{{QStringLiteral("path"), QStringLiteral("~/Documents")}}),
+                    }));
 
   ASSERT_EQ(events.size(), 1U);
   ASSERT_TRUE(std::holds_alternative<ToolRequestEvent>(events[0]));
@@ -636,8 +648,10 @@ TEST(GoogleProvider, SendChatCapturesThoughtSignatureWhenPresent) {
   std::vector<StreamEvent> events;
   provider.sendChat(testModel(), {}, [&events](const StreamEvent& event) { events.push_back(event); });
 
-  fake->emitData(0, candidateChunk(QJsonArray{functionCallPart(QStringLiteral("ListFiles"), QJsonObject{}, QString(),
-                                                               QStringLiteral("sig-abc"))}));
+  fake->emitData(0,
+                 candidateChunk(QJsonArray{
+                     functionCallPart(QStringLiteral("ListFiles"), QJsonObject{}, QString(), QStringLiteral("sig-abc")),
+                 }));
 
   ASSERT_EQ(events.size(), 1U);
   ASSERT_TRUE(std::holds_alternative<ToolRequestEvent>(events[0]));
@@ -668,7 +682,8 @@ TEST(GoogleProvider, SendChatUsesProviderSuppliedIdVerbatim) {
   provider.sendChat(testModel(), {}, [&events](const StreamEvent& event) { events.push_back(event); });
 
   fake->emitData(0, candidateChunk(QJsonArray{
-                        functionCallPart(QStringLiteral("ListFiles"), QJsonObject{}, QStringLiteral("call_123"))}));
+                        functionCallPart(QStringLiteral("ListFiles"), QJsonObject{}, QStringLiteral("call_123")),
+                    }));
 
   ASSERT_EQ(events.size(), 1U);
   ASSERT_TRUE(std::holds_alternative<ToolRequestEvent>(events[0]));
@@ -717,8 +732,14 @@ TEST(GoogleProvider, SendChatFailsStreamOnNonObjectArgs) {
   provider.sendChat(testModel(), {}, [&events](const StreamEvent& event) { events.push_back(event); });
 
   const QJsonObject part{
-      {QStringLiteral("functionCall"), QJsonObject{{QStringLiteral("name"), QStringLiteral("ListFiles")},
-                                                   {QStringLiteral("args"), QStringLiteral("not-an-object")}}}};
+      {
+          QStringLiteral("functionCall"),
+          QJsonObject{
+              {QStringLiteral("name"), QStringLiteral("ListFiles")},
+              {QStringLiteral("args"), QStringLiteral("not-an-object")},
+          },
+      },
+  };
   fake->emitData(0, candidateChunk(QJsonArray{part}));
 
   ASSERT_EQ(events.size(), 1U);
@@ -734,19 +755,27 @@ TEST(GoogleProvider, SendChatReconstructsFunctionCallAndFunctionResponseAcrossTu
   QJsonObject input;
   input[QStringLiteral("path")] = QStringLiteral("~/Documents");
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString());
-  invocation.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                         .tool_use_id = QStringLiteral("call_123"),
-                                         .tool_name = QStringLiteral("ListFiles"),
-                                         .function_name = QStringLiteral("ListFiles"),
-                                         .input = input}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("call_123"),
+          .tool_name = QStringLiteral("ListFiles"),
+          .function_name = QStringLiteral("ListFiles"),
+          .input = input,
+      },
+  });
 
   QJsonObject result;
   result[QStringLiteral("entries")] = QJsonArray{QJsonObject{{QStringLiteral("name"), QStringLiteral("notes.txt")}}};
   Message toolResult(MessageId::generate(), MessageRole::User, QString());
-  toolResult.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Result,
-                                         .tool_use_id = QStringLiteral("call_123"),
-                                         .function_name = QStringLiteral("ListFiles"),
-                                         .result = result}});
+  toolResult.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Result,
+          .tool_use_id = QStringLiteral("call_123"),
+          .function_name = QStringLiteral("ListFiles"),
+          .result = result,
+      },
+  });
 
   const std::vector<Message> history{
       Message(MessageId::generate(), MessageRole::User, QString("List my documents")),
@@ -792,10 +821,14 @@ TEST(GoogleProvider, SendChatEchoesThoughtSignatureOnFollowUp) {
   GoogleProvider provider(fake);
 
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString());
-  invocation.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                         .tool_use_id = QStringLiteral("call_123"),
-                                         .tool_name = QStringLiteral("ListFiles"),
-                                         .thought_signature = QStringLiteral("sig-xyz")}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("call_123"),
+          .tool_name = QStringLiteral("ListFiles"),
+          .thought_signature = QStringLiteral("sig-xyz"),
+      },
+  });
   provider.sendChat(testModel(), {invocation}, [](const StreamEvent&) {});
 
   const QJsonObject body = QJsonDocument::fromJson(fake->streamingCall(0).request.body).object();
@@ -813,9 +846,13 @@ TEST(GoogleProvider, SendChatEchoesThoughtSignatureOnFollowUp) {
   auto fakeNoSignature = makeFakeWithEmptyModels();
   GoogleProvider providerNoSignature(fakeNoSignature);
   Message invocationNoSignature(MessageId::generate(), MessageRole::Assistant, QString());
-  invocationNoSignature.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                                    .tool_use_id = QStringLiteral("call_456"),
-                                                    .tool_name = QStringLiteral("ListFiles")}});
+  invocationNoSignature.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("call_456"),
+          .tool_name = QStringLiteral("ListFiles"),
+      },
+  });
   providerNoSignature.sendChat(testModel(), {invocationNoSignature}, [](const StreamEvent&) {});
 
   const QJsonObject bodyNoSignature = QJsonDocument::fromJson(fakeNoSignature->streamingCall(0).request.body).object();
@@ -835,15 +872,23 @@ TEST(GoogleProvider, SendChatOmitsIdInFunctionResponseWhenIdWasSynthesized) {
   GoogleProvider provider(fake);
 
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString());
-  invocation.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                         .tool_use_id = QStringLiteral("f47ac10b-58cc-4372-a567-0e02b2c3d479"),
-                                         .tool_name = QStringLiteral("ListFiles"),
-                                         .provider_call_id_synthesized = true}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("f47ac10b-58cc-4372-a567-0e02b2c3d479"),
+          .tool_name = QStringLiteral("ListFiles"),
+          .provider_call_id_synthesized = true,
+      },
+  });
   Message toolResult(MessageId::generate(), MessageRole::User, QString());
-  toolResult.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Result,
-                                         .tool_use_id = QStringLiteral("f47ac10b-58cc-4372-a567-0e02b2c3d479"),
-                                         .tool_name = QStringLiteral("ListFiles"),
-                                         .provider_call_id_synthesized = true}});
+  toolResult.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Result,
+          .tool_use_id = QStringLiteral("f47ac10b-58cc-4372-a567-0e02b2c3d479"),
+          .tool_name = QStringLiteral("ListFiles"),
+          .provider_call_id_synthesized = true,
+      },
+  });
 
   provider.sendChat(testModel(), {invocation, toolResult}, [](const StreamEvent&) {});
 
@@ -875,15 +920,23 @@ TEST(GoogleProvider, SendChatIncludesIdInFunctionResponseWhenIdWasFromModel) {
   GoogleProvider provider(fake);
 
   Message invocation(MessageId::generate(), MessageRole::Assistant, QString());
-  invocation.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                         .tool_use_id = QStringLiteral("call_123"),
-                                         .tool_name = QStringLiteral("ListFiles"),
-                                         .provider_call_id_synthesized = false}});
+  invocation.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("call_123"),
+          .tool_name = QStringLiteral("ListFiles"),
+          .provider_call_id_synthesized = false,
+      },
+  });
   Message toolResult(MessageId::generate(), MessageRole::User, QString());
-  toolResult.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Result,
-                                         .tool_use_id = QStringLiteral("call_123"),
-                                         .tool_name = QStringLiteral("ListFiles"),
-                                         .provider_call_id_synthesized = false}});
+  toolResult.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Result,
+          .tool_use_id = QStringLiteral("call_123"),
+          .tool_name = QStringLiteral("ListFiles"),
+          .provider_call_id_synthesized = false,
+      },
+  });
 
   provider.sendChat(testModel(), {invocation, toolResult}, [](const StreamEvent&) {});
 
@@ -918,21 +971,37 @@ TEST(GoogleProvider, SendChatGroupsParallelFunctionCallsIntoOneContentEntry) {
   GoogleProvider provider(fake);
 
   Message invocationA(MessageId::generate(), MessageRole::Assistant, QString());
-  invocationA.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                          .tool_use_id = QStringLiteral("call_a"),
-                                          .tool_name = QStringLiteral("check_weather")}});
+  invocationA.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("call_a"),
+          .tool_name = QStringLiteral("check_weather"),
+      },
+  });
   Message invocationB(MessageId::generate(), MessageRole::Assistant, QString());
-  invocationB.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Invocation,
-                                          .tool_use_id = QStringLiteral("call_b"),
-                                          .tool_name = QStringLiteral("check_weather")}});
+  invocationB.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Invocation,
+          .tool_use_id = QStringLiteral("call_b"),
+          .tool_name = QStringLiteral("check_weather"),
+      },
+  });
   Message resultA(MessageId::generate(), MessageRole::User, QString());
-  resultA.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Result,
-                                      .tool_use_id = QStringLiteral("call_a"),
-                                      .tool_name = QStringLiteral("check_weather")}});
+  resultA.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Result,
+          .tool_use_id = QStringLiteral("call_a"),
+          .tool_name = QStringLiteral("check_weather"),
+      },
+  });
   Message resultB(MessageId::generate(), MessageRole::User, QString());
-  resultB.setToolCalls({ToolCallEntry{.kind = ToolCallKind::Result,
-                                      .tool_use_id = QStringLiteral("call_b"),
-                                      .tool_name = QStringLiteral("check_weather")}});
+  resultB.setToolCalls({
+      ToolCallEntry{
+          .kind = ToolCallKind::Result,
+          .tool_use_id = QStringLiteral("call_b"),
+          .tool_name = QStringLiteral("check_weather"),
+      },
+  });
 
   provider.sendChat(testModel(), {invocationA, invocationB, resultA, resultB}, [](const StreamEvent&) {});
 

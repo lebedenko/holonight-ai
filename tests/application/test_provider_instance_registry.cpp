@@ -15,9 +15,9 @@ using holonight_config::ProviderState;
 using holonight_config::ProviderType;
 using holonight_domain::ModelId;
 
-ProviderInstanceConfig instance(QString id, ProviderType type, QString name, bool enabled = true) {
+ProviderInstanceConfig instance(QString instance_id, ProviderType type, QString name, bool enabled = true) {
   return ProviderInstanceConfig{
-      .id = std::move(id),
+      .id = std::move(instance_id),
       .type = type,
       .display_name = std::move(name),
       .enabled = enabled,
@@ -27,11 +27,13 @@ ProviderInstanceConfig instance(QString id, ProviderType type, QString name, boo
 }
 
 TEST(ProviderInstanceRegistry, LoadedInstancesPreserveOrderAndStartWithoutSelection) {
-  ProviderInstanceRegistry registry(
-      ProviderState{.instances = {
-                        instance(QStringLiteral("first"), ProviderType::Ollama, QStringLiteral("Local")),
-                        instance(QStringLiteral("second"), ProviderType::OpenAi, QStringLiteral("Cloud"), false),
-                    }});
+  ProviderInstanceRegistry registry(ProviderState{
+      .instances =
+          {
+              instance(QStringLiteral("first"), ProviderType::Ollama, QStringLiteral("Local")),
+              instance(QStringLiteral("second"), ProviderType::OpenAi, QStringLiteral("Cloud"), false),
+          },
+  });
 
   ASSERT_EQ(registry.instances()->rowCount(), 2);
   EXPECT_EQ(registry.instances()->data(registry.instances()->index(0), ProviderInstanceListModel::InstanceIdRole),
@@ -55,10 +57,12 @@ TEST(ProviderInstanceRegistry, ModelPublishesStableQmlFacingRoles) {
 }
 
 TEST(ProviderInstanceRegistry, AddDraftCreatesUuidPrependsDefaultsAndSelectsIt) {
-  ProviderInstanceRegistry registry(
-      ProviderState{.instances = {
-                        instance(QStringLiteral("saved"), ProviderType::Ollama, QStringLiteral("Ollama")),
-                    }});
+  ProviderInstanceRegistry registry(ProviderState{
+      .instances =
+          {
+              instance(QStringLiteral("saved"), ProviderType::Ollama, QStringLiteral("Ollama")),
+          },
+  });
   QSignalSpy insertedSpy(registry.instances(), &QAbstractItemModel::rowsInserted);
   QSignalSpy selectionSpy(&registry, &ProviderInstanceRegistry::selectedSettingsInstanceIdChanged);
 
@@ -80,10 +84,12 @@ TEST(ProviderInstanceRegistry, AddDraftCreatesUuidPrependsDefaultsAndSelectsIt) 
 }
 
 TEST(ProviderInstanceRegistry, OnlyOneDraftCanExistAndCancelRemovesItWithoutSelectingFallback) {
-  ProviderInstanceRegistry registry(
-      ProviderState{.instances = {
-                        instance(QStringLiteral("saved"), ProviderType::Ollama, QStringLiteral("Ollama")),
-                    }});
+  ProviderInstanceRegistry registry(ProviderState{
+      .instances =
+          {
+              instance(QStringLiteral("saved"), ProviderType::Ollama, QStringLiteral("Ollama")),
+          },
+  });
   ASSERT_TRUE(registry.addDraft(ProviderType::Google).has_value());
   EXPECT_FALSE(registry.addDraft(ProviderType::Anthropic).has_value());
   QSignalSpy removedSpy(registry.instances(), &QAbstractItemModel::rowsRemoved);
@@ -97,10 +103,12 @@ TEST(ProviderInstanceRegistry, OnlyOneDraftCanExistAndCancelRemovesItWithoutSele
 }
 
 TEST(ProviderInstanceRegistry, SelectionChangesOnlyForKnownInstancesOrExplicitClear) {
-  ProviderInstanceRegistry registry(
-      ProviderState{.instances = {
-                        instance(QStringLiteral("known"), ProviderType::Ollama, QStringLiteral("Ollama")),
-                    }});
+  ProviderInstanceRegistry registry(ProviderState{
+      .instances =
+          {
+              instance(QStringLiteral("known"), ProviderType::Ollama, QStringLiteral("Ollama")),
+          },
+  });
   QSignalSpy selectionSpy(&registry, &ProviderInstanceRegistry::selectedSettingsInstanceIdChanged);
 
   EXPECT_FALSE(registry.selectSettingsInstance(QStringLiteral("missing")));
@@ -113,11 +121,13 @@ TEST(ProviderInstanceRegistry, SelectionChangesOnlyForKnownInstancesOrExplicitCl
 }
 
 TEST(ProviderInstanceRegistry, NamesAreTrimmedUnicodeCaseFoldedAndGlobalAcrossTypes) {
-  ProviderInstanceRegistry registry(
-      ProviderState{.instances = {
-                        instance(QStringLiteral("one"), ProviderType::Ollama, QStringLiteral("  Київ  ")),
-                        instance(QStringLiteral("two"), ProviderType::OpenAi, QStringLiteral("Ollama")),
-                    }});
+  ProviderInstanceRegistry registry(ProviderState{
+      .instances =
+          {
+              instance(QStringLiteral("one"), ProviderType::Ollama, QStringLiteral("  Київ  ")),
+              instance(QStringLiteral("two"), ProviderType::OpenAi, QStringLiteral("Ollama")),
+          },
+  });
 
   EXPECT_FALSE(registry.isDisplayNameAvailable(QStringLiteral("КИЇВ")));
   EXPECT_FALSE(registry.isDisplayNameAvailable(QStringLiteral(" ollama ")));
@@ -126,21 +136,25 @@ TEST(ProviderInstanceRegistry, NamesAreTrimmedUnicodeCaseFoldedAndGlobalAcrossTy
 }
 
 TEST(ProviderInstanceRegistry, LowestFreeNameUsesGapsRatherThanInstanceCount) {
-  ProviderInstanceRegistry registry(
-      ProviderState{.instances = {
-                        instance(QStringLiteral("one"), ProviderType::Ollama, QStringLiteral("Ollama")),
-                        instance(QStringLiteral("three"), ProviderType::OpenAi, QStringLiteral("ollama 3")),
-                        instance(QStringLiteral("other"), ProviderType::OpenAi, QStringLiteral("Work")),
-                    }});
+  ProviderInstanceRegistry registry(ProviderState{
+      .instances =
+          {
+              instance(QStringLiteral("one"), ProviderType::Ollama, QStringLiteral("Ollama")),
+              instance(QStringLiteral("three"), ProviderType::OpenAi, QStringLiteral("ollama 3")),
+              instance(QStringLiteral("other"), ProviderType::OpenAi, QStringLiteral("Work")),
+          },
+  });
 
   EXPECT_EQ(registry.nextAvailableDisplayName(ProviderType::Ollama), QStringLiteral("Ollama 2"));
 }
 
 TEST(ProviderInstanceRegistry, UnavailableInstanceIsNotSelectedAndBecomesUsableWhenReady) {
-  ProviderInstanceRegistry registry(
-      ProviderState{.instances = {
-                        instance(QStringLiteral("work"), ProviderType::OpenAi, QStringLiteral("Work")),
-                    }});
+  ProviderInstanceRegistry registry(ProviderState{
+      .instances =
+          {
+              instance(QStringLiteral("work"), ProviderType::OpenAi, QStringLiteral("Work")),
+          },
+  });
   const ModelId model{.provider_id = QStringLiteral("work"), .model_name = QStringLiteral("gpt")};
   registry.setRuntimeModels(QStringLiteral("work"), {model});
 
@@ -153,11 +167,13 @@ TEST(ProviderInstanceRegistry, UnavailableInstanceIsNotSelectedAndBecomesUsableW
 }
 
 TEST(ProviderInstanceRegistry, DisableAndDeleteFallBackInSavedOrderThenClear) {
-  ProviderInstanceRegistry registry(
-      ProviderState{.instances = {
-                        instance(QStringLiteral("first"), ProviderType::OpenAi, QStringLiteral("First")),
-                        instance(QStringLiteral("second"), ProviderType::OpenAi, QStringLiteral("Second")),
-                    }});
+  ProviderInstanceRegistry registry(ProviderState{
+      .instances =
+          {
+              instance(QStringLiteral("first"), ProviderType::OpenAi, QStringLiteral("First")),
+              instance(QStringLiteral("second"), ProviderType::OpenAi, QStringLiteral("Second")),
+          },
+  });
   const ModelId first{.provider_id = QStringLiteral("first"), .model_name = QStringLiteral("shared")};
   const ModelId second{.provider_id = QStringLiteral("second"), .model_name = QStringLiteral("shared")};
   registry.setRuntimeModels(first.provider_id, {first});
@@ -177,12 +193,20 @@ TEST(ProviderInstanceRegistry, DisableAndDeleteFallBackInSavedOrderThenClear) {
 TEST(ProviderInstanceRegistry, HistoricalIdentityPrefersLiveThenTombstoneThenUnknown) {
   ProviderInstanceRegistry registry(ProviderState{
       .instances = {instance(QStringLiteral("live"), ProviderType::OpenAi, QStringLiteral("Renamed live"))},
-      .tombstones = {{.instance_id = QStringLiteral("live"),
-                      .type = ProviderType::Ollama,
-                      .last_display_name = QStringLiteral("Stale name")},
-                     {.instance_id = QStringLiteral("deleted"),
-                      .type = ProviderType::Anthropic,
-                      .last_display_name = QStringLiteral("Deleted work")}}});
+      .tombstones =
+          {
+              {
+                  .instance_id = QStringLiteral("live"),
+                  .type = ProviderType::Ollama,
+                  .last_display_name = QStringLiteral("Stale name"),
+              },
+              {
+                  .instance_id = QStringLiteral("deleted"),
+                  .type = ProviderType::Anthropic,
+                  .last_display_name = QStringLiteral("Deleted work"),
+              },
+          },
+  });
 
   EXPECT_EQ(registry.historicalIdentity(QStringLiteral("live")),
             (HistoricalProviderIdentity{.instance_id = QStringLiteral("live"),

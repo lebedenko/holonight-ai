@@ -51,7 +51,10 @@ void failStream(const std::shared_ptr<StreamContext>& context, const std::functi
     context->handle->cancel();
   }
   on_event(StreamEvent{holonight_domain::Error{
-      .message = std::move(message), .usage = context->usage, .model_identifier = context->model_identifier}});
+      .message = std::move(message),
+      .usage = context->usage,
+      .model_identifier = context->model_identifier,
+  }});
 }
 
 // Gemini reports usageMetadata on every chunk, cumulative-to-date rather than delta — so each
@@ -435,12 +438,14 @@ HttpRequestHandlePtr GoogleProvider::sendChat(const ModelId& model, const std::v
   // stopSequences, and any top-level "model"/"stream" field (REQ-C-001/C-004/C-008/C-009,
   // DESIGN.md §5.9 — model selection lives entirely in the URL path).
 
-  const HttpRequest request{.method = HttpMethod::Post,
-                            .url = base_url_ + QStringLiteral("/v1beta/models/") + model.model_name +
-                                   QStringLiteral(":streamGenerateContent?alt=sse"),
-                            .body = QJsonDocument(body).toJson(QJsonDocument::Compact),
-                            .content_type = QStringLiteral("application/json"),
-                            .headers = authHeaders()};
+  const HttpRequest request{
+      .method = HttpMethod::Post,
+      .url = base_url_ + QStringLiteral("/v1beta/models/") + model.model_name +
+             QStringLiteral(":streamGenerateContent?alt=sse"),
+      .body = QJsonDocument(body).toJson(QJsonDocument::Compact),
+      .content_type = QStringLiteral("application/json"),
+      .headers = authHeaders(),
+  };
 
   auto context = std::make_shared<StreamContext>();
   context->provider_instance_id = instance_id_;
@@ -463,7 +468,7 @@ HttpRequestHandlePtr GoogleProvider::sendChat(const ModelId& model, const std::v
     }
   };
 
-  auto onFinished = [context, on_event]() {
+  auto onFinished = [context, on_event] {
     if (context->terminal) {
       return;
     }

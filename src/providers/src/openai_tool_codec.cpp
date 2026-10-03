@@ -20,8 +20,8 @@ QString role(const holonight_domain::MessageRole value) {
 }
 
 QString itemIdentity(const QJsonObject& item) {
-  const QString id = item.value(QStringLiteral("id")).toString();
-  return id.isEmpty() ? QString::fromUtf8(QJsonDocument(item).toJson(QJsonDocument::Compact)) : id;
+  const QString item_id = item.value(QStringLiteral("id")).toString();
+  return item_id.isEmpty() ? QString::fromUtf8(QJsonDocument(item).toJson(QJsonDocument::Compact)) : item_id;
 }
 
 }  // namespace
@@ -29,10 +29,12 @@ QString itemIdentity(const QJsonObject& item) {
 QJsonArray OpenAIToolCodec::encodeDefinitions(const holonight_domain::ToolCatalogSnapshot& catalog) {
   QJsonArray tools;
   for (const auto& definition : catalog.client_tools) {
-    tools.append(QJsonObject{{QStringLiteral("type"), QStringLiteral("function")},
-                             {QStringLiteral("name"), definition.function_name},
-                             {QStringLiteral("description"), definition.description},
-                             {QStringLiteral("parameters"), definition.input_schema}});
+    tools.append(QJsonObject{
+        {QStringLiteral("type"), QStringLiteral("function")},
+        {QStringLiteral("name"), definition.function_name},
+        {QStringLiteral("description"), definition.description},
+        {QStringLiteral("parameters"), definition.input_schema},
+    });
   }
   return tools;
 }
@@ -59,8 +61,11 @@ QJsonArray OpenAIToolCodec::encodeHistory(const std::vector<holonight_domain::Me
             {QStringLiteral("type"), QStringLiteral("function_call")},
             {QStringLiteral("call_id"), entry.tool_use_id},
             {QStringLiteral("name"), entry.function_name.isEmpty() ? entry.tool_name : entry.function_name},
-            {QStringLiteral("arguments"),
-             QString::fromUtf8(QJsonDocument(entry.input).toJson(QJsonDocument::Compact))}};
+            {
+                QStringLiteral("arguments"),
+                QString::fromUtf8(QJsonDocument(entry.input).toJson(QJsonDocument::Compact)),
+            },
+        };
         if (entry.provider_item_id.has_value()) {
           item[QStringLiteral("id")] = *entry.provider_item_id;
         }
@@ -69,7 +74,8 @@ QJsonArray OpenAIToolCodec::encodeHistory(const std::vector<holonight_domain::Me
         input.append(QJsonObject{
             {QStringLiteral("type"), QStringLiteral("function_call_output")},
             {QStringLiteral("call_id"), entry.tool_use_id},
-            {QStringLiteral("output"), QString::fromUtf8(QJsonDocument(entry.result).toJson(QJsonDocument::Compact))}});
+            {QStringLiteral("output"), QString::fromUtf8(QJsonDocument(entry.result).toJson(QJsonDocument::Compact))},
+        });
       }
     }
   }
@@ -109,9 +115,9 @@ std::expected<std::vector<holonight_domain::ToolRequestEvent>, QString> OpenAITo
           QStringLiteral("Malformed OpenAI function call '%1': arguments must be a JSON object").arg(name));
     }
     std::optional<QString> itemId;
-    const QString id = item.value(QStringLiteral("id")).toString();
-    if (!id.isEmpty()) {
-      itemId = id;
+    const QString item_id = item.value(QStringLiteral("id")).toString();
+    if (!item_id.isEmpty()) {
+      itemId = item_id;
     }
     requests.push_back(holonight_domain::ToolRequestEvent{
         .provider_call_id = callId,

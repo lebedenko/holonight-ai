@@ -101,7 +101,7 @@ TEST(OllamaProvider, RefreshReplacesModelList) {
 
   fake->enqueueBufferedSuccess(QByteArray(R"({"models":[{"name":"mistral:latest"}]})"));
   bool completed = false;
-  provider.refresh([&completed]() { completed = true; });
+  provider.refresh([&completed] { completed = true; });
 
   EXPECT_TRUE(completed);
   ASSERT_EQ(provider.availableModels().size(), 1U);
@@ -472,11 +472,15 @@ TEST(OllamaProvider, SendChatIncludesToolsArrayInRequestBodyWhenProvided) {
 
   const ModelId model{.provider_id = QStringLiteral("ollama"), .model_name = QStringLiteral("llama3")};
   const holonight_domain::ToolCatalogSnapshot catalog{
-      .client_tools = {{
-          .function_name = QStringLiteral("list_files"),
-          .description = QStringLiteral("List files"),
-          .input_schema = QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}},
-      }}};
+      .client_tools =
+          {
+              {
+                  .function_name = QStringLiteral("list_files"),
+                  .description = QStringLiteral("List files"),
+                  .input_schema = QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}},
+              },
+          },
+  };
   provider.sendChat(model, {}, [](const StreamEvent&) {}, std::chrono::seconds{30}, catalog);
 
   ASSERT_EQ(fake->streamingCallCount(), 1U);
