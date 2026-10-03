@@ -349,3 +349,17 @@ GPL-3.0-or-later — see [LICENSE](LICENSE).
 
 See [tooling/README.md](tooling/README.md) for presets, local dependency overrides, editor refresh,
 `task tooling:doctor`, and the independent Serena project.
+
+## Local CI rehearsal
+
+Run `task ci` with Python 3, Git and Docker (or Podman) installed. It rehearses
+build/test, independent static checks and licensing in the same pinned environments
+and provider revisions as GitHub CI. Registry and GitHub access are required.
+
+Each lane receives a disposable snapshot of tracked edits and non-ignored new files,
+with a fresh application/provider build. Source is mounted read-only; existing
+development builds are preserved. Add reported untracked inputs before pushing.
+Logs, source state, image/tool identities, lane results and runtime evidence are
+saved under ignored `build/ci/`. A failed or unavailable required check returns
+nonzero and prints its full log. Container layers may be cached. Publication,
+releases and remote artifact uploads are outside this command.

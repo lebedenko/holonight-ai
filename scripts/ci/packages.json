@@ -1,0 +1,14 @@
+[
+  {
+    "name": "syntax-highlighting",
+    "version": "6.30.0-1",
+    "sha256": "d61960e617914d51c8e6e9ba334d40f0fb46ca41e17ed75546643dd8338ab81a",
+    "url": "https://archive.archlinux.org/packages/s/syntax-highlighting/syntax-highlighting-6.30.0-1-x86_64.pkg.tar.zst"
+  },
+  {
+    "name": "ripgrep",
+    "version": "15.2.0-1",
+    "sha256": "4ab540861ee43dfe6974403dd3f03830615fd4b53971736f5c4fc7aa82133a21",
+    "url": "https://archive.archlinux.org/packages/r/ripgrep/ripgrep-15.2.0-1-x86_64.pkg.tar.zst"
+  }
+]
