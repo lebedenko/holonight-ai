@@ -20,6 +20,7 @@
 ChatApplication::ChatApplication(int& argc, char** argv)
     : QGuiApplication(argc, argv), engine_{std::make_unique<QQmlEngine>()} {
   setApplicationName(QStringLiteral("holonight-chat"));
+  setDesktopFileName(QStringLiteral("org.holonight.Chat"));
   setApplicationVersion(QStringLiteral(HOLONIGHT_CHAT_VERSION));
   setQuitOnLastWindowClosed(false);
 

@@ -134,3 +134,8 @@ install(
 
 qt_add_resources(holonight-chat controls_style_config
     PREFIX "/" FILES qtquickcontrols2.conf)
+
+install(FILES "${PROJECT_SOURCE_DIR}/data/applications/org.holonight.Chat.desktop"
+  DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
+install(FILES "${PROJECT_SOURCE_DIR}/assets/holonight-ai.svg"
+  DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps")

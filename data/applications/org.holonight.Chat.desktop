@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=HoloNight AI
+Exec=holonight-chat
+Icon=holonight-ai
+Terminal=false
+Categories=Utility;Qt;

@@ -363,3 +363,8 @@ Logs, source state, image/tool identities, lane results and runtime evidence are
 saved under ignored `build/ci/`. A failed or unavailable required check returns
 nonzero and prints its full log. Container layers may be cached. Publication,
 releases and remote artifact uploads are outside this command.
+
+## Installed application
+
+The application menu entry **HoloNight AI** launches `holonight-chat` directly.
+CMake installs `org.holonight.Chat.desktop` and the `holonight-ai` SVG into the hicolor fallback theme.
