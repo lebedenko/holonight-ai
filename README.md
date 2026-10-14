@@ -39,13 +39,14 @@ rationale and roadmap, and [`docs/adr/`](docs/adr/) for recorded decisions.
 
 ## Requirements
 
-- Qt 6 (`Core`, `Gui`, `Quick`, `Qml`, `Network`, `Concurrent`, `Sql`, `DBus`)
+- Qt >=6.11 (`Core`, `Gui`, `Quick`, `Qml`, `Network`, `Concurrent`, `Sql`, `DBus`)
 - CMake 3.25+
 - Ninja
-- `libsecret-1` (for credential storage via the desktop Secret Service)
+- `libsecret-1`, md4c and KF6SyntaxHighlighting
+- A local `holonight-config` checkout, prepared before Qt
 - [`holonight-qt`](../holonight-qt) checked out as a sibling directory (`../holonight-qt`) —
   supplies the shared `HolonightQt` CMake package and the `Holonight` QML design-system module
-- GTest (optional, for tests — fetched automatically if not installed)
+- Installed GTest and GMock >=1.14 (required when tests are enabled)
 
 ## Building
 
@@ -65,10 +66,16 @@ task coverage     # build with coverage and generate build/coverage/index.html
 task clean        # remove build/
 ```
 
-`task build:qt-dependency` (a dependency of most other tasks) builds and installs the sibling
-`../holonight-qt` and `../holonight-config` checkouts at the exact revisions in Taskfile.yml.
-Dependencies are built and staged under `build/deps/`, with provider tests/examples off
-and Wayland support enabled. `HolonightQt_DIR` determines the QML path used by tests and lint.
+Run `task deps` explicitly with local `HOLONIGHT_CONFIG_SOURCE` and `HOLONIGHT_QT_SOURCE`
+checkouts (defaults: sibling repositories). It prepares Config before Qt in `build/deps/prefix`,
+with provider tests/demo/gallery disabled and Controls/Wayland retained. Normal configure, build,
+test and static commands only validate prerequisites; missing providers report remediation.
+`build:qt-dependency` and `build:config-dependency` remain explicit aliases for `task deps`.
+Install declared external packages beforehand; Qt >=6.11 and installed GTest/GMock >=1.14 are
+required for tests. `ENABLE_COVERAGE` defaults OFF and adds gcovr only for coverage.
+Use `HOLONIGHT_DEPENDENCY_PREFIX` for installed internal providers and `HOLONIGHT_EXTERNAL_PREFIX`
+for external libraries. Internal providers cannot fall back to system/external locations.
+Compatible source/toolchain/options reuse existing builds; incompatible state is archived.
 
 ```bash
 task configure-tests
@@ -352,17 +359,22 @@ See [tooling/README.md](tooling/README.md) for presets, local dependency overrid
 
 ## Local CI rehearsal
 
-Run `task ci` with Python 3, Git and Docker (or Podman) installed. It rehearses
-build/test, independent static checks and licensing in the same pinned environments
-and provider revisions as GitHub CI. Registry and GitHub access are required.
+Run `task ci:prepare` explicitly before `task ci`, with Python 3, Git and Docker (or Podman).
+Preparation acquires the pinned qualified Arch and REUSE images, clones exact Config/Qt revisions,
+and prepares installed providers. To clone local repositories at the same exact commits, run
+`task ci:prepare -- --provider-source-root ..`. Dirty provider working trees are never copied.
 
-Each lane receives a disposable snapshot of tracked edits and non-ignored new files,
-with a fresh application/provider build. Source is mounted read-only; existing
-development builds are preserved. Add reported untracked inputs before pushing.
-Logs, source state, image/tool identities, lane results and runtime evidence are
-saved under ignored `build/ci/`. A failed or unavailable required check returns
-nonzero and prints its full log. Container layers may be cached. Publication,
-releases and remote artifact uploads are outside this command.
+Acceptance runs build-test, clean Release staging, strict static checks and licensing with
+`--pull=never --network=none`, caller UID/GID, read-only source and installed-provider inputs.
+It never installs packages, fetches sources or mounts provider build trees. Identity/content hashes
+reject stale or tampered preparation; rerun preparation explicitly after contract changes.
+Build and installed startup cover all four style selectors without desktop automation or live
+model-service calls. Release staging excludes tests and fixtures and verifies D-Bus activation.
+Complete logs, package/tool versions, source/content hashes and lane results are saved under ignored
+`build/ci/`; preparation evidence is in `build/ci-prepared/`. A failed check returns nonzero.
+`task tidy-container` explicitly prepares then runs static acceptance. `Dockerfile.ci` is a thin
+qualified-image compatibility wrapper; project-image publishing has been retired. Historical
+`scripts/ci/packages.json` remains audit evidence, not an acceptance-time installation list.
 
 ## Installed application
 

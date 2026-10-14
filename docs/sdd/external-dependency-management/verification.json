@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "work_package": "EDM-017",
+  "date": "2026-10-14",
+  "implementation_baseline": "0d8c54e166fb4e34ee1e496421c4bd98339a95c1",
+  "declaration_checkpoint": "f6621567ddef06e14403a387c4bf99a5a6b679d6",
+  "platform": "linux/amd64",
+  "runtime": "Docker version 29.9.0, build f415da838b",
+  "command": "JOBS=8 python3 scripts/ci/run.py",
+  "working_tree_acceptance": true,
+  "publication": "not requested; no push or umbrella pin update",
+  "run": "build/ci/20261014T151030Z-0d98xrcy",
+  "jobs": 8,
+  "preparation_identity": {
+    "images": {
+      "build": "ghcr.io/lebedenko/holonight-deps@sha256:37ca051c39d1688d6413c47d94b8c0f221152dac6981ec67d155f2c43ea17b40",
+      "licensing": "docker.io/fsfe/reuse@sha256:85462a75c0f8efda09ddd190b92816b70e7662577c8427429e11e1b9f25a992e"
+    },
+    "platform": "linux/amd64",
+    "providers": {
+      "holonight-config": "0ccd25f323662f50a47bb048be636160f2b7c135",
+      "holonight-qt": "7c3ce074a8c2e02e4ee8cad8cd19eb8627aa4f68"
+    },
+    "inputs": {
+      "tooling/VERSION": "c28fcca53637bc88e124af1725df13cb98c69dedefd62fb3cdbe1cdb6b760624",
+      "tooling/module.json": "392af45d4ff6e9bae35a203154ec264b2d2a3dba36c1040f61103d61fd565832",
+      "tooling/dependencies.cmake": "495162bdb3d0d1cc3a77bddc905633112f8752fa3c3ff58c565aa2ae42f24c35",
+      "tooling/providers.cmake": "5d6e7aae9f7f6874d9fa3cf5efca17cab8c3df88ea3b312633ece6341b592876",
+      "tooling/external.py": "2e87dc012d7cdda7235d5ea2e311a2a49272ff82eac5cf3ccec7841ec610df27",
+      "tooling/workflow.py": "9d3224f822ad05ecc877dfd511a6a43df3b7ce0e4ef9afe4dfcb1a83d23c1450",
+      "tooling/external-packages.json": "509a186aed46c705f0306ab86ff8e573747bb8c4a6627d4668c928fbfd0422b9",
+      "CMakeLists.txt": "ba679b18a2e98f097c3a04598a94ee0203566e4c9d35905b817e856e45f380a0",
+      "CMakePresets.json": "f980cdf37a8c4626a382dd08861654e819e6a9394e696ce55ffdd4dd2c220f2e",
+      "Taskfile.yml": "0211320cd248387dc0fb06b54cd14863f62a410942ed472b5b5b45aae721cb66",
+      "scripts/ci/lane.sh": "b3dd23ee9713212dbc00214e65183da3bc65c7fb7dd76bc17eb2c4260bde75df",
+      "scripts/ci/run.py": "ac52a2bdaddeaa9dfaa2c673acddd411645e17dbd1b126378dbb359361b1e84a"
+    }
+  },
+  "image_ids": {
+    "build": "sha256:51bb1aed43c0ad4e9336ed49962862ec78293f4380fd05e73b954e88c6c479c7",
+    "licensing": "sha256:2575b4ad3a736a14323c7705b708e0027109930a1511cce4e65cd09b9dfc1cc4"
+  },
+  "prepared_manifest_sha256": "1c95034843056b31b8564eda9c86c41f90c07e36eee51681a6ddb17f5bed0ede",
+  "prepared_file_count": 1481,
+  "providers": {
+    "holonight-config": {
+      "revision": "0ccd25f323662f50a47bb048be636160f2b7c135",
+      "content": "0329c0f5df87b1fecde6253a521ad2984a40c2ca89c91c5d72e8926887ec8a05",
+      "options": [
+        "-DBUILD_TESTING=OFF"
+      ],
+      "build_type": "Debug",
+      "toolchain": {
+        "bundle_version": "2.0.0",
+        "cc": {
+          "command": [
+            "cc"
+          ],
+          "path": "/usr/bin/gcc",
+          "version": "cc (GCC) 16.2.1 20260810\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+        },
+        "cmake": {
+          "command": [
+            "cmake"
+          ],
+          "path": "/usr/bin/cmake",
+          "version": "cmake version 4.4.3\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "cxx": {
+          "command": [
+            "c++"
+          ],
+          "path": "/usr/bin/c++",
+          "version": "c++ (GCC) 16.2.1 20260810\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+        },
+        "environment": {},
+        "ninja": {
+          "command": [
+            "ninja"
+          ],
+          "path": "/usr/bin/ninja",
+          "version": "1.13.2"
+        },
+        "preset_context": {}
+      }
+    },
+    "holonight-qt": {
+      "revision": "7c3ce074a8c2e02e4ee8cad8cd19eb8627aa4f68",
+      "content": "423b6042725d32236a574924fd274681ac4f7d482b09b7a302653bc8c3b02053",
+      "options": [
+        "-DBUILD_TESTS=OFF",
+        "-DBUILD_DEMO=OFF",
+        "-DBUILD_CONTROLS_GALLERY=OFF",
+        "-DBUILD_WAYLAND=ON"
+      ],
+      "build_type": "Debug",
+      "toolchain": {
+        "bundle_version": "2.0.0",
+        "cc": {
+          "command": [
+            "cc"
+          ],
+          "path": "/usr/bin/gcc",
+          "version": "cc (GCC) 16.2.1 20260810\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+        },
+        "cmake": {
+          "command": [
+            "cmake"
+          ],
+          "path": "/usr/bin/cmake",
+          "version": "cmake version 4.4.3\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "cxx": {
+          "command": [
+            "c++"
+          ],
+          "path": "/usr/bin/c++",
+          "version": "c++ (GCC) 16.2.1 20260810\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+        },
+        "environment": {},
+        "ninja": {
+          "command": [
+            "ninja"
+          ],
+          "path": "/usr/bin/ninja",
+          "version": "1.13.2"
+        },
+        "preset_context": {}
+      }
+    }
+  },
+  "snapshot_sha256": "cdb537588a95da825baa98ddb92abb42268764b4de41dce39ee0d529acd50798",
+  "non_documentation_inputs_match": true,
+  "lanes": {
+    "build-test": {
+      "image": "ghcr.io/lebedenko/holonight-deps@sha256:37ca051c39d1688d6413c47d94b8c0f221152dac6981ec67d155f2c43ea17b40",
+      "exit_code": 0,
+      "log_sha256": "062197943cf146462388fc44f8ab781237cc236c9197e81a245be7a444f58da3"
+    },
+    "release": {
+      "image": "ghcr.io/lebedenko/holonight-deps@sha256:37ca051c39d1688d6413c47d94b8c0f221152dac6981ec67d155f2c43ea17b40",
+      "exit_code": 0,
+      "log_sha256": "0833bb67ef5e7cf36896b5bf8930f50452f4d044906b19b0302571d127c05090"
+    },
+    "static-checks": {
+      "image": "ghcr.io/lebedenko/holonight-deps@sha256:37ca051c39d1688d6413c47d94b8c0f221152dac6981ec67d155f2c43ea17b40",
+      "exit_code": 0,
+      "log_sha256": "23c7e0d59a00d41aaaf66dca6ee60df8de30f3afa2c979481b54eddd8a5321ae"
+    },
+    "licensing": {
+      "image": "docker.io/fsfe/reuse@sha256:85462a75c0f8efda09ddd190b92816b70e7662577c8427429e11e1b9f25a992e",
+      "exit_code": 0,
+      "log_sha256": "91be05b5bbc69f5524799b95f88299553ecfc5214a2935496e775a0e7d997cf2"
+    }
+  },
+  "acceptance": {
+    "ctest": 714,
+    "composer": {
+      "styles": [
+        "Holonight",
+        "Fusion"
+      ],
+      "scales": [
+        1,
+        1.25
+      ],
+      "tests_per_combination": 4
+    },
+    "style_qml_tests": {
+      "Holonight": 59,
+      "Fusion": 59
+    },
+    "build_and_installed_startup": [
+      "default",
+      "environment",
+      "command-line",
+      "external-config"
+    ],
+    "release_tests": "OFF",
+    "release_fixture_exclusion": true,
+    "installed_path_isolation": true,
+    "configured_dbus_exec": true,
+    "strict_tidy_units": 127,
+    "strict_tidy_warnings_as_errors": true,
+    "format_qml_lint_types_policies_reuse": "pass"
+  },
+  "focused": {
+    "launcher_tests": 12,
+    "real_cmake_tests": 15,
+    "canonical_dependency_tests": 21,
+    "canonical_tooling_tests": 11,
+    "coverage": "Configuration and instrumented holonight_domain compilation pass; no report threshold introduced",
+    "bundle_declarations_profile_syntax_whitespace": "pass",
+    "logs": {
+      "build/focused-dependencies-2.log": "deeea53d4d5e698ab5d93f5e5909a2496edee6cb13fa551b2843883e684daeab",
+      "build/focused-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "build/focused-composer-before.log": "e159689f08d071968cccc7deda6695664727838adf1bd8417897441ae102ce27",
+      "build/focused-composer-after.log": "4af588a48a7e657142dcfb665ae7bdc04e35fa6c52b233df6b8c13e7b3c3c716"
+    }
+  },
+  "provenance_hashes": {
+    "environment/cmake.txt": "f46066af33a13476fb604a1a1a24bb8d4dbddb6eb5855e0c24f9f7132784c9f0",
+    "environment/compiler.txt": "0b52fa36f98d1a1ff3f77256f64c13ac7e2264cf7f072ea7943756a0ef378028",
+    "environment/packages.txt": "34ec39510e95051a6fde615c2105b2eb5d3d816fe5d09dfa51e25bc1d50a1ffd",
+    "environment/versions.txt": "9a13048ed7959515c6ac326d1d230e69beca699807ab9f68a4f566dd608cfeda"
+  },
+  "initial_acceptance": {
+    "run": "build/ci/20261014T145453Z-t3wm24jd",
+    "build-test_exit": 8,
+    "other_lanes_exit": 0,
+    "cause": "Retained Holonight composer equality assertion: icon-only 32 vs text buttons 34",
+    "correction": "Derive square attachment height from adjacent native text button heights; existing assertions unchanged"
+  },
+  "warnings": [
+    "Provider-only Qt private-module version-coupling notices; selected Qt is 6.11.2",
+    "Optional Vulkan headers unavailable; qualified acceptance uses software rendering",
+    "Source-only QML unit fixtures do not embed application image resources and report missing fixture images; no other QML diagnostic categories",
+    "No compiler or strict static-analysis diagnostics; real runtime/startup checks pass"
+  ],
+  "limitations": [
+    "No Debian runtime qualification",
+    "No manual desktop acceptance (EDM-022)",
+    "No host installation or application restart",
+    "No live model-service calls",
+    "No publication or current hosted CI query"
+  ],
+  "compatibility_commit": "549ab344cac6f989e56b2404e49a69a1b4fede52",
+  "documentation_checks": {
+    "reuse_snapshot_files": 508,
+    "reuse_exit_code": 0,
+    "log": "build/final-doc-license-snapshot.log",
+    "log_sha256": "d17bcd33df7091e7bdd7819b75ff64d6a2b5de0759e809a580d646c5813d2f52",
+    "direct_mount_attempt": "Not valid evidence: external submodule Git metadata unavailable; REUSE scanned ignored local artifacts. Corrected with canonical independent snapshot."
+  }
+}

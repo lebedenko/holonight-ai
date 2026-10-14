@@ -20,8 +20,7 @@ WarningsAsErrors: '*'
 HeaderFilterRegex: '(apps|libs|include|src|qml|wayland|tests)/.*\.(h|hpp)$'
 
 CheckOptions:
-  # Clang 23 misidentifies argument delimiters after empty inline initializers.
-  # Keep multiline trailing-comma validation, and preserve inline commas as authored.
+  # Clang 23 mistakes empty argument braces for single-line initializers.
   - key: readability-trailing-comma.SingleLineCommaPolicy
     value: Ignore
   - key: readability-identifier-naming.ClassCase

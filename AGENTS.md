@@ -24,8 +24,9 @@ Use `task` as the primary workflow:
   clang-tidy, and qmllint checks.
 - `task clean` removes `build/` after confirmation.
 
-All of the above depend on `task build:qt-dependency`, which builds and installs the sibling
-`../holonight-qt` checkout to `build/deps/prefix`.
+Run `task deps` explicitly to prepare supplied local Config and Qt providers in `build/deps/prefix`.
+Normal commands validate prerequisites and never prepare providers. The legacy dependency tasks are aliases.
+Use `task ci:prepare` before `task ci` for qualified offline container acceptance.
 
 ## Coding Style & Naming Conventions
 

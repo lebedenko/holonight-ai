@@ -80,3 +80,6 @@ CLAUDE.md
 /build/
 /__pycache__/
 /tooling/__pycache__/
+
+# Python helpers
+__pycache__/

@@ -20,6 +20,9 @@ WarningsAsErrors: '*'
 HeaderFilterRegex: '(apps|libs|include|src|qml|wayland|tests)/.*\.(h|hpp)$'
 
 CheckOptions:
+  # Clang 23 mistakes empty argument braces for single-line initializers.
+  - key: readability-trailing-comma.SingleLineCommaPolicy
+    value: Ignore
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
   - key: readability-identifier-naming.MemberCase

@@ -5,15 +5,14 @@ on:
   pull_request:
     branches: ["main"]
 jobs:
-  build-test:
-    name: Build and test
+  acceptance:
+    name: ${{ matrix.lane }}
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [build-test, release, static-checks]
     steps:
       - uses: actions/checkout@v4
-      - run: python3 scripts/ci/run.py --lane build-test
-  static-checks:
-    name: Static checks
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - run: python3 scripts/ci/run.py --lane static-checks
+      - run: python3 scripts/ci/run.py --prepare
+      - run: python3 scripts/ci/run.py --lane ${{ matrix.lane }}
