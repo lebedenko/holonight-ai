@@ -22,6 +22,8 @@ RowLayout {
         objectName: "attachmentButton"
         visible: !root.compact
         enabled: false
+        // Keep the square icon action aligned when native text metrics exceed the style minimum.
+        implicitHeight: Math.max(contextButton.implicitHeight, toolsButton.implicitHeight)
         implicitWidth: implicitHeight
         display: AbstractButton.IconOnly
         icon.source: "qrc:/qt/qml/Holonight/Controls/assets/paperclip.svg"
@@ -31,6 +33,7 @@ RowLayout {
     }
 
     Controls.Button {
+        id: contextButton
         objectName: "contextButton"
         visible: !root.compact
         enabled: false
@@ -42,6 +45,7 @@ RowLayout {
     }
 
     Controls.Button {
+        id: toolsButton
         objectName: "toolsButton"
         visible: !root.compact
         enabled: false
