@@ -15,7 +15,6 @@ class TokenFormatter : public QObject {
   Q_OBJECT
   QML_ELEMENT
   QML_SINGLETON
-  QML_UNCREATABLE("Stateless formatting helper; call its methods directly, do not instantiate")
 
  public:
   using QObject::QObject;

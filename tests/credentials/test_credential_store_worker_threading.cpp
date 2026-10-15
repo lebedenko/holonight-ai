@@ -1,9 +1,12 @@
 #include "holonight_credentials/detail/credential_store_worker.h"
 #include "holonight_credentials/secret_service_credential_store.h"
 
+#include <QScopeGuard>
 #include <QSignalSpy>
+#include <QTest>
 #include <QThread>
 
+#include <atomic>
 #include <chrono>
 #include <gtest/gtest.h>
 
@@ -14,9 +17,10 @@ TEST(CredentialStoreWorkerThreadingTest, SlotsExecuteOnWorkerThread) {
   QThread workerThread;
   auto* worker = new detail::CredentialStoreWorker();
   worker->moveToThread(&workerThread);
+  QObject::connect(&workerThread, &QThread::finished, worker, &QObject::deleteLater);
   workerThread.start();
 
-  QThread* observed = nullptr;
+  std::atomic<QThread*> observed = nullptr;
   QObject::connect(
       worker, &detail::CredentialStoreWorker::knownProviderIdsLoaded, worker,
       [&] { observed = QThread::currentThread(); }, Qt::DirectConnection);
@@ -24,17 +28,16 @@ TEST(CredentialStoreWorkerThreadingTest, SlotsExecuteOnWorkerThread) {
       worker, &detail::CredentialStoreWorker::unavailable, worker, [&] { observed = QThread::currentThread(); },
       Qt::DirectConnection);
 
-  QSignalSpy loadedSpy(worker, &detail::CredentialStoreWorker::knownProviderIdsLoaded);
-  QSignalSpy unavailableSpy(worker, &detail::CredentialStoreWorker::unavailable);
+  const auto cleanup = qScopeGuard([&] {
+    workerThread.quit();
+    workerThread.wait();
+  });
   QMetaObject::invokeMethod(worker, [worker] { worker->loadKnownProviderIds(); }, Qt::QueuedConnection);
 
-  ASSERT_TRUE(loadedSpy.wait(2000) || !unavailableSpy.isEmpty());
+  ASSERT_TRUE(QTest::qWaitFor([&] { return observed.load() != nullptr; }, 2000));
 
-  EXPECT_EQ(observed, &workerThread);
-  EXPECT_NE(observed, QThread::currentThread());
-
-  workerThread.quit();
-  workerThread.wait();
+  EXPECT_EQ(observed.load(), &workerThread);
+  EXPECT_NE(observed.load(), QThread::currentThread());
 }
 
 TEST(SecretServiceCredentialStoreThreadingTest, StoreReturnsImmediately) {
