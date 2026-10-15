@@ -16,7 +16,7 @@ under `qml/shared/`, `qml/workspace/`, `qml/quickpanel/`. Design/architecture no
 Use `task` as the primary workflow:
 
 - `task configure` configures a Debug CMake/Ninja build and writes `compile_commands.json`.
-- `task build` builds `build/debug/holonight-chat`.
+- `task build` builds `build/dev/holonight-chat`.
 - `task run` builds and launches the window.
 - `task test` configures tests, builds them, and runs `ctest --output-on-failure`.
 - `task coverage` generates an HTML coverage report in `build/coverage/index.html`.
@@ -24,9 +24,7 @@ Use `task` as the primary workflow:
   clang-tidy, and qmllint checks.
 - `task clean` removes `build/` after confirmation.
 
-Run `task deps` explicitly to prepare supplied local Config and Qt providers in `build/deps/prefix`.
-Normal commands validate prerequisites and never prepare providers. The legacy dependency tasks are aliases.
-Use `task ci:prepare` before `task ci` for qualified offline container acceptance.
+
 
 ## Coding Style & Naming Conventions
 
@@ -64,5 +62,22 @@ dependency path; installed execution discovers `../lib/qt6/qml` relative to the 
 (using the configured install libdir). Activation paths are fixed at CMake configure time.
 See [UQC-104 acceptance](docs/sdd/unified-qtquick-controls/SPEC.md).
 
-Developer tooling uses `build/debug`, `build/test`, `build/release` and module-owned `build/deps`.
-See tooling/README.md; run task tooling:refresh explicitly after configuring/building for editor metadata.
+
+
+## Development and documentation
+
+Use `task build` and `task test` for incremental native CMake/CTest work. Native builds
+consume installed packages; use `CMAKE_PREFIX_PATH` for an explicit development prefix.
+Use `task format` for the pinned formatter and `task check` for container acceptance.
+Run `task check:integration` for installation/runtime changes. Container builds use
+fresh build/prefix directories, separate from `build/dev` and `build/release`.
+clangd reads `build/dev/compile_commands.json` directly.
+
+Routine changes need tests and a commit explanation; update user documentation when
+behavior changes. Substantial designs need one local SDD describing intent, decisions,
+interfaces and acceptance. Cross-project changes need one umbrella note linking local
+designs and stating contracts, dependency order and integration checks. Historical SDDs
+remain historical. No separate planning, readiness, handoff or closure commits are required.
+Keep routine logs and generated evidence in ignored build directories or CI artifacts.
+Provider and consumer implementation may proceed together; publish providers before
+consumer commits that reference them. Update umbrella pins per coherent milestone.

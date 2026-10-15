@@ -1,61 +1,16 @@
 version: '3'
 vars:
-  BUILD_DIR: build/debug
+  PRESET: '{{default "dev" .PRESET}}'
+  BUILD_DIR: build/{{.PRESET}}
   RELEASE_BUILD_DIR: build/release
-  HOLONIGHT_QT_PREFIX: '{{default (printf "%s/build/deps/prefix" .TASKFILE_DIR) .HOLONIGHT_DEPENDENCY_PREFIX}}'
-  HOLONIGHT_QT_DIR: '{{.TASKFILE_DIR}}/build/deps/prefix/lib/cmake/HolonightQt'
-  HOLONIGHT_QT_BUILD_DIR: build/deps/holonight-qt
-  HOLONIGHT_QT_SOURCE: '{{default "../holonight-qt" .HOLONIGHT_QT_SOURCE}}'
-  HOLONIGHT_QT_REVISION: 7c3ce074a8c2e02e4ee8cad8cd19eb8627aa4f68
-  HOLONIGHT_CONFIG_PREFIX: '{{default (printf "%s/build/deps/prefix" .TASKFILE_DIR) .HOLONIGHT_DEPENDENCY_PREFIX}}'
-  HOLONIGHT_CONFIG_BUILD_DIR: build/deps/holonight-config
-  HOLONIGHT_CONFIG_SOURCE: '{{default "../holonight-config" .HOLONIGHT_CONFIG_SOURCE}}'
-  HOLONIGHT_CONFIG_REVISION: 0ccd25f323662f50a47bb048be636160f2b7c135
   SCALE_FACTOR: '{{default "1.0" .SCALE_FACTOR}}'
   NPROC:
     sh: nproc
-  PRESET: '{{default "debug" .PRESET}}'
 tasks:
-  ci:
-    desc: Rehearse all push validation in isolated containers
-    cmds:
-    - python3 scripts/ci/run.py
   license-check:
     desc: Validate REUSE licensing metadata
     cmds:
     - reuse lint
-  configure:
-    desc: configure using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py configure --preset {{.PRESET}}
-  configure:release:
-    desc: configure using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py configure --preset release
-  configure-tests:
-    desc: configure using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py configure --preset test
-  configure-coverage:
-    desc: Configure coverage preset
-    cmds:
-    - python3 tooling/workflow.py configure --preset coverage
-  build:qt-dependency:
-    desc: Explicit alias for task deps
-    cmds:
-    - task: deps
-  build:config-dependency:
-    desc: Explicit alias for task deps
-    cmds:
-    - task: deps
-  build:
-    desc: build using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py build --preset {{.PRESET}}
-  build:release:
-    desc: build using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py build --preset release
   run:
     desc: Build and run holonight-chat (SCALE_FACTOR defaults to 1.0)
     deps:
@@ -78,55 +33,15 @@ tasks:
     - cmake -B {{.RELEASE_BUILD_DIR}} -DCMAKE_INSTALL_PREFIX=/usr
     - cmake --build {{.RELEASE_BUILD_DIR}} -j{{.NPROC}}
     - sudo cmake --install {{.RELEASE_BUILD_DIR}}
-  test:
-    desc: test using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py test --preset {{.PRESET}}
   coverage:
     desc: Build coverage report
     cmds:
-    - task: configure-coverage
+    - cmake --preset dev -B build/coverage -DENABLE_COVERAGE=ON
     - cmake --build build/coverage --target coverage
-  format:
-    desc: format using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py format
-  format-check:
-    desc: format-check using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py format-check
-  tidy:
-    desc: tidy using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py tidy --scope all
-  tidy-src:
-    desc: tidy using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py tidy --scope src
-  tidy-tests:
-    desc: tidy using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py tidy --scope tests
-  tidy-container:
-    desc: Explicitly prepare qualified CI inputs, then run offline static acceptance
-    cmds:
-    - task: ci:prepare
-    - python3 scripts/ci/run.py --lane static-checks
-  build-ci-image:
-    desc: Explicitly acquire qualified CI images and prepare providers
-    cmds:
-    - task: ci:prepare
-  ci:prepare:
-    desc: Explicitly acquire pinned images and provider sources and prepare providers
-    cmds:
-    - python3 scripts/ci/run.py --prepare {{.CLI_ARGS}}
   qml-lint:
-    desc: Build and check QML with configured Qt installation
+    desc: qml-lint
     cmds:
-    - task: build
-      vars:
-        PRESET: test
-    - cmake --build build/test --target qml-lint
+    - cmake --build build/{{.PRESET}} --target qml-lint
   qmltypes-check:
     desc: Verify generated HolonightChat QML type metadata
     deps:
@@ -138,45 +53,52 @@ tasks:
     cmds:
     - rm -rf {{.BUILD_DIR}}
     prompt: Remove {{.BUILD_DIR}}/ entirely?
-  tooling:doctor:
-    desc: doctor using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py doctor
-  tooling:refresh:
-    desc: refresh using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py refresh --preset {{default "test" .EDITOR_PRESET}}
-  serena:serve:
-    desc: Start independent Serena server in codex context
-    cmds:
-    - serena start-mcp-server --project "{{.TASKFILE_DIR}}" --context codex
-  serena:index:
-    desc: Explicitly index this module
-    cmds:
-    - serena project index "{{.TASKFILE_DIR}}"
-  deps:
-    desc: deps using standalone tooling
-    cmds:
-    - python3 tooling/workflow.py deps --preset {{.PRESET}}
   qml-import-check:
-    desc: Check QML runtime import contracts
+    desc: qml-import-check
     cmds:
-    - python3 tooling/qml_policy.py
-  tooling:qmlls:
-    desc: Start configured Qt language server with resolved import paths
-    cmds:
-    - python3 tooling/workflow.py qmlls
-  lint:
-    desc: Run C++ and QML lint
-    cmds:
-    - task: tidy
-    - task: qml-lint
+    - python3 scripts/check-runtime-imports.py
   check:
-    desc: Run build, tests and static checks
+    desc: Authoritative container acceptance
+    cmds:
+    - python3 scripts/ci/container.py check {{.CLI_ARGS}}
+  configure:
+    desc: configure
+    cmds:
+    - cmake --preset {{.PRESET}} {{.CLI_ARGS}}
+  build:
+    desc: build
+    cmds:
+    - cmake --preset {{.PRESET}}
+    - cmake --build --preset {{.PRESET}}
+  test:
+    desc: test
     cmds:
     - task: build
-    - task: test
-    - task: format-check
-    - task: lint
-    - task: qml-import-check
-    - task: qmltypes-check
+      vars:
+        PRESET: dev
+    - dbus-run-session -- ctest --preset dev {{.CLI_ARGS}}
+  configure:release:
+    desc: configure:release
+    cmds:
+    - cmake --preset release {{.CLI_ARGS}}
+  build:release:
+    desc: build:release
+    cmds:
+    - cmake --preset release
+    - cmake --build --preset release
+  format:
+    desc: Format with the pinned container tools
+    cmds:
+    - python3 scripts/ci/container.py format
+  format-check:
+    desc: format-check
+    cmds:
+    - python3 scripts/quality.py format-check
+  tidy:
+    desc: tidy
+    cmds:
+    - python3 scripts/quality.py tidy --build build/{{.PRESET}}
+  check:integration:
+    desc: Container acceptance plus Release staging and runtime checks
+    cmds:
+    - python3 scripts/ci/container.py integration {{.CLI_ARGS}}

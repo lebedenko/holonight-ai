@@ -9,12 +9,11 @@ add_library(holonight_credentials STATIC
 
 target_include_directories(holonight_credentials PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${LIBSECRET_INCLUDE_DIRS}
 )
 
 target_link_libraries(holonight_credentials PUBLIC
     Qt6::Core
-    ${LIBSECRET_LIBRARIES}
+    PkgConfig::LIBSECRET
 )
 
 target_compile_features(holonight_credentials PUBLIC cxx_std_23)

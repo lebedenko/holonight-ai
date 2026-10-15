@@ -1,6 +1,23 @@
 cmake_minimum_required(VERSION 3.25)
 project(holonight-ai VERSION 0.1.0 LANGUAGES C CXX)
 
+# Installed QML providers follow the standard CMake prefix search path.
+set(_qml_prefixes ${CMAKE_PREFIX_PATH})
+if(DEFINED ENV{CMAKE_PREFIX_PATH})
+  string(REPLACE ":" ";" _prefix_environment "$ENV{CMAKE_PREFIX_PATH}")
+  list(APPEND _qml_prefixes ${_prefix_environment})
+endif()
+foreach(_prefix IN LISTS _qml_prefixes)
+  if(IS_DIRECTORY "${_prefix}/lib/qt6/qml")
+    list(APPEND QML_IMPORT_PATH "${_prefix}/lib/qt6/qml")
+  endif()
+endforeach()
+if(DEFINED ENV{QML_IMPORT_PATH})
+  string(REPLACE ":" ";" _qml_environment "$ENV{QML_IMPORT_PATH}")
+  list(APPEND QML_IMPORT_PATH ${_qml_environment})
+endif()
+list(REMOVE_DUPLICATES QML_IMPORT_PATH)
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
@@ -11,7 +28,6 @@ include(GNUInstallDirs)
 install(FILES LICENSE LICENSES/GPL-3.0-or-later.txt
   DESTINATION "${CMAKE_INSTALL_DATADIR}/licenses/${PROJECT_NAME}")
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/tooling/dependencies.cmake")
 find_package(Qt6 6.11 REQUIRED COMPONENTS Core Gui Quick Qml Network Concurrent Sql DBus)
 find_package(HolonightQt REQUIRED COMPONENTS Controls Wayland)
 unset(HOLONIGHT_QML_IMPORT_PATH CACHE)
@@ -23,7 +39,7 @@ find_path(HOLONIGHT_QML_IMPORT_PATH
   REQUIRED
 )
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBSECRET REQUIRED libsecret-1)
+pkg_check_modules(LIBSECRET REQUIRED IMPORTED_TARGET libsecret-1)
 
 # Generate qmldir redirectors for QML files in module subdirectories.
 qt_policy(SET QTP0004 NEW)
@@ -106,9 +122,7 @@ endif()
 # Format / Tidy / qmllint targets
 # ============================================================
 find_program(CLANG_FORMAT clang-format)
-find_program(CLANG_TIDY clang-tidy)
 
-find_program(RUN_CLANG_TIDY run-clang-tidy)
 if(NOT QMLLINT)
   get_target_property(QMLLINT Qt6::qmllint IMPORTED_LOCATION)
 endif()
@@ -118,21 +132,6 @@ file(GLOB_RECURSE ALL_SOURCE_FILES
     CONFIGURE_DEPENDS
     apps/*.cpp apps/*.h src/*.cpp src/*.h tests/*.cpp tests/*.h
 )
-
-file(GLOB_RECURSE ALL_CXX_SRC_IMPL_FILES
-    LIST_DIRECTORIES false
-    CONFIGURE_DEPENDS
-    apps/*.cpp src/*.cpp
-)
-
-file(GLOB_RECURSE ALL_CXX_TEST_IMPL_FILES
-    LIST_DIRECTORIES false
-    CONFIGURE_DEPENDS
-    tests/*.cpp
-)
-list(REMOVE_ITEM ALL_CXX_TEST_IMPL_FILES "${CMAKE_CURRENT_SOURCE_DIR}/tests/main.cpp")
-
-set(ALL_CXX_IMPL_FILES ${ALL_CXX_SRC_IMPL_FILES} ${ALL_CXX_TEST_IMPL_FILES})
 
 file(GLOB_RECURSE ALL_QML_FILES
     LIST_DIRECTORIES false
@@ -153,74 +152,12 @@ if(CLANG_FORMAT)
     )
 endif()
 
-if(CLANG_TIDY)
-  include(ProcessorCount)
-  ProcessorCount(TIDY_DEFAULT_JOBS)
-  if(TIDY_DEFAULT_JOBS EQUAL 0)
-    set(TIDY_DEFAULT_JOBS 1)
-  endif()
-  set(TIDY_JOBS "${TIDY_DEFAULT_JOBS}" CACHE STRING "Maximum parallel clang-tidy processes")
-
-  # run-clang-tidy gained -hide-progress in LLVM 20. On older toolchains
-  # (e.g. Debian's clang-tidy) the flag is unknown, and run-clang-tidy's
-  # argparse latches onto the leading "-h", prints --help, and exits 0 —
-  # silently skipping every file while the build target reports success.
-  # Only pass the flag when the installed run-clang-tidy advertises it.
-  set(TIDY_HIDE_PROGRESS_FLAG "")
-  if(RUN_CLANG_TIDY)
-    execute_process(
-      COMMAND ${RUN_CLANG_TIDY} --help
-      OUTPUT_VARIABLE RUN_CLANG_TIDY_HELP
-      ERROR_VARIABLE RUN_CLANG_TIDY_HELP
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    if(RUN_CLANG_TIDY_HELP MATCHES "-hide-progress")
-      set(TIDY_HIDE_PROGRESS_FLAG "-hide-progress")
-    endif()
-  endif()
-
-  set(TIDY_DB_DIR ${CMAKE_BINARY_DIR}/tidy)
-  set(STRIP_TIDY_FLAGS_SCRIPT ${CMAKE_BINARY_DIR}/strip_tidy_flags.cmake)
-  file(MAKE_DIRECTORY ${TIDY_DB_DIR})
-  file(WRITE ${STRIP_TIDY_FLAGS_SCRIPT}
-        "file(READ \"${CMAKE_BINARY_DIR}/compile_commands.json\" db)\n"
-        "string(REPLACE \"-mno-direct-extern-access\" \"\" db \"\${db}\")\n"
-        "file(WRITE \"${TIDY_DB_DIR}/compile_commands.json\" \"\${db}\")\n"
-    )
-
-  function(add_holonight_tidy_target target_name target_sources)
-    if(RUN_CLANG_TIDY)
-      add_custom_target(${target_name}
-            COMMAND ${CMAKE_COMMAND} -P ${STRIP_TIDY_FLAGS_SCRIPT}
-            COMMAND ${RUN_CLANG_TIDY}
-                -quiet
-                ${TIDY_HIDE_PROGRESS_FLAG}
-                -j ${TIDY_JOBS}
-                -p ${TIDY_DB_DIR}
-                -header-filter "^${CMAKE_CURRENT_SOURCE_DIR}/(apps|src|include|tests)/.*\\.(h|hpp)$"
-                ${${target_sources}}
-            COMMENT "Running ${target_name}"
-            VERBATIM
-        )
-    else()
-      add_custom_target(${target_name}
-            COMMAND ${CMAKE_COMMAND} -P ${STRIP_TIDY_FLAGS_SCRIPT}
-            COMMAND ${CLANG_TIDY} --quiet -p ${TIDY_DB_DIR}
-                -header-filter "^${CMAKE_CURRENT_SOURCE_DIR}/(apps|src|include|tests)/.*\\.(h|hpp)$" ${${target_sources}}
-            COMMENT "Running ${target_name}"
-            VERBATIM
-        )
-    endif()
-  endfunction()
-
-  add_holonight_tidy_target(tidy-src ALL_CXX_SRC_IMPL_FILES)
-  add_holonight_tidy_target(tidy-tests ALL_CXX_TEST_IMPL_FILES)
-  add_holonight_tidy_target(tidy ALL_CXX_IMPL_FILES)
-
-  if(NOT RUN_CLANG_TIDY)
-    message(STATUS "run-clang-tidy was not found; tidy targets will use clang-tidy sequentially")
-  endif()
-endif()
+# Use the same direct compilation-database check as task tidy.
+add_custom_target(tidy
+  COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/scripts/quality.py" tidy --build "${CMAKE_BINARY_DIR}"
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+  VERBATIM
+)
 
 if(QMLLINT)
   cmake_path(ABSOLUTE_PATH QT6_INSTALL_QML BASE_DIRECTORY "${QT6_INSTALL_PREFIX}"

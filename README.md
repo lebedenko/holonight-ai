@@ -1,5 +1,7 @@
 # HoloNight AI
 
+For current build, test, container acceptance and provider workflows, see [DEVELOPMENT.md](DEVELOPMENT.md).
+
 A standalone C++23/Qt6 desktop assistant application, part of the HoloNight group of projects.
 Built as `holonight-chat`, a normal desktop Qt Quick window (not a Wayland layer-shell surface)
 with a second, compact quick-panel window sharing the same conversation state; shell-driven
@@ -54,7 +56,7 @@ All workflows go through [`task`](https://taskfile.dev):
 
 ```bash
 task configure    # configure CMake
-task build        # build build/debug/holonight-chat
+task build        # build build/dev/holonight-chat
 task run          # build and launch the window
 task test         # build and run unit tests
 task format       # auto-format with clang-format
@@ -66,21 +68,7 @@ task coverage     # build with coverage and generate build/coverage/index.html
 task clean        # remove build/
 ```
 
-Run `task deps` explicitly with local `HOLONIGHT_CONFIG_SOURCE` and `HOLONIGHT_QT_SOURCE`
-checkouts (defaults: sibling repositories). It prepares Config before Qt in `build/deps/prefix`,
-with provider tests/demo/gallery disabled and Controls/Wayland retained. Normal configure, build,
-test and static commands only validate prerequisites; missing providers report remediation.
-`build:qt-dependency` and `build:config-dependency` remain explicit aliases for `task deps`.
-Install declared external packages beforehand; Qt >=6.11 and installed GTest/GMock >=1.14 are
-required for tests. `ENABLE_COVERAGE` defaults OFF and adds gcovr only for coverage.
-Use `HOLONIGHT_DEPENDENCY_PREFIX` for installed internal providers and `HOLONIGHT_EXTERNAL_PREFIX`
-for external libraries. Internal providers cannot fall back to system/external locations.
-Compatible source/toolchain/options reuse existing builds; incompatible state is archived.
-
-```bash
-task configure-tests
-task test
-```
+See [DEVELOPMENT.md](DEVELOPMENT.md) for current native and container commands.
 
 ## Runtime style selection
 
@@ -351,30 +339,6 @@ instance — falling through silently (no error) at each unusable tier.
 ## License
 
 GPL-3.0-or-later — see [LICENSE](LICENSE).
-
-## Standalone developer tooling
-
-See [tooling/README.md](tooling/README.md) for presets, local dependency overrides, editor refresh,
-`task tooling:doctor`, and the independent Serena project.
-
-## Local CI rehearsal
-
-Run `task ci:prepare` explicitly before `task ci`, with Python 3, Git and Docker (or Podman).
-Preparation acquires the pinned qualified Arch and REUSE images, clones exact Config/Qt revisions,
-and prepares installed providers. To clone local repositories at the same exact commits, run
-`task ci:prepare -- --provider-source-root ..`. Dirty provider working trees are never copied.
-
-Acceptance runs build-test, clean Release staging, strict static checks and licensing with
-`--pull=never --network=none`, caller UID/GID, read-only source and installed-provider inputs.
-It never installs packages, fetches sources or mounts provider build trees. Identity/content hashes
-reject stale or tampered preparation; rerun preparation explicitly after contract changes.
-Build and installed startup cover all four style selectors without desktop automation or live
-model-service calls. Release staging excludes tests and fixtures and verifies D-Bus activation.
-Complete logs, package/tool versions, source/content hashes and lane results are saved under ignored
-`build/ci/`; preparation evidence is in `build/ci-prepared/`. A failed check returns nonzero.
-`task tidy-container` explicitly prepares then runs static acceptance. `Dockerfile.ci` is a thin
-qualified-image compatibility wrapper; project-image publishing has been retired. Historical
-`scripts/ci/packages.json` remains audit evidence, not an acceptance-time installation list.
 
 ## Installed application
 

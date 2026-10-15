@@ -9,7 +9,7 @@ root = Path(__file__).resolve().parents[1]
 errors = []
 for name in subprocess.check_output(['git', 'ls-files', '-z'], cwd=root).decode().split('\0'):
     path = root / name
-    if path.suffix != '.qml' or name.startswith(('tests/', 'tooling/')):
+    if path.suffix != '.qml' or name.startswith('tests/'):
         continue
     if root.name == 'holonight-qt' and not name.startswith(('demo/', 'examples/')):
         continue
