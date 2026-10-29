@@ -49,9 +49,9 @@ describe the user-visible change, list validation commands run, and link relevan
 
 ## Agent-Specific Notes
 
-Preserve the application/rendering metatype extraction, merge and singleton registration in
+Preserve the application metatype extraction, merge and singleton registration in
 `apps/chat/CMakeLists.txt`. The acceptance executable shares the QML/assets inventory but
-registers only test doubles and rendering types. Keep its executable and generated QML module
+registers only test doubles; QMarkdown supplies its own rendering types. Keep its executable and generated QML module
 in their separate build directory so source-based tests cannot discover fixture resources.
 
 Runtime standard controls use `import QtQuick.Controls as Controls`; palette/primitives and

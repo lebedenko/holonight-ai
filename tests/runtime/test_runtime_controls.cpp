@@ -15,8 +15,6 @@
 #include <QtQml>
 
 #include <gtest/gtest.h>
-#include <holonight_rendering/code_highlighter.h>
-#include <holonight_rendering/content_block.h>
 #include <memory>
 
 namespace {
@@ -40,6 +38,21 @@ void activate(QObject* object, const char* signal) {
 
 TEST(RuntimeControls, ApplicationSurfacesAndBehavior) {
   FakeChatViewModel chat;
+  QList<QVariantMap> markdown_rows;
+  for (const auto& role : {QStringLiteral("assistant"), QStringLiteral("user")}) {
+    markdown_rows.append({
+        {QStringLiteral("messageId"), role},
+        {QStringLiteral("role"), role},
+        {QStringLiteral("text"), QStringLiteral("# Markdown row\n\n- [x] GFM\n\n```cpp\nint value = 1;\n```\n")},
+        {QStringLiteral("status"), QStringLiteral("complete")},
+        {QStringLiteral("createdAt"), QDateTime::currentDateTime()},
+        {QStringLiteral("modelName"), QStringLiteral("fixture")},
+        {QStringLiteral("providerId"), QStringLiteral("fixture")},
+        {QStringLiteral("providerType"), QStringLiteral("openai")},
+        {QStringLiteral("providerName"), QStringLiteral("Fixture")},
+    });
+  }
+  chat.message_model.resetRows(markdown_rows);
   FakeProviderController providers;
   FakeUtilitySettingsController utility;
   const std::unique_ptr<QQmlPropertyMap> provider_form{QQmlPropertyMap::create()};
@@ -84,11 +97,9 @@ TEST(RuntimeControls, ApplicationSurfacesAndBehavior) {
        }) {
     qmlRegisterSingletonInstance("HolonightChat", 1, 0, name, provider_form.get());
   }
-  qmlRegisterTypesAndRevisions<holonight_rendering::CodeHighlighter>("HolonightChat", 1);
-  qmlRegisterTypesAndRevisions<holonight_rendering::ContentBlock>("HolonightChat", 1);
-  qmlRegisterTypesAndRevisions<holonight_rendering::ContentBlockTypeNs>("HolonightChat", 1);
   QQmlEngine engine;
   engine.addImportPath(QStringLiteral(HOLONIGHT_QML_IMPORT_PATH));
+  engine.addImportPath(QStringLiteral(QMARKDOWN_QML_IMPORT_PATH));
   QStringList diagnostics;
   QObject::connect(&engine, &QQmlEngine::warnings, &engine, [&diagnostics](const QList<QQmlError>& errors) {
     for (const auto& error : errors) {
@@ -110,6 +121,14 @@ TEST(RuntimeControls, ApplicationSurfacesAndBehavior) {
   ASSERT_NE(panel_item, nullptr);
   panel_item->setParentItem(host.contentItem());
   panel_item->setSize(QSizeF{500, 600});
+  QTRY_VERIFY(workspace->findChildren<QObject*>(QStringLiteral("markdownBlockBody")).size() >= 2);
+  QTRY_VERIFY(panel->findChildren<QObject*>(QStringLiteral("markdownBlockBody")).size() >= 2);
+  for (QObject* surface : {workspace.get(), panel.get()}) {
+    for (QObject* markdown : surface->findChildren<QObject*>(QStringLiteral("markdownBlockBody"))) {
+      EXPECT_TRUE(markdown->property("syntaxHighlightingAvailable").toBool());
+      EXPECT_TRUE(markdown->property("contentHeight").toReal() > 0);
+    }
+  }
   auto* quick_popup = panel->findChild<QObject*>(QStringLiteral("quickPanelConversationPopup"));
   ASSERT_NE(quick_popup, nullptr);
   activate(quick_popup, "open");

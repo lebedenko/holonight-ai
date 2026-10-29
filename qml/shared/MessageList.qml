@@ -36,6 +36,8 @@ Item {
 
             width: ListView.view.width
             messageWidthRatio: root.messageWidthRatio
+            selectionViewport: messageView
+            onSelectionScrollRequested: deltaY => messageView.scrollForSelection(deltaY)
             onStopRequested: ChatViewModel.stop()
             onUserExpansionStarted: messageView.beginPreservingItemTop(messageDelegate)
             onUserExpansionFinished: messageView.finishPreservingItemTop()

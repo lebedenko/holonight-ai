@@ -1,6 +1,5 @@
 #include "holonight_application/message_list_model.h"
 
-#include "holonight_application/message_content_model.h"
 #include "holonight_application/provider_instance_registry.h"
 #include "holonight_application/tools/tool_presenters.h"
 #include "holonight_application/tools/tool_registry.h"
@@ -534,9 +533,7 @@ QVariant MessageListModel::data(const QModelIndex& index, int role) const {
       return row.provider_type;
     case ProviderNameRole:
       return row.provider_name;
-    case ContentBlocksRole: {
-      return row.content_model ? QVariant::fromValue(static_cast<QObject*>(row.content_model.get())) : QVariant();
-    }
+
     case InputTokenCountRole:
     case OutputTokenCountRole:
     case ReasoningTokenCountRole:
@@ -558,7 +555,6 @@ QHash<int, QByteArray> MessageListModel::roleNames() const {
       {StatusRole, QByteArrayLiteral("status")},
       {CreatedAtRole, QByteArrayLiteral("createdAt")},
       {ModelNameRole, QByteArrayLiteral("modelName")},
-      {ContentBlocksRole, QByteArrayLiteral("contentBlocks")},
       {ProviderIdRole, QByteArrayLiteral("providerId")},
       {ProviderTypeRole, QByteArrayLiteral("providerType")},
       {ProviderNameRole, QByteArrayLiteral("providerName")},
@@ -622,7 +618,6 @@ void MessageListModel::updateNewestMessage(const Message& message) {
 
   Row& current = rows_.front();
   Row updated = toRow(message);
-  std::unique_ptr<MessageContentModel> content_model = std::move(current.content_model);
   QList<int> changedRoles;
   const bool textChanged = current.text != updated.text;
 
@@ -660,14 +655,7 @@ void MessageListModel::updateNewestMessage(const Message& message) {
     changedRoles.append(toolActivityRoles());
   }
   if (changedRoles.isEmpty()) {
-    current.content_model = std::move(content_model);
     return;
-  }
-  if (content_model && updated.role == QStringLiteral("assistant") && !updated.tool_call.has_value()) {
-    const bool terminal = updated.status == QStringLiteral("complete") || updated.status == QStringLiteral("error") ||
-                          updated.status == QStringLiteral("cancelled");
-    content_model->setSource(updated.text, terminal);
-    updated.content_model = std::move(content_model);
   }
 
   current = std::move(updated);
@@ -720,12 +708,6 @@ MessageListModel::Row MessageListModel::toRow(const Message& message) {
 
   const auto toolCallOpt = singleToolCall(message);
   if (!toolCallOpt.has_value()) {
-    if (row.role == QStringLiteral("assistant")) {
-      row.content_model = std::make_unique<MessageContentModel>(this);
-      const bool terminal = row.status == QStringLiteral("complete") || row.status == QStringLiteral("error") ||
-                            row.status == QStringLiteral("cancelled");
-      row.content_model->setSource(row.text, terminal);
-    }
     return row;
   }
   row.tool_call = toolCallVariant(*toolCallOpt, tool_registry_.get());

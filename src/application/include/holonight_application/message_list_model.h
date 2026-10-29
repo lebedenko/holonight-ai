@@ -20,7 +20,6 @@
 namespace holonight_application {
 
 class ToolRegistry;
-class MessageContentModel;
 
 // Bridges Conversation::messages() (a plain std::vector<Message>, with no change notification of
 // its own) to a newest-first QML transcript projection. Tool activity rows are collapsed in this
@@ -39,11 +38,10 @@ class MessageListModel : public QAbstractListModel {
     TextRole,
     StatusRole,  // "pending" | "streaming" | "complete" | "error" | "cancelled"
     CreatedAtRole,
-    ModelNameRole,      // model name for assistant messages, "" for user/system
-    ContentBlocksRole,  // persistent MessageContentModel for assistant text rows
-    ProviderIdRole,     // provider identifier for assistant messages, "" for user/system
-    ProviderTypeRole,   // provider type resolved from live configuration or a tombstone
-    ProviderNameRole,   // current live name or the frozen tombstone name
+    ModelNameRole,     // model name for assistant messages, "" for user/system
+    ProviderIdRole,    // provider identifier for assistant messages, "" for user/system
+    ProviderTypeRole,  // provider type resolved from live configuration or a tombstone
+    ProviderNameRole,  // current live name or the frozen tombstone name
     // REQ-F-003/REQ-NF-003. Undefined in QML (invalid QVariant) until applyUsageRecords() supplies
     // a matching holonight_persistence::UsageRecord for this row's message id.
     InputTokenCountRole,
@@ -121,7 +119,6 @@ class MessageListModel : public QAbstractListModel {
     QString provider_id;
     QString provider_type;
     QString provider_name;
-    std::unique_ptr<MessageContentModel> content_model;
     // REQ-F-003. Absent until applyUsageRecords() supplies a match; absence means the footer's 13
     // usage roles report an invalid QVariant (undefined in QML), not zero-filled values.
     std::optional<holonight_persistence::UsageRecord> usage;

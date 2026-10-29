@@ -1,4 +1,3 @@
-#include "holonight_application/message_content_model.h"
 #include "holonight_application/message_list_model.h"
 
 #include <QDate>
@@ -13,7 +12,6 @@
 #include <holonight_domain/message.h>
 #include <holonight_domain/tool_call.h>
 #include <holonight_persistence/usage_record.h>
-#include <holonight_rendering/content_block.h>
 
 namespace holonight_application {
 namespace {
@@ -101,15 +99,12 @@ TEST(MessageListModel, IdenticalUpdateEmitsNothing) {
   EXPECT_EQ(changedSpy.count(), 0);
 }
 
-TEST(MessageListModel, CompletionKeepsPersistentContentModel) {
+TEST(MessageListModel, CompletionWithUnchangedTextEmitsStatus) {
   MessageListModel model;
   const MessageId messageId = MessageId::generate();
   const QDateTime createdAt(QDate(2026, 8, 5), QTime(12, 0), QTimeZone::UTC);
   model.insertNewestMessage(Message(messageId, MessageRole::Assistant, QStringLiteral("```cpp\ncomplete\n```"),
                                     MessageStatus::Streaming, createdAt));
-  auto* blocks = qobject_cast<MessageContentModel*>(
-      model.data(model.index(0), MessageListModel::ContentBlocksRole).value<QObject*>());
-  ASSERT_NE(blocks, nullptr);
   QSignalSpy changedSpy(&model, &QAbstractItemModel::dataChanged);
 
   model.updateNewestMessage(Message(messageId, MessageRole::Assistant, QStringLiteral("```cpp\ncomplete\n```"),
@@ -117,21 +112,14 @@ TEST(MessageListModel, CompletionKeepsPersistentContentModel) {
 
   ASSERT_EQ(changedSpy.count(), 1);
   EXPECT_EQ(changedRoles(changedSpy), (QList<int>{MessageListModel::StatusRole}));
-  EXPECT_EQ(qobject_cast<MessageContentModel*>(
-                model.data(model.index(0), MessageListModel::ContentBlocksRole).value<QObject*>()),
-            blocks);
-  ASSERT_EQ(blocks->rowCount(), 1);
-  EXPECT_EQ(blocks->data(blocks->index(0), MessageContentModel::TextRole).toString(), QStringLiteral("complete\n"));
-  EXPECT_TRUE(blocks->data(blocks->index(0), MessageContentModel::CompleteRole).toBool());
 }
 
-TEST(MessageListModel, TerminalTextChangeInvalidatesTextAndContentBlocksOnly) {
+TEST(MessageListModel, TerminalTextChangeEmitsTextOnly) {
   MessageListModel model;
   const MessageId messageId = MessageId::generate();
   const QDateTime createdAt(QDate(2026, 8, 5), QTime(12, 0), QTimeZone::UTC);
   model.insertNewestMessage(
       Message(messageId, MessageRole::Assistant, QStringLiteral("before"), MessageStatus::Complete, createdAt));
-  (void)model.data(model.index(0), MessageListModel::ContentBlocksRole);
   QSignalSpy changedSpy(&model, &QAbstractItemModel::dataChanged);
 
   model.updateNewestMessage(
@@ -139,17 +127,6 @@ TEST(MessageListModel, TerminalTextChangeInvalidatesTextAndContentBlocksOnly) {
 
   ASSERT_EQ(changedSpy.count(), 1);
   EXPECT_EQ(changedRoles(changedSpy), (QList<int>{MessageListModel::TextRole}));
-}
-
-TEST(MessageListModel, StreamingMessageExposesPersistentContentModel) {
-  MessageListModel model;
-  model.insertNewestMessage(Message(MessageId::generate(), MessageRole::Assistant, QStringLiteral("```cpp\npartial"),
-                                    MessageStatus::Streaming));
-
-  auto* blocks = qobject_cast<MessageContentModel*>(
-      model.data(model.index(0), MessageListModel::ContentBlocksRole).value<QObject*>());
-  ASSERT_NE(blocks, nullptr);
-  EXPECT_EQ(blocks->rawMarkdown(), QStringLiteral("```cpp\npartial"));
 }
 
 // T-011 (REQ-F-007/REQ-F-011): ordinary text messages carry no tool-call data.

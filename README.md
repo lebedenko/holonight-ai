@@ -11,8 +11,8 @@ activation of the quick panel over D-Bus remains future work.
 SQLite-backed conversation persistence, a Settings window for live per-provider configuration,
 Secret Service-backed credential storage, a compact quick-panel surface, desktop notifications
 for responses/errors completing while the app is out of view, native block-based Markdown/code
-rendering for completed messages (fenced code blocks get syntax highlighting, a language label, and
-a copy button; live theme switching updates code colors instantly), per-provider message icons
+rendering during streaming and for completed messages (fenced code blocks get syntax highlighting,
+a language label, and a copy button; live theme switching updates code colors instantly), per-provider message icons
 (theme-tinted for Ollama/OpenAI/Anthropic, original multi-color branding preserved for Google), and
 automatic conversation-title generation (a background, non-streaming model call replaces the
 synchronous fallback title with a short generated one after the first assistant response
@@ -44,11 +44,19 @@ rationale and roadmap, and [`docs/adr/`](docs/adr/) for recorded decisions.
 - Qt >=6.11 (`Core`, `Gui`, `Quick`, `Qml`, `Network`, `Concurrent`, `Sql`, `DBus`)
 - CMake 3.25+
 - Ninja
-- `libsecret-1`, md4c and KF6SyntaxHighlighting
-- A local `holonight-config` checkout, prepared before Qt
-- [`holonight-qt`](../holonight-qt) checked out as a sibling directory (`../holonight-qt`) —
-  supplies the shared `HolonightQt` CMake package and the `Holonight` QML design-system module
+- `libsecret-1` and QMarkdown >=1.18 (built with `QMARKDOWN_WITH_KSYNTAXHIGHLIGHTING=ON`)
+- Installed `holonight-config` and [`holonight-qt`](../holonight-qt) packages;
+  HolonightQt supplies the shared Controls/Wayland libraries and QML design-system modules
 - Installed GTest and GMock >=1.14 (required when tests are enabled)
+
+For QMarkdown in a separate installed prefix, configure with
+`CMAKE_PREFIX_PATH=/opt/qmarkdown:/opt/holonight task configure`. Build launches use
+QMarkdown's exported `QMarkdown_QML_IMPORT_PATH` independently of HolonightQt.
+Installed launches retain executable-relative and standard Qt system lookup; for a
+custom external prefix set `QML_IMPORT_PATH=/opt/qmarkdown/lib/qt6/qml` and ensure
+its shared libraries are discoverable (for example `LD_LIBRARY_PATH=/opt/qmarkdown/lib`).
+Native builds and the installer never acquire QMarkdown. See the
+[rendering migration SDD](docs/sdd/qmarkdown-migration/SPEC.md).
 
 ## Building
 
@@ -95,7 +103,6 @@ Modular monolith, static-library targets per layer under `src/`:
 | `holonight_persistence`     | SQLite repositories and schema migrations                        |
 | `holonight_credentials`     | Secret Service / KWallet credential storage (via `libsecret`)    |
 | `holonight_platform`        | D-Bus activation, notifications, desktop integration              |
-| `holonight_rendering`       | Markdown/code block parsing (MD4C) and syntax highlighting (KSyntaxHighlighting) |
 
 The targets above are `STATIC` libraries with real, headlessly-tested logic:
 
@@ -215,14 +222,11 @@ The targets above are `STATIC` libraries with real, headlessly-tested logic:
   Ollama, OpenAI, Anthropic, and Google auth-token/API-key fields via `ProviderSettingsController`/
   `OpenAIProviderSettingsController`/`AnthropicProviderSettingsController`/
   `GoogleProviderSettingsController` (all four share the same `CredentialStore` instance).
-- `holonight_rendering` — `MessageContentParser`, splitting a completed message's raw text into
-  `ContentBlock`s (Markdown prose vs. fenced code, via MD4C) once per message and caching the
-  result on `MessageListModel::ContentBlocksRole`; `CodeHighlighter`, a `KSyntaxHighlighting`-backed
-  `QSyntaxHighlighter` subclass attached to each code block's `TextEdit`, resolving a
-  `KSyntaxHighlighting::Definition` from the block's (normalized) language and reloading its
-  `Theme` on `HoloniightPalette::paletteChanged` without re-parsing the code. `MessageBubble.qml`
-  renders the plain `Text.MarkdownText` element while a message is `pending`/`streaming` and swaps
-  to the block-based `Repeater`/`HnCodeBlock`/`MarkdownBlock` renderer once it's `complete`/`error`.
+- Chat Markdown uses the package-owned QMarkdown 1.18 renderer through shared
+  `MarkdownBlock.qml` for user and assistant messages in both transcript hosts. GFM,
+  document selection, and syntax highlighting work during streaming. Code headers
+  provide language metadata and exact code copying; terminal assistant copy preserves
+  the untouched response source. Palette and syntax colors update live.
   `MessageListModel` pairs tool Invocation/Result ledger messages by provider call ID into one
   chronological activity row. `ToolActivityCard.qml` supplies shared lifecycle, disclosure,
   accessibility, raw-data, and copy controls; `ToolRendererRegistry.qml` selects

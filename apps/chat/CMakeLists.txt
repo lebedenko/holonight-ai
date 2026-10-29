@@ -24,6 +24,7 @@ qt_add_qml_module(holonight-chat
 )
 
 target_link_libraries(holonight-chat PRIVATE
+    QMarkdown::QMarkdown
     HolonightQt::Controls
     holonight_domain
     holonight_application
@@ -35,20 +36,6 @@ target_link_libraries(holonight-chat PRIVATE
     Qt6::Gui
     Qt6::Quick
     Qt6::Qml
-)
-
-# holonight_rendering is already pulled into holonight-chat's link line transitively (static-lib
-# archive propagation through holonight_application's PRIVATE link — see
-# src/application/CMakeLists.txt's comment on REQ-C-005). But the *generated*
-# holonight-chat_qmltyperegistrations.cpp below is compiled as part of the holonight-chat target
-# itself, and its __has_include(<code_highlighter.h>)-guarded includes only succeed if
-# holonight_rendering's PUBLIC include directories reach holonight-chat's own compile line —
-# PRIVATE linkage through holonight_application does not relay usage requirements that far. Linking
-# it here too (redundant for the archive, load-bearing for the include path) is what makes that
-# registration TU compile; holonight_application's own link to it stays PRIVATE, so REQ-C-005 still
-# holds for every other consumer.
-target_link_libraries(holonight-chat PRIVATE
-    holonight_rendering
 )
 
 # ChatViewModel/MessageListModel (QML_ELEMENT types) live in holonight_application, a static
@@ -68,15 +55,6 @@ qt6_extract_metatypes(holonight_application OUTPUT_FILES _HOLONIGHT_APPLICATION_
 # below. Clearing it again here mirrors holonight-shell/apps/shell/CMakeLists.txt's proven pattern.
 set_property(TARGET holonight_application PROPERTY INTERFACE_SOURCES "")
 
-# Same extraction, same clear-twice dance, for holonight_rendering (ContentBlockTypeNs,
-# ContentBlock, CodeHighlighter are all QML-visible types declared there). holonight_rendering is
-# in holonight-chat's transitive link graph (via holonight_application, even though that link is
-# PRIVATE) so _qt_internal_qml_type_registration()'s foreign-types walk would re-discover it too if
-# its own INTERFACE_SOURCES were left populated after this extraction.
-set_property(TARGET holonight_rendering PROPERTY INTERFACE_SOURCES "")
-qt6_extract_metatypes(holonight_rendering OUTPUT_FILES _HOLONIGHT_RENDERING_METATYPES)
-set_property(TARGET holonight_rendering PROPERTY INTERFACE_SOURCES "")
-
 # qt6_extract_metatypes()'s OUTPUT_FILES value is the BYPRODUCTS path (a dummy file touched at
 # configure time), not a real ninja OUTPUT — depending on it directly does not establish a build
 # order. The actual declared OUTPUT is the same path with ".gen" appended (see
@@ -84,17 +62,15 @@ set_property(TARGET holonight_rendering PROPERTY INTERFACE_SOURCES "")
 # BYPRODUCTS ${metatypes_file} ...)). holonight-shell's apps/shell/CMakeLists.txt depends on the
 # ".gen" variant for exactly this reason — mirrored here.
 set(_HOLONIGHT_APPLICATION_METATYPES_DEP "${_HOLONIGHT_APPLICATION_METATYPES}.gen")
-set(_HOLONIGHT_RENDERING_METATYPES_DEP "${_HOLONIGHT_RENDERING_METATYPES}.gen")
 
 set(_HOLONIGHT_CHAT_METATYPES "${CMAKE_CURRENT_BINARY_DIR}/meta_types/qt6holonight-chat_metatypes.json")
 add_custom_command(
     OUTPUT "${_HOLONIGHT_CHAT_METATYPES}"
     DEPENDS
         ${_HOLONIGHT_APPLICATION_METATYPES_DEP}
-        ${_HOLONIGHT_RENDERING_METATYPES_DEP}
         "${PROJECT_SOURCE_DIR}/cmake/combine-metatypes.cmake"
     COMMAND ${CMAKE_COMMAND}
-        "-DINPUT_FILES=${_HOLONIGHT_APPLICATION_METATYPES}|${_HOLONIGHT_RENDERING_METATYPES}"
+        "-DINPUT_FILES=${_HOLONIGHT_APPLICATION_METATYPES}"
         "-DOUTPUT=${_HOLONIGHT_CHAT_METATYPES}"
         -P "${PROJECT_SOURCE_DIR}/cmake/combine-metatypes.cmake"
     COMMENT "Collecting HolonightChat C++ metatypes"
@@ -109,6 +85,7 @@ _qt_internal_qml_type_registration(holonight-chat)
 
 target_compile_definitions(holonight-chat PRIVATE
     HOLONIGHT_CHAT_VERSION="${PROJECT_VERSION}"
+    QMARKDOWN_QML_IMPORT_PATH="${QMarkdown_QML_IMPORT_PATH}"
     HOLONIGHT_QML_IMPORT_PATH="${HOLONIGHT_QML_IMPORT_PATH}"
     HOLONIGHT_BUILD_EXECUTABLE="$<TARGET_FILE:holonight-chat>"
     HOLONIGHT_INSTALL_QML_PATH="../${CMAKE_INSTALL_LIBDIR}/qt6/qml"

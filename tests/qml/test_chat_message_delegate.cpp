@@ -12,9 +12,7 @@
 #include <QtQml>
 
 #include <gtest/gtest.h>
-#include <holonight_application/message_content_model.h>
-#include <holonight_rendering/code_highlighter.h>
-#include <holonight_rendering/content_block.h>
+#include <holonight_application/token_formatter.h>
 #include <memory>
 
 namespace {
@@ -35,13 +33,12 @@ QVariantMap runningToolCall() {
 class ChatMessageDelegateQml : public testing::Test {
  protected:
   static void SetUpTestSuite() {
-    qmlRegisterTypesAndRevisions<holonight_rendering::CodeHighlighter>("HolonightChat", 1);
-    qmlRegisterTypesAndRevisions<holonight_rendering::ContentBlock>("HolonightChat", 1);
-    qmlRegisterTypesAndRevisions<holonight_rendering::ContentBlockTypeNs>("HolonightChat", 1);
+    qmlRegisterTypesAndRevisions<holonight_application::TokenFormatter>("HolonightChat", 1);
   }
 
   void SetUp() override {
     engine.addImportPath(QStringLiteral(HOLONIGHT_QML_IMPORT_PATH));
+    engine.addImportPath(QStringLiteral(QMARKDOWN_QML_IMPORT_PATH));
     engine.addImportPath(QDir{QStringLiteral(PROJECT_SOURCE_DIR)}.filePath(QStringLiteral("qml")));
   }
 
@@ -64,7 +61,6 @@ class ChatMessageDelegateQml : public testing::Test {
         {QStringLiteral("providerId"), QStringLiteral("provider-id")},
         {QStringLiteral("providerType"), QStringLiteral("openai")},
         {QStringLiteral("providerName"), QStringLiteral("Provider A")},
-        {QStringLiteral("contentBlocks"), QVariant::fromValue(&content_model)},
         {QStringLiteral("inputTokenCount"), 11},
         {QStringLiteral("outputTokenCount"), 22},
         {QStringLiteral("reasoningTokenCount"), 3},
@@ -81,7 +77,6 @@ class ChatMessageDelegateQml : public testing::Test {
   // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   QQmlEngine engine;
   // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
-  holonight_application::MessageContentModel content_model;
 };
 
 TEST_F(ChatMessageDelegateQml, RoutesUserAssistantFallbackAndToolRowsWithExistingPrecedence) {
@@ -126,7 +121,6 @@ TEST_F(ChatMessageDelegateQml, PreservesBindingsLayoutAndLoadedCardIdentity) {
   EXPECT_EQ(bubble->property("providerId").toString(), QStringLiteral("provider-id"));
   EXPECT_EQ(bubble->property("providerType").toString(), QStringLiteral("openai"));
   EXPECT_EQ(bubble->property("providerName").toString(), QStringLiteral("Provider A"));
-  EXPECT_EQ(bubble->property("contentBlocks").value<QObject*>(), &content_model);
   EXPECT_EQ(bubble->property("inputTokenCount").toInt(), 11);
   EXPECT_EQ(bubble->property("outputTokenCount").toInt(), 22);
   EXPECT_EQ(bubble->property("reasoningTokenCount").toInt(), 3);

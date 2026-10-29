@@ -30,6 +30,8 @@ install(FILES LICENSE LICENSES/GPL-3.0-or-later.txt
 
 find_package(Qt6 6.11 REQUIRED COMPONENTS Core Gui Quick Qml Network Concurrent Sql DBus)
 find_package(HolonightQt REQUIRED COMPONENTS Controls Wayland)
+find_package(QMarkdown 1.18 CONFIG REQUIRED)
+list(APPEND QML_IMPORT_PATH "${QMarkdown_QML_IMPORT_PATH}")
 unset(HOLONIGHT_QML_IMPORT_PATH CACHE)
 find_path(HOLONIGHT_QML_IMPORT_PATH
   NAMES Holonight/qmldir
@@ -49,7 +51,6 @@ qt_policy(SET QTP0004 NEW)
 # ============================================================
 add_subdirectory(src/domain)
 add_subdirectory(src/config)
-add_subdirectory(src/rendering)
 add_subdirectory(src/application)
 add_subdirectory(src/providers)
 add_subdirectory(src/persistence)
@@ -103,7 +104,6 @@ if(BUILD_TESTS)
     foreach(coverage_target IN ITEMS
         holonight_domain
         holonight_config
-        holonight_rendering
         holonight_application
         holonight_providers
         holonight_persistence
@@ -172,6 +172,7 @@ if(QMLLINT)
             -I "${CMAKE_CURRENT_BINARY_DIR}/apps/chat"
             -I "${CMAKE_BINARY_DIR}"
             -I "${HOLONIGHT_QML_IMPORT_PATH}"
+            -I "${QMarkdown_QML_IMPORT_PATH}"
             -I "${HOLONIGHT_QT_QML_DIR}"
             ${ALL_QML_FILES}
         DEPENDS

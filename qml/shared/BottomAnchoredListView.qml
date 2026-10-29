@@ -9,9 +9,22 @@ ListView {
     property real preservedItemTop: 0
     readonly property real discreteWheelStep: 100
 
+    function scrollForSelection(deltaY: real): void {
+        cancelFlick()
+        const minimum = originY
+        const maximum = Math.max(minimum, originY + contentHeight - height)
+        contentY = Math.max(minimum, Math.min(maximum, contentY + deltaY))
+        followingLatest = false
+    }
+
     function showLatest(): void {
         followingLatest = true
         positionViewAtBeginning()
+    }
+
+    function followLatestIfEnabled(): void {
+        if (followingLatest)
+            positionViewAtBeginning()
     }
 
     function beginPreservingItemTop(item: Item): void {
@@ -107,7 +120,7 @@ ListView {
         ignoreUnknownSignals: true
 
         function onRowsInserted(): void {
-            Qt.callLater(root.showLatest)
+            Qt.callLater(root.followLatestIfEnabled)
         }
 
         function onModelReset(): void {

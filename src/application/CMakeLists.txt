@@ -2,7 +2,6 @@ add_library(holonight_application STATIC
     include/holonight_application/chat_controller.h
     include/holonight_application/chat_view_model.h
     include/holonight_application/message_list_model.h
-    include/holonight_application/message_content_model.h
     include/holonight_application/conversation_list_model.h
     include/holonight_application/provider_settings_controller_base.h
     include/holonight_application/provider_runtime_coordinator.h
@@ -31,7 +30,6 @@ add_library(holonight_application STATIC
     src/chat_controller.cpp
     src/chat_view_model.cpp
     src/message_list_model.cpp
-    src/message_content_model.cpp
     src/conversation_list_model.cpp
     src/provider_settings_controller_base.cpp
     src/provider_runtime_coordinator.cpp
@@ -78,10 +76,6 @@ target_link_libraries(holonight_application PUBLIC
     holonight_credentials
     Qt6::Core
     Qt6::Qml
-)
-
-target_link_libraries(holonight_application PRIVATE
-    holonight_rendering
 )
 
 target_compile_features(holonight_application PUBLIC cxx_std_23)

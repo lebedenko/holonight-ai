@@ -15,7 +15,6 @@ Item {
     required property string providerType
     required property string providerName
     required property date createdAt
-    required property var contentBlocks
     required property var inputTokenCount
     required property var outputTokenCount
     required property var reasoningTokenCount
@@ -23,6 +22,9 @@ Item {
     required property var cacheReadTokenCount
     required property var totalTokenCount
     required property var durationMs
+    property Item selectionViewport: null
+    signal selectionScrollRequested(real deltaY)
+
     property real maximumWidthRatio: 0.75
 
     readonly property bool isAssistant: messageRole === "assistant"
@@ -116,7 +118,9 @@ Item {
             AssistantResponseContent {
                 Layout.fillWidth: true
                 visible: root.isAssistant && root.messageText.length > 0
-                contentModel: root.contentBlocks
+                messageText: root.messageText
+                selectionViewport: root.selectionViewport
+                onSelectionScrollRequested: deltaY => root.selectionScrollRequested(deltaY)
                 messageStatus: root.messageStatus
             }
 

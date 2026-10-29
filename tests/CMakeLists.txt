@@ -11,7 +11,6 @@ add_executable(test_holonight_ai
   domain/test_model_id.cpp
   domain/test_tool_activity.cpp
   domain/test_stream_event.cpp
-  rendering/test_message_content_parser.cpp
   providers/test_clock.cpp
   providers/test_ollama_provider.cpp
   providers/test_ollama_tool_codec.cpp
@@ -22,7 +21,6 @@ add_executable(test_holonight_ai
   application/test_chat_controller.cpp
   application/test_chat_view_model.cpp
   application/test_message_list_model.cpp
-  application/test_message_content_model.cpp
   application/test_conversation_list_model.cpp
   application/test_provider_settings_controller.cpp
   application/test_provider_runtime_coordinator.cpp
@@ -82,7 +80,7 @@ target_link_libraries(test_holonight_ai PRIVATE
   Qt6::Sql
   Qt6::Test
   holonight_domain
-  holonight_rendering
+  QMarkdown::QMarkdown
   holonight_providers
   holonight_application
   holonight_persistence
@@ -91,6 +89,7 @@ target_link_libraries(test_holonight_ai PRIVATE
   holonight_platform
 )
 target_compile_definitions(test_holonight_ai PRIVATE
+  QMARKDOWN_QML_IMPORT_PATH="${QMarkdown_QML_IMPORT_PATH}"
   HOLONIGHT_QML_IMPORT_PATH="${HOLONIGHT_QML_IMPORT_PATH}"
   PROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
 )
@@ -154,8 +153,9 @@ qt_add_resources(test_runtime_controls runtime_style_config
   FILES "${PROJECT_SOURCE_DIR}/apps/chat/qtquickcontrols2.conf")
 target_include_directories(test_runtime_controls PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(test_runtime_controls PRIVATE
-  GTest::gtest Qt6::Quick Qt6::Qml Qt6::Test holonight_rendering)
+  GTest::gtest Qt6::Quick Qt6::Qml Qt6::Test QMarkdown::QMarkdown)
 target_compile_definitions(test_runtime_controls PRIVATE
+  QMARKDOWN_QML_IMPORT_PATH="${QMarkdown_QML_IMPORT_PATH}"
   HOLONIGHT_QML_IMPORT_PATH="${HOLONIGHT_QML_IMPORT_PATH}")
 foreach(style IN ITEMS Holonight Fusion)
   add_test(NAME runtime_controls_${style} COMMAND test_runtime_controls)

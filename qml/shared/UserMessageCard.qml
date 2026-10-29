@@ -8,6 +8,9 @@ Item {
 
     required property string messageText
     required property date createdAt
+    property Item selectionViewport: null
+    signal selectionScrollRequested(real deltaY)
+
     property real maximumWidthRatio: 0.75
 
     implicitHeight: messageFrame.height
@@ -74,15 +77,11 @@ Item {
                     }
                 }
 
-                TextEdit {
+                MarkdownBlock {
                     Layout.fillWidth: true
-                    text: root.messageText
-                    textFormat: TextEdit.MarkdownText
-                    wrapMode: TextEdit.Wrap
-                    color: HoloniightPalette.textPrimary
-                    readOnly: true
-                    selectByMouse: true
-                    onLinkActivated: link => Qt.openUrlExternally(link)
+                    markdown: root.messageText
+                    selectionViewport: root.selectionViewport
+                    onSelectionScrollRequested: deltaY => root.selectionScrollRequested(deltaY)
                 }
             }
         }

@@ -16,7 +16,6 @@ Item {
     required property string providerId
     required property string providerType
     required property string providerName
-    required property var contentBlocks
     required property var inputTokenCount
     required property var outputTokenCount
     required property var reasoningTokenCount
@@ -26,6 +25,9 @@ Item {
     required property var durationMs
     required property var toolCall
     required property real messageWidthRatio
+
+    property Item selectionViewport: null
+    signal selectionScrollRequested(real deltaY)
 
     height: messageLoader.item ? (messageLoader.item as Item).implicitHeight : 0
 
@@ -58,6 +60,8 @@ Item {
             messageText: root.text
             createdAt: root.createdAt
             maximumWidthRatio: root.messageWidthRatio
+            selectionViewport: root.selectionViewport
+            onSelectionScrollRequested: deltaY => root.selectionScrollRequested(deltaY)
         }
     }
 
@@ -76,7 +80,8 @@ Item {
             providerName: root.providerName
             createdAt: root.createdAt
             maximumWidthRatio: root.messageWidthRatio
-            contentBlocks: root.contentBlocks
+            selectionViewport: root.selectionViewport
+            onSelectionScrollRequested: deltaY => root.selectionScrollRequested(deltaY)
             inputTokenCount: root.inputTokenCount
             outputTokenCount: root.outputTokenCount
             reasoningTokenCount: root.reasoningTokenCount

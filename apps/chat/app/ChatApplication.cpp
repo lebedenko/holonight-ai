@@ -27,6 +27,7 @@ ChatApplication::ChatApplication(int& argc, char** argv)
   if (QFileInfo{applicationFilePath()}.canonicalFilePath() ==
       QFileInfo{QStringLiteral(HOLONIGHT_BUILD_EXECUTABLE)}.canonicalFilePath()) {
     engine_->addImportPath(QStringLiteral(HOLONIGHT_QML_IMPORT_PATH));
+    engine_->addImportPath(QStringLiteral(QMARKDOWN_QML_IMPORT_PATH));
   } else {
     engine_->addImportPath(QDir{applicationDirPath()}.absoluteFilePath(QStringLiteral(HOLONIGHT_INSTALL_QML_PATH)));
   }

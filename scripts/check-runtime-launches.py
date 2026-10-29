@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
+import sqlite3
 import subprocess
 import tempfile
 import time
@@ -19,6 +20,28 @@ def stop(process):
         process.kill()
         process.wait()
         raise AssertionError("Process did not terminate promptly")
+
+
+def seed_markdown_conversation(database):
+    """Restore real Markdown rows without a live provider or desktop interaction."""
+    database.parent.mkdir(parents=True, exist_ok=True)
+    migrations = Path(__file__).resolve().parents[1] / "src/persistence/migrations"
+    conversation = "11111111-1111-4111-8111-111111111111"
+    timestamp = "2026-01-01T12:00:00.000Z"
+    with sqlite3.connect(database) as connection:
+        for migration in sorted(migrations.glob("*.sql")):
+            connection.executescript(migration.read_text())
+            connection.execute("INSERT INTO schema_version(version, applied_at) VALUES (?, ?)",
+                               (int(migration.name.split("_", 1)[0]), timestamp))
+        connection.execute("INSERT INTO conversations(id, title, created_at, updated_at) VALUES (?, ?, ?, ?)",
+                           (conversation, "Markdown acceptance", timestamp, timestamp))
+        for message, role, created in (
+                ("22222222-2222-4222-8222-222222222222", "user", timestamp),
+                ("33333333-3333-4333-8333-333333333333", "assistant", "2026-01-01T12:00:01.000Z")):
+            connection.execute(
+                "INSERT INTO messages(id, conversation_id, role, content, status, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (message, conversation, role,
+                 "# Restored Markdown\n\n- [x] GFM\n\n```cpp\nint value = 1;\n```\n", "complete", created))
 
 
 def main():
@@ -51,6 +74,7 @@ def main():
                     {"id": name, "type": name, "name": name, "enabled": False, "settings": {}}
                     for name in ("ollama", "openai", "anthropic", "google")], "tombstones": []},
                 "utility": {"chat_title_generation_enabled": False}}))
+            seed_markdown_conversation(root / "data/holonight-ai/conversations.db")
             bus_config = root / "bus.conf"
             bus_config.write_text('''<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
@@ -88,6 +112,7 @@ def main():
                         maps = Path(f"/proc/{process.pid}/maps").read_text()
                         assert str(prefix / "lib/qt6/qml/Holonight/Core") in maps, f"{mode}: wrong Core plugin"
                         assert str(prefix / "lib/qt6/qml/Holonight/Controls") in maps, f"{mode}: wrong composite plugin"
+                        assert "libQMarkdown.so" in maps, f"{mode}: missing QMarkdown shared library"
                         if expected == "Holonight":
                             assert "libholonight_qml" in maps, f"{mode}: missing style plugin"
                         else:
@@ -96,6 +121,10 @@ def main():
                     finally:
                         stop(process)
                 evidence = log_path.read_text()
+                # QMarkdown's plugin is optional when its linked backing library registers types.
+                assert re.search(r'addLibraryImport: .*MarkdownBlock.qml "QMarkdown" version "1.18"', evidence), \
+                    f"{mode}: missing QMarkdown 1.18 import"
+                assert "/QMarkdown/qmldir" in evidence, f"{mode}: missing installed QMarkdown module"
                 assert re.search(rf"/{expected}/(?:Button|TextArea)\.qml", evidence), f"{mode}: no implementation evidence"
                 diagnostics = re.findall(r"^.*(?:ReferenceError|TypeError|Binding loop|Cannot assign|Unable to assign|"
                                          r"is not a type|is not installed|Failed to create|Error loading|QML [A-Za-z]+:|Required property|"

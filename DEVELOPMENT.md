@@ -23,6 +23,21 @@ For simultaneous provider/consumer development, explicitly run
 edits. Final umbrella integration uses its gitlinks; never substitute sibling mode for it.
 Provider sources are built with ordinary CMake into a disposable prefix. QMarkdown is
 an independently installed package in the shared image and is not owned by our installer.
+Chat requires QMarkdown >=1.18, packaged with `QMARKDOWN_WITH_KSYNTAXHIGHLIGHTING=ON`.
+The shared image must be rebuilt and published before consumers update their digest.
+Native builds never fetch, build, or install QMarkdown.
+
+For a separate QMarkdown prefix, include it in `CMAKE_PREFIX_PATH` at configure time.
+Its exported `QMarkdown_QML_IMPORT_PATH` is added to build engine and lint lookup
+independently of HolonightQt. Installed launches keep relative/system QML imports;
+custom external prefixes need `QML_IMPORT_PATH` and the platform shared-library path
+configured (for example `LD_LIBRARY_PATH` on Linux). See the
+[local migration SDD](docs/sdd/qmarkdown-migration/SPEC.md) and its umbrella contract.
+
+Markdown integration tests use QMarkdown's public API and host-owned copy controls;
+the runtime acceptance executable instantiates real Markdown rows in both transcript
+hosts and requires highlighting availability. Installed startup checks assert that
+the installed QMarkdown module and shared library load without build-directory imports.
 
 Routine fixes need tests and a commit explanation. Substantial designs use one SDD;
 cross-project work uses one umbrella contract note. Keep execution logs out of Git.

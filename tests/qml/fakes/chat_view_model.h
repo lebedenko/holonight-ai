@@ -22,6 +22,47 @@ class FakeConversationModel final : public QAbstractListModel {
   }
 };
 
+class FakeMessageModel final : public QAbstractListModel {
+  Q_OBJECT
+ public:
+  [[nodiscard]] int rowCount(const QModelIndex& parent = {}) const override {
+    return parent.isValid() ? 0 : static_cast<int>(rows_.size());
+  }
+  [[nodiscard]] QHash<int, QByteArray> roleNames() const override {
+    return {{Qt::UserRole + 1, "messageId"},
+            {Qt::UserRole + 2, "role"},
+            {Qt::UserRole + 3, "text"},
+            {Qt::UserRole + 4, "status"},
+            {Qt::UserRole + 5, "createdAt"},
+            {Qt::UserRole + 6, "modelName"},
+            {Qt::UserRole + 7, "providerId"},
+            {Qt::UserRole + 8, "providerType"},
+            {Qt::UserRole + 9, "providerName"},
+            {Qt::UserRole + 10, "inputTokenCount"},
+            {Qt::UserRole + 11, "outputTokenCount"},
+            {Qt::UserRole + 12, "reasoningTokenCount"},
+            {Qt::UserRole + 13, "cacheCreationTokenCount"},
+            {Qt::UserRole + 14, "cacheReadTokenCount"},
+            {Qt::UserRole + 15, "totalTokenCount"},
+            {Qt::UserRole + 16, "durationMs"},
+            {Qt::UserRole + 17, "toolCall"}};
+  }
+  [[nodiscard]] QVariant data(const QModelIndex& index, int role) const override {
+    if (!index.isValid() || index.row() < 0 || index.row() >= rowCount()) {
+      return {};
+    }
+    return rows_.at(index.row()).value(QString::fromUtf8(roleNames().value(role)));
+  }
+  void resetRows(QList<QVariantMap> rows) {
+    beginResetModel();
+    rows_ = std::move(rows);
+    endResetModel();
+  }
+
+ private:
+  QList<QVariantMap> rows_;
+};
+
 class FakeChatViewModel final : public QObject {
   Q_OBJECT
   Q_PROPERTY(bool canSend READ canSend WRITE setCanSend NOTIFY canSendChanged)
@@ -38,7 +79,7 @@ class FakeChatViewModel final : public QObject {
   Q_PROPERTY(QString errorMessage MEMBER error_message CONSTANT)
   Q_PROPERTY(QString persistenceStatusMessage MEMBER persistence_status_message CONSTANT)
   Q_PROPERTY(bool messagesReady MEMBER messages_ready CONSTANT)
-  Q_PROPERTY(QVariantList messages MEMBER messages NOTIFY messagesChanged)
+  Q_PROPERTY(QAbstractItemModel* messages READ messages CONSTANT)
   Q_PROPERTY(QAbstractItemModel* conversationList READ conversationList CONSTANT)
   Q_PROPERTY(QString activeConversationId MEMBER active_conversation_id CONSTANT)
  public:
@@ -72,7 +113,8 @@ class FakeChatViewModel final : public QObject {
   // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   bool messages_ready = true;
   // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
-  QVariantList messages;
+  FakeMessageModel message_model;
+  QAbstractItemModel* messages() { return &message_model; }
   // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)
   FakeConversationModel conversations;
   QAbstractItemModel* conversationList() { return &conversations; }

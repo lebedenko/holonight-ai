@@ -12,8 +12,6 @@
 #include <QtQml>
 
 #include <gtest/gtest.h>
-#include <holonight_rendering/code_highlighter.h>
-#include <holonight_rendering/content_block.h>
 #include <memory>
 
 namespace {
@@ -43,15 +41,13 @@ void activate(QObject* object, const char* signal_name) {
 class ProviderManagementQml : public testing::Test {
  protected:
   static void SetUpTestSuite() {
-    qmlRegisterTypesAndRevisions<holonight_rendering::CodeHighlighter>("HolonightChat", 1);
-    qmlRegisterTypesAndRevisions<holonight_rendering::ContentBlock>("HolonightChat", 1);
-    qmlRegisterTypesAndRevisions<holonight_rendering::ContentBlockTypeNs>("HolonightChat", 1);
     qmlRegisterType(QUrl::fromLocalFile(workspaceFile(QStringLiteral("../shared/ProviderIcon.qml"))), "HolonightChat",
                     1, 0, "ProviderIcon");
   }
 
   void SetUp() override {
     engine.addImportPath(QStringLiteral(HOLONIGHT_QML_IMPORT_PATH));
+    engine.addImportPath(QStringLiteral(QMARKDOWN_QML_IMPORT_PATH));
     engine.addImportPath(QDir{QStringLiteral(PROJECT_SOURCE_DIR)}.filePath(QStringLiteral("qml")));
   }
 
@@ -218,7 +214,6 @@ TEST_F(ProviderManagementQml, HistoricalAttributionShowsResolvedNameModelAndProv
                                     {QStringLiteral("providerType"), QStringLiteral("openai")},
                                     {QStringLiteral("providerName"), QStringLiteral("Former work account")},
                                     {QStringLiteral("createdAt"), QDateTime::currentDateTime()},
-                                    {QStringLiteral("contentBlocks"), QVariantList{}},
                                     {QStringLiteral("inputTokenCount"), QVariant()},
                                     {QStringLiteral("outputTokenCount"), QVariant()},
                                     {QStringLiteral("reasoningTokenCount"), QVariant()},
@@ -251,7 +246,6 @@ TEST_F(ProviderManagementQml, EmptyCancelledAssistantPlaceholderIsNotRendered) {
                                     {QStringLiteral("providerType"), QStringLiteral("anthropic")},
                                     {QStringLiteral("providerName"), QStringLiteral("Anthropic")},
                                     {QStringLiteral("createdAt"), QDateTime::currentDateTime()},
-                                    {QStringLiteral("contentBlocks"), QVariantList{}},
                                     {QStringLiteral("inputTokenCount"), QVariant()},
                                     {QStringLiteral("outputTokenCount"), QVariant()},
                                     {QStringLiteral("reasoningTokenCount"), QVariant()},

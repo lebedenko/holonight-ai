@@ -153,6 +153,21 @@ TEST(BottomAnchoredListView, KeepsNewestAtBottomAcrossLayoutChangesAndReset) {
   QTRY_VERIFY(delegateForRow(view, 0) != nullptr);
   EXPECT_NEAR(bottomInView(delegateForRow(view, 0), view), view->height(), 1.0);
 
+  // Selection requests use viewport coordinates even for a bottom-to-top ListView.
+  ASSERT_TRUE(QMetaObject::invokeMethod(view, "scrollForSelection", Q_ARG(double, -1000000.0)));
+  EXPECT_FALSE(view->property("followingLatest").toBool());
+  EXPECT_NEAR(view->property("contentY").toReal(), view->property("originY").toReal(), 1.0);
+  ASSERT_TRUE(QMetaObject::invokeMethod(view, "scrollForSelection", Q_ARG(double, 1000000.0)));
+  EXPECT_FALSE(view->property("followingLatest").toBool());
+  EXPECT_NEAR(view->property("contentY").toReal(),
+              view->property("originY").toReal() + view->property("contentHeight").toReal() - view->height(), 1.0);
+
+  ASSERT_TRUE(QMetaObject::invokeMethod(view, "scrollForSelection", Q_ARG(double, -200.0)));
+  model.insertNewestHeight(100);
+  QCoreApplication::processEvents();
+  EXPECT_FALSE(view->property("followingLatest").toBool());
+  EXPECT_FALSE(view->property("atYBeginning").toBool());
+
   model.resetHeights(variedHeights(120));
   QTRY_VERIFY(delegateForRow(view, 0) != nullptr);
   EXPECT_NEAR(bottomInView(delegateForRow(view, 0), view), view->height(), 1.0);
