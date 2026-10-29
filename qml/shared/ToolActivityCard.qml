@@ -217,8 +217,10 @@ Item {
 
                 property var toolCall: root.toolCall
 
+                readonly property var loadedRenderer: item
+
                 onLoaded: {
-                    item.toolCall = root.toolCall;
+                    loadedRenderer.toolCall = root.toolCall;
                 }
             }
 

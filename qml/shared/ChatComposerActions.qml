@@ -25,7 +25,7 @@ RowLayout {
         // Keep the square icon action aligned when native text metrics exceed the style minimum.
         implicitHeight: Math.max(contextButton.implicitHeight, toolsButton.implicitHeight)
         implicitWidth: implicitHeight
-        display: AbstractButton.IconOnly
+        display: Controls.AbstractButton.IconOnly
         icon.source: "qrc:/qt/qml/Holonight/Controls/assets/paperclip.svg"
         icon.color: enabled ? HoloniightPalette.textPrimary : HoloniightPalette.textDisabled
         Accessible.name: qsTr("Attach a file")
