@@ -125,6 +125,12 @@ TEST(RuntimeControls, ApplicationSurfacesAndBehavior) {
   QTRY_VERIFY(panel->findChildren<QObject*>(QStringLiteral("markdownBlockBody")).size() >= 2);
   for (QObject* surface : {workspace.get(), panel.get()}) {
     for (QObject* markdown : surface->findChildren<QObject*>(QStringLiteral("markdownBlockBody"))) {
+      auto* viewport = markdown->property("selectionViewport").value<QQuickItem*>();
+      ASSERT_NE(viewport, nullptr);
+      QTRY_VERIFY(viewport->height() > 0);
+      QTRY_COMPARE(markdown->property("codeBlockViewportHeight").toReal(), viewport->height());
+      EXPECT_EQ(markdown->property("codeBlockHeightRatio").toReal(), 0.5);
+      EXPECT_EQ(markdown->property("codeBlockMinimumLines").toInt(), 1);
       EXPECT_TRUE(markdown->property("syntaxHighlightingAvailable").toBool());
       EXPECT_TRUE(markdown->property("contentHeight").toReal() > 0);
     }

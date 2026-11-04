@@ -102,6 +102,41 @@ TEST_F(MarkdownBlockQml, LongCodeBlockHasBoundedScrollableViewport) {
   EXPECT_EQ(QGuiApplication::clipboard()->text(), code);
 }
 
+TEST_F(MarkdownBlockQml, HostViewportResizesStreamingAndCompletedCode) {
+  QQuickItem host;
+  host.setHeight(480);
+  const QString code = QStringLiteral("int value = 1;\n").repeated(100);
+  auto object = create(QStringLiteral("```cpp\n") + code, 640, true);
+  ASSERT_NE(object, nullptr);
+  object->setProperty("selectionViewport", QVariant::fromValue(&host));
+  for (const bool streaming : {true, false}) {
+    object->setProperty("streaming", streaming);
+    if (streaming) {
+      object->setProperty("markdown", QStringLiteral("```cpp\n") + code + QStringLiteral("// appended\n"));
+      QTRY_VERIFY(selected(object.get()).contains(QStringLiteral("// appended")));
+    }
+    if (!streaming) {
+      object->setProperty("markdown", QStringLiteral("```cpp\n") + code + QStringLiteral("```"));
+    }
+    for (const int height : {480, 240, 80, 2, 10000, 0}) {
+      host.setHeight(height);
+      QTRY_COMPARE(object->property("codeBlockViewportHeight").toReal(), height);
+      QTRY_VERIFY(object->findChild<QQuickItem*>(QStringLiteral("codeViewport")) != nullptr);
+      auto* viewport = object->findChild<QQuickItem*>(QStringLiteral("codeViewport"));
+      auto* surface = viewport->parentItem();
+      QTRY_VERIFY(surface->property("lineHeight").toReal() > 0);
+      const qreal line = surface->property("lineHeight").toReal();
+      const qreal cap = object->property("codeBlockMaximumLines").toReal() * line;
+      const qreal expected = height > 0 ? qMax(line, qMin(cap, height * 0.5)) : cap;
+      QTRY_VERIFY(qAbs(viewport->height() - expected) < 1);
+      EXPECT_LT(viewport->height(), viewport->property("contentHeight").toReal());
+      EXPECT_TRUE(selected(object.get()).contains(QStringLiteral("int value = 1;")));
+    }
+  }
+  object->setProperty("selectionViewport", QVariant::fromValue<QQuickItem*>(nullptr));
+  QTRY_COMPARE(object->property("codeBlockViewportHeight").toReal(), 0);
+}
+
 TEST_F(MarkdownBlockQml, TerminalFlushAndSourceReplacementDiscardPendingSnapshots) {
   for (const bool changed : {false, true}) {
     auto object = create(QStringLiteral("```cpp\nint partial = 1;"), 420, true);

@@ -32,7 +32,13 @@ and the monospace font, over PolishedDark/PolishedLight presets selected from th
 effective surface lightness. Presets own spacing, padding, borders and decoration.
 This replaces KDE theme-file styling. Code stays unwrapped and without line numbers,
 with QMarkdown height limits and scrolling on both axes for overflowing blocks; highlighting stays
-on during streaming and unknown languages remain readable. The action header shows
+on during streaming and unknown languages remain readable. The code text viewport uses
+half the transcript selection viewport height, with a one-line minimum and the
+QMarkdown maximum-line cap. Missing or zero-height hosts pass zero to preserve the
+standalone line-count fallback; document height never determines this budget. Host
+resizing updates the budget for both streaming and completed messages without
+replacing the wrapper. Internal tail-follow and renderer flicker remain upstream
+QMarkdown responsibilities. The action header shows
 QMarkdown's `languageName` or “plain text” and Copy/Copied feedback.
 
 A small hidden `TextEdit` clipboard helper copies selection and exact parser-provided

@@ -19,6 +19,9 @@ MarkdownView {
     codeBlockWrapEnabled: false
     codeBlockLineNumbersVisible: false
     codeBlockHeightLimitEnabled: true
+    codeBlockViewportHeight: selectionViewport ? Math.max(0, selectionViewport.height) : 0
+    codeBlockHeightRatio: 0.5
+    codeBlockMinimumLines: 1
     mathEnabled: false
     inlineMathEnabled: false
     footnotesEnabled: false
