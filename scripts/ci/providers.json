@@ -1,10 +1,10 @@
 [
   {
     "name": "holonight-config",
-    "revision": "0ccd25f323662f50a47bb048be636160f2b7c135"
+    "revision": "b115286c67561bcb34c8009da5098e3cb215f874"
   },
   {
     "name": "holonight-qt",
-    "revision": "7c3ce074a8c2e02e4ee8cad8cd19eb8627aa4f68"
+    "revision": "e9b5f79b9ab69a0d22ba6d326dc04f12055a45ab"
   }
 ]
