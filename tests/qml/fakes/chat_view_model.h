@@ -29,23 +29,25 @@ class FakeMessageModel final : public QAbstractListModel {
     return parent.isValid() ? 0 : static_cast<int>(rows_.size());
   }
   [[nodiscard]] QHash<int, QByteArray> roleNames() const override {
-    return {{Qt::UserRole + 1, "messageId"},
-            {Qt::UserRole + 2, "role"},
-            {Qt::UserRole + 3, "text"},
-            {Qt::UserRole + 4, "status"},
-            {Qt::UserRole + 5, "createdAt"},
-            {Qt::UserRole + 6, "modelName"},
-            {Qt::UserRole + 7, "providerId"},
-            {Qt::UserRole + 8, "providerType"},
-            {Qt::UserRole + 9, "providerName"},
-            {Qt::UserRole + 10, "inputTokenCount"},
-            {Qt::UserRole + 11, "outputTokenCount"},
-            {Qt::UserRole + 12, "reasoningTokenCount"},
-            {Qt::UserRole + 13, "cacheCreationTokenCount"},
-            {Qt::UserRole + 14, "cacheReadTokenCount"},
-            {Qt::UserRole + 15, "totalTokenCount"},
-            {Qt::UserRole + 16, "durationMs"},
-            {Qt::UserRole + 17, "toolCall"}};
+    return {
+        {Qt::UserRole + 1, "messageId"},
+        {Qt::UserRole + 2, "role"},
+        {Qt::UserRole + 3, "text"},
+        {Qt::UserRole + 4, "status"},
+        {Qt::UserRole + 5, "createdAt"},
+        {Qt::UserRole + 6, "modelName"},
+        {Qt::UserRole + 7, "providerId"},
+        {Qt::UserRole + 8, "providerType"},
+        {Qt::UserRole + 9, "providerName"},
+        {Qt::UserRole + 10, "inputTokenCount"},
+        {Qt::UserRole + 11, "outputTokenCount"},
+        {Qt::UserRole + 12, "reasoningTokenCount"},
+        {Qt::UserRole + 13, "cacheCreationTokenCount"},
+        {Qt::UserRole + 14, "cacheReadTokenCount"},
+        {Qt::UserRole + 15, "totalTokenCount"},
+        {Qt::UserRole + 16, "durationMs"},
+        {Qt::UserRole + 17, "toolCall"},
+    };
   }
   [[nodiscard]] QVariant data(const QModelIndex& index, int role) const override {
     if (!index.isValid() || index.row() < 0 || index.row() >= rowCount()) {
@@ -91,7 +93,7 @@ class FakeChatViewModel final : public QObject {
     Connected,
     SetupRequired,
     Unavailable,
-    Error
+    Error,
   };
   Q_ENUM(ProviderStatus)
   // NOLINTNEXTLINE(cppcoreguidelines-non-private-member-variables-in-classes)

@@ -216,8 +216,13 @@ TEST(MessageListModel, ToolCallRoleExposesErrorResult) {
       ToolCallEntry{
           .kind = ToolCallKind::Result,
           .tool_use_id = QStringLiteral("toolu_01"),
-          .result = QJsonObject{{QStringLiteral("error"),
-                                 QJsonObject{{QStringLiteral("code"), QStringLiteral("NOT_FOUND")}}}},
+          .result =
+              QJsonObject{
+                  {
+                      QStringLiteral("error"),
+                      QJsonObject{{QStringLiteral("code"), QStringLiteral("NOT_FOUND")}},
+                  },
+              },
           .is_error = true,
       },
   });

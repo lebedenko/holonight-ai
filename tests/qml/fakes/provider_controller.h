@@ -22,7 +22,7 @@ class FakeProviderModel final : public QAbstractListModel {
     InstanceIdRole = Qt::UserRole + 1,
     ProviderTypeRole,
     DisplayNameRole,
-    EnabledRole
+    EnabledRole,
   };
 
   [[nodiscard]] int rowCount(const QModelIndex& parent = {}) const override {

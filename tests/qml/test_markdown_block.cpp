@@ -27,9 +27,11 @@ class MarkdownBlockQml : public testing::Test {
     if (!component.isReady()) {
       return {};
     }
-    std::unique_ptr<QObject> object(component.createWithInitialProperties({{QStringLiteral("markdown"), source},
-                                                                           {QStringLiteral("width"), width},
-                                                                           {QStringLiteral("streaming"), streaming}}));
+    std::unique_ptr<QObject> object(component.createWithInitialProperties({
+        {QStringLiteral("markdown"), source},
+        {QStringLiteral("width"), width},
+        {QStringLiteral("streaming"), streaming},
+    }));
     if (auto* item = qobject_cast<QQuickItem*>(object.get())) {
       window.resize(640, 480);
       item->setParentItem(window.contentItem());
@@ -60,8 +62,14 @@ TEST_F(MarkdownBlockQml, MixedGfmDocumentSupportsCrossBlockSelectionAndCopy) {
   EXPECT_TRUE(object->property("gfmEnabled").toBool());
   EXPECT_TRUE(object->property("syntaxHighlightingAvailable").toBool());
   const QString text = selected(object.get());
-  for (const auto& fragment : {QStringLiteral("Heading"), QStringLiteral("child"), QStringLiteral("café 🌙"),
-                               QStringLiteral("<details>"), QStringLiteral("int value = 1;"), QStringLiteral("end")}) {
+  for (const auto& fragment : {
+           QStringLiteral("Heading"),
+           QStringLiteral("child"),
+           QStringLiteral("café 🌙"),
+           QStringLiteral("<details>"),
+           QStringLiteral("int value = 1;"),
+           QStringLiteral("end"),
+       }) {
     EXPECT_TRUE(text.contains(fragment)) << qPrintable(text);
   }
   ASSERT_TRUE(QMetaObject::invokeMethod(object.get(), "requestCopy"));
