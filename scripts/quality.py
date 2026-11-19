@@ -2,12 +2,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Small source-format and compilation-database checks; no dependency preparation."""
 import argparse
+from contextlib import ExitStack
 import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import re
 import subprocess
+import shlex
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -21,6 +24,45 @@ def owned(suffixes):
     return sorted({ROOT / name for name in names.decode().split('\0') if name
                    and Path(name).suffix in suffixes and (ROOT / name).is_file()
                    and not set(Path(name).parts) & {'third_party', 'vendor', 'docs', '.serena', 'tooling', 'build'}})
+
+
+def entry_directory(entry, database):
+    directory = Path(entry['directory'])
+    return directory if directory.is_absolute() else database.parent.resolve() / directory
+
+
+def entry_file(entry, database):
+    path = Path(entry['file'])
+    return (entry_directory(entry, database) / path).resolve()
+
+
+def analysis_database(database, stack):
+    """Translate GCC-only tokens in a private database, retaining the original cwd."""
+    entries = json.loads(database.read_text())
+    changed = False
+    for entry in entries:
+        tokens = entry.get('arguments')
+        if tokens is None:
+            tokens = shlex.split(entry['command'])
+        if '-mno-direct-extern-access' in tokens:
+            tokens = ['-fno-direct-access-external-data' if token == '-mno-direct-extern-access'
+                      else token for token in tokens]
+            if 'arguments' in entry:
+                entry['arguments'] = tokens
+            else:
+                entry['command'] = shlex.join(tokens)
+            changed = True
+    if not changed:
+        return database
+    for entry in entries:
+        # All relative compiler paths (including response files and outputs) retain
+        # their meaning through the original working directory.
+        entry['directory'] = str(entry_directory(entry, database))
+        entry['file'] = str(entry_file(entry, database))
+    directory = Path(stack.enter_context(tempfile.TemporaryDirectory(prefix='holonight-tidy-')))
+    result = directory / 'compile_commands.json'
+    result.write_text(json.dumps(entries))
+    return result
 
 
 def main():
@@ -57,16 +99,18 @@ def main():
         header_filter = '^' + re.escape(str(ROOT)) + '/(' + '|'.join(sorted(header_roots)) + ')'
         covered = set()
         commands = []
-        for database in databases:
-            files = {Path(e['file']).resolve() for e in json.loads(database.read_text())} & sources
-            for path in sorted(files):
-                config = ROOT / 'tests/.clang-tidy' if 'tests' in path.relative_to(ROOT).parts else ROOT / '.clang-tidy'
-                if not config.exists():
-                    config = ROOT / '.clang-tidy'
-                commands.append(('clang-tidy', '--quiet', path, '-p', database.parent, f'--config-file={config}', f'--header-filter={header_filter}', '--warnings-as-errors=*'))
-            covered |= files
-        with ThreadPoolExecutor(max_workers=int((os.environ.get('JOBS') or subprocess.check_output(['nproc'], text=True).strip()))) as pool:
-            list(pool.map(lambda command: run(*command), commands))
+        with ExitStack() as stack:
+            for database in databases:
+                files = {entry_file(e, database) for e in json.loads(database.read_text())} & sources
+                analysis = analysis_database(database, stack)
+                for path in sorted(files):
+                    config = ROOT / 'tests/.clang-tidy' if 'tests' in path.relative_to(ROOT).parts else ROOT / '.clang-tidy'
+                    if not config.exists():
+                        config = ROOT / '.clang-tidy'
+                    commands.append(('clang-tidy', '--quiet', path, '-p', analysis.parent, f'--config-file={config}', f'--header-filter={header_filter}', '--warnings-as-errors=*'))
+                covered |= files
+            with ThreadPoolExecutor(max_workers=int((os.environ.get('JOBS') or subprocess.check_output(['nproc'], text=True).strip()))) as pool:
+                list(pool.map(lambda command: run(*command), commands))
         if not covered:
             raise RuntimeError('No owned sources were checked by clang-tidy')
     else:

@@ -81,3 +81,8 @@ remain historical. No separate planning, readiness, handoff or closure commits a
 Keep routine logs and generated evidence in ignored build directories or CI artifacts.
 Provider and consumer implementation may proceed together; publish providers before
 consumer commits that reference them. Update umbrella pins per coherent milestone.
+
+Clang-tidy translates GCC-only direct-access flags in temporary analysis databases;
+no manual database edits are needed. See the umbrella
+[translation contract](../docs/initiatives/clang-tidy-compatibility.md) when working
+in the coordinated checkout. Standalone helper regressions: `python3 scripts/test-quality.py`.
